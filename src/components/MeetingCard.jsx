@@ -15,11 +15,15 @@ export default function MeetingCard({ meeting, type, onReschedule, onDelete, onA
         }
     ];
 
+    // Convert the date to a readable string
+    const formattedDate = new Date(meeting.date).toLocaleDateString();
+    const formattedTime = meeting.time;
+
     return (
         <div className="border border-gray-200 p-5 rounded-xl shadow-sm bg-white hover:shadow-md transition">
             <h3 className="text-xl font-semibold text-gray-800 mb-1">{meeting.title}</h3>
-            <p className="text-sm text-gray-600">Date: {meeting.date}</p>
-            <p className="text-sm text-gray-600 mb-3">Time: {meeting.time}</p>
+            <p className="text-sm text-gray-600">Date: {formattedDate}</p>
+            <p className="text-sm text-gray-600 mb-3">Time: {formattedTime}</p>
 
             <div className="flex gap-2 flex-wrap">
                 {actionButtons.map((btn, idx) => (
