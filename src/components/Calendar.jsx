@@ -1,12 +1,18 @@
 "use client";
-import React, { useState } from 'react';
-import { format, addMonths, startOfMonth, endOfMonth, eachDayOfInterval, isToday, getDay } from 'date-fns';
+import React from 'react';
+import {
+    format,
+    addMonths,
+    startOfMonth,
+    endOfMonth,
+    eachDayOfInterval,
+    isToday,
+    getDay
+} from 'date-fns';
 
-const Calendar = () => {
-    const [currentMonth, setCurrentMonth] = useState(new Date()); // Track the currently displayed month
-    const today = new Date();
+const Calendar = ({ selectedDate, setSelectedDate, theme = 'dark' }) => {
+    const [currentMonth, setCurrentMonth] = React.useState(new Date());
 
-    // Function to get days of a given month
     const getDaysOfMonth = (date) => {
         const start = startOfMonth(date);
         const end = endOfMonth(date);
@@ -17,28 +23,42 @@ const Calendar = () => {
     const currentMonthDays = getDaysOfMonth(currentMonthStart);
 
     const handleDayClick = (date) => {
-        // Handle selecting a date if needed
-        console.log(`Selected date: ${format(date, 'MMMM dd, yyyy')}`);
-    };
-
-    const handleNextMonthClick = () => {
-        // Move to the next month when the button is clicked
-        setCurrentMonth(addMonths(currentMonth, 1));
-    };
-
-    const handlePreviousMonthClick = () => {
-        // Move to the previous month when the button is clicked
-        setCurrentMonth(addMonths(currentMonth, -1));
+        const formattedDate = format(date, 'EEE MMMM d, yyyy');
+        setSelectedDate({ raw: date, display: formattedDate });
     };
 
     const renderDay = (date) => {
         const dayText = format(date, 'd');
+        const isSelected =
+            selectedDate?.raw &&
+            format(selectedDate.raw, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
+
+        const isDark = theme === 'dark';
+
+        const baseClasses = `p-3 cursor-pointer text-center rounded-lg text-sm font-medium transition-all duration-200 ease-in-out`;
+
+        const todayClass = isToday(date)
+            ? isDark
+                ? 'bg-blue-600 text-white font-semibold'
+                : 'bg-blue-500 text-white font-semibold'
+            : '';
+
+        const selectedClass = isSelected
+            ? isDark
+                ? 'bg-green-600 text-white font-semibold scale-105'
+                : 'bg-green-500 text-white font-semibold scale-105'
+            : isDark
+                ? 'bg-gray-700 text-gray-300'
+                : 'bg-gray-100 text-gray-700';
+
+        const hoverClass = isDark
+            ? 'hover:bg-blue-500 hover:text-white active:scale-95'
+            : 'hover:bg-blue-200 hover:text-blue-800 active:scale-95';
+
         return (
             <div
                 key={date}
-                className={`p-4 cursor-pointer border rounded-lg text-center text-gray-200 transition-all ease-in-out duration-200
-                ${isToday(date) ? 'bg-blue-600 text-white font-semibold' : ''} 
-                hover:bg-blue-700 hover:text-white active:bg-blue-800 active:text-white`}
+                className={`${baseClasses} ${todayClass || selectedClass} ${hoverClass}`}
                 onClick={() => handleDayClick(date)}
             >
                 {dayText}
@@ -49,52 +69,65 @@ const Calendar = () => {
     const getDayHeaders = () => {
         const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         return daysOfWeek.map((day, index) => (
-            <div key={index} className="text-center text-gray-400 font-medium text-sm p-2">
+            <div
+                key={index}
+                className={`text-center font-semibold text-sm py-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                    }`}
+            >
                 {day}
             </div>
         ));
     };
 
-    // Get the first day of the current month to align the days correctly
     const firstDayOfMonth = getDay(currentMonthStart);
+    const lastRowPadding = (7 - (currentMonthDays.length + firstDayOfMonth) % 7) % 7;
 
     return (
-        <div className="flex flex-col items-center space-y-4 bg-gray-800 p-4 rounded-lg shadow-xl w-full max-w-md mx-auto">
-            {/* Month Header with Navigation */}
-            <div className="flex justify-between items-center w-full bg-gray-700 p-3 rounded-lg shadow-md">
+        <div
+            className={`rounded-xl shadow-lg w-full p-4 space-y-4 transition-colors ${theme === 'dark' ? 'bg-gray-900' : 'bg-white border border-gray-200'
+                }`}
+        >
+            {/* Header */}
+            <div className="flex justify-between items-center">
                 <button
-                    className="text-white text-xl hover:bg-gray-600 p-2 rounded-full"
-                    onClick={handlePreviousMonthClick}
+                    className={`text-xl px-3 py-1 rounded-full transition ${theme === 'dark'
+                            ? 'text-white hover:bg-gray-700'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                    onClick={() => setCurrentMonth(addMonths(currentMonth, -1))}
                 >
-                    &lt; {/* Left arrow */}
+                    &lt;
                 </button>
-                <h3 className="text-xl font-semibold text-gray-200">{format(currentMonthStart, 'MMMM yyyy')}</h3>
-                <button
-                    className="text-white text-xl hover:bg-gray-600 p-2 rounded-full"
-                    onClick={handleNextMonthClick}
+                <h3
+                    className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'
+                        }`}
                 >
-                    &gt; {/* Right arrow */}
+                    {format(currentMonthStart, 'MMMM yyyy')}
+                </h3>
+                <button
+                    className={`text-xl px-3 py-1 rounded-full transition ${theme === 'dark'
+                            ? 'text-white hover:bg-gray-700'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                    onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                >
+                    &gt;
                 </button>
             </div>
 
-            {/* Days of the week headers */}
-            <div className="grid grid-cols-7 gap-1 mt-2">
-                {getDayHeaders()}
-            </div>
+            {/* Weekday headers */}
+            <div className="grid grid-cols-7 gap-1">{getDayHeaders()}</div>
 
-            {/* Days Grid */}
-            <div className="grid grid-cols-7 gap-1 mt-2">
-                {/* Empty cells before the first day of the month */}
-                {Array.from({ length: firstDayOfMonth }).map((_, index) => (
-                    <div key={index} className="text-center text-gray-600"></div>
+            {/* Calendar Days */}
+            <div className="grid grid-cols-7 gap-1">
+                {Array.from({ length: firstDayOfMonth }).map((_, i) => (
+                    <div key={`empty-start-${i}`} />
                 ))}
 
-                {/* Days of the current month */}
                 {currentMonthDays.map((day) => renderDay(day))}
 
-                {/* Empty cells after the last day of the month */}
-                {Array.from({ length: 7 - (currentMonthDays.length + firstDayOfMonth) % 7 }).map((_, index) => (
-                    <div key={index} className="text-center text-gray-600"></div>
+                {Array.from({ length: lastRowPadding }).map((_, i) => (
+                    <div key={`empty-end-${i}`} />
                 ))}
             </div>
         </div>

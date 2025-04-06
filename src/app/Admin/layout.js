@@ -1,19 +1,24 @@
 // app/Admin/layout.js
-import Sidebar from "@/components/Sidebar";
+"use client";
 
-export const metadata = {
-  title: "Admin Dashboard",
-  description: "Manage events and projects",
-};
+import Sidebar from "@/components/Sidebar";
+import { MeetingProvider } from "@/constants/MeetingContext";
+
+// export const metadata = {
+//   title: "Admin Dashboard",
+//   description: "Manage events and projects",
+// };
 
 export default function AdminLayout({ children }) {
   return (
-    <div className="flex min-h-screen bg-gray-100">
-      {/* Sidebar always visible */}
-      <Sidebar />
+    <MeetingProvider>
+      <div className="flex min-h-screen bg-gray-100">
+        {/* Sidebar always visible */}
+        <Sidebar />
 
-      {/* Page content */}
-      <main className="flex-1 p-4">{children}</main>
-    </div>
+        {/* Page content */}
+        <main className="flex-1 p-4">{children}</main>
+      </div>
+    </MeetingProvider>
   );
 }
