@@ -64,3 +64,48 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 - Expands efficiently on mobile to improve usability.
 
 ---
+
+---
+
+# ✅ 7/4/25 Progress Summary : Event Page
+
+## Overview
+
+We developed a dynamic and engaging Event Page for managing and viewing meetings. The page includes categorized meetings, interactive UI components, and personalization based on meeting context.
+
+## Features Implemented
+
+### 1. **Create Event Page**
+
+- Built a responsive and animated Event Dashboard.
+- Allows users to create new meetings with a step-by-step modal form.
+- Added fields for name, business type, date, and time.
+- UI inspired by modern design platforms (like streaming services).
+
+### 2. **Meeting List**
+
+- Displayed meetings in categories like _Upcoming_ and _Lineup_.
+- Added **search bar** to quickly filter meetings by title or name.
+- Added **sorting** functionality (by date, name, etc.).
+- Optimized layout using responsive design principles.
+
+### 3. **Meeting Card**
+
+- Each meeting displayed as a styled card.
+- Background color dynamically changes based on time (e.g., red for overdue, green for future).
+- Included **tags** like _Today_, _Tomorrow_, _Upcoming_ for better identification.
+- Integrated profile image logic:
+  - If the meeting is with a **client**, show professional image.
+  - If the meeting is with an **inmate**, use a separate graphic/icon.
+
+## Visual Enhancements
+
+- Subtle animations for page transitions using `GSAP`.
+- Button styling for accessibility and clarity.
+- Icon support for labels and tags for a polished UX.
+
+## Next Suggestions
+
+- Add real-time status updates.
+- Include filters by tags.
+- Hook up to a backend for persistence.
