@@ -34,3 +34,33 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+# ✅ 6/4/25 Progress Summary – Time Picker Component (React + Tailwind CSS)
+
+## 🛠 Features Implemented
+
+- Developed a `TimePicker` component using React with Tailwind CSS.
+- Allowed time slot generation from **9 AM to 9 PM**.
+- Included toggle functionality between **30 minutes** and **1 hour** intervals.
+- Used `toLocaleTimeString()` with `Asia/Kolkata` timezone for proper IST formatting.
+- Highlighted the selected time with styling feedback.
+- Displayed the selected time at the bottom.
+
+## 📱 Responsive Design
+
+- Made the component responsive using **Tailwind's grid system**:
+  - Mobile: `grid-cols-2` (2 slots per row for better spacing)
+  - Tablet: `sm:grid-cols-3`
+  - Medium: `md:grid-cols-4`
+  - Large: `lg:grid-cols-5`
+  - Extra Large: `xl:grid-cols-6`
+- Ensured **layout doesn't break** inside the component while expanding on mobile screens.
+- Adjusted the layout without changing inner content appearance.
+
+## 🎯 Outcome
+
+- TimePicker is now fully responsive.
+- Maintains clean layout on tablets/desktops.
+- Expands efficiently on mobile to improve usability.
+
+---

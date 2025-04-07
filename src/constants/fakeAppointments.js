@@ -7,6 +7,7 @@ const fakeAppointments = [
     selectTime: "10:00 AM",
     slot: 30,
     type: "upcoming",
+    user_role: "Admin", // changed to Admin
   },
   {
     id: 2,
@@ -16,6 +17,7 @@ const fakeAppointments = [
     selectTime: "02:30 PM",
     slot: 30,
     type: "lineup",
+    user_role: "user", // changed to user
   },
   {
     id: 3,
@@ -25,6 +27,7 @@ const fakeAppointments = [
     selectTime: "04:00 PM",
     slot: 30,
     type: "upcoming",
+    user_role: "user",
   },
   {
     id: 4,
@@ -34,6 +37,7 @@ const fakeAppointments = [
     selectTime: "11:00 AM",
     slot: 30,
     type: "lineup",
+    user_role: "Admin",
   },
   {
     id: 5,
@@ -43,6 +47,7 @@ const fakeAppointments = [
     selectTime: "03:00 PM",
     slot: 30,
     type: "upcoming",
+    user_role: "Admin", // changed to Admin
   },
   {
     id: 6,
@@ -52,6 +57,7 @@ const fakeAppointments = [
     selectTime: "09:00 AM",
     slot: 30,
     type: "lineup",
+    user_role: "user", // changed to user
   },
   {
     id: 7,
@@ -61,6 +67,7 @@ const fakeAppointments = [
     selectTime: "01:30 PM",
     slot: 30,
     type: "upcoming",
+    user_role: "user",
   },
   {
     id: 8,
@@ -70,6 +77,7 @@ const fakeAppointments = [
     selectTime: "10:30 AM",
     slot: 30,
     type: "lineup",
+    user_role: "Admin",
   },
   {
     id: 9,
@@ -77,8 +85,9 @@ const fakeAppointments = [
     title: "Sprint Review",
     selectDay: "Friday, April 18, 2025",
     selectTime: "02:00 PM",
-    slot: 30,
+    slot: 1,
     type: "upcoming",
+    user_role: "Admin", // changed to Admin
   },
   {
     id: 10,
@@ -88,6 +97,7 @@ const fakeAppointments = [
     selectTime: "11:45 AM",
     slot: 30,
     type: "lineup",
+    user_role: "user", // changed to user
   },
 ];
 

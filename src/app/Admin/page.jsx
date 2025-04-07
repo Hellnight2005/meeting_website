@@ -1,11 +1,14 @@
 "use client";
 import React from "react";
 import { useMeetingContext } from "../../constants/MeetingContext";
-import UpcomingMeetings from "@/components/UpcomingMeetings";
+import MeetingList from "@/components/MeetingList";
 import Charts from "@/components/Charts";
 
 export default function Admin() {
-    const { meetings } = useMeetingContext();
+    const { meetings, upcomingMeetingIds, lineupMeetingIds } = useMeetingContext();
+
+    const upcomingMeetings = meetings.filter((m) => upcomingMeetingIds.includes(m.id));
+
     const upcoming = meetings.filter((m) => m.type === "upcoming");
 
     const handleReschedule = (meeting) => alert(`Reschedule: ${meeting.title}`);
@@ -20,11 +23,7 @@ export default function Admin() {
                 </div>
 
                 {/* ✅ Show upcoming meetings */}
-                <UpcomingMeetings
-                    meetings={upcoming}
-                    onReschedule={handleReschedule}
-                    onDelete={handleDelete}
-                />
+                <MeetingList meetings={upcomingMeetings} type="upcoming" showSearchBar={false} visibleSlots={3} />
 
                 <div className="mt-10">
                     <h2 className="text-2xl font-bold text-gray-800 mb-4">Analytics Dashboard</h2>

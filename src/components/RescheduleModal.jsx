@@ -1,19 +1,32 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Calendar from './Calendar';
 import TimePicker from './TimePicker';
 import { format, parse } from 'date-fns';
 
-function RescheduleModal({ selectDay, selectTime, user_name, slot, title }) {
+function RescheduleModal({ meeting, onClose, onSave }) {
+    const { selectDay, selectTime, user_name, slot, title } = meeting;
     const today = new Date();
-    const formattedDate = format(today, 'EEEE, MMMM d, yyyy');
+    const formattedToday = format(today, 'EEEE, MMMM d, yyyy');
 
     const [selectedDate, setSelectedDate] = useState(null);
     const [selectedTime, setSelectedTime] = useState('');
-    const [isHalfHour, setIsHalfHour] = useState(false);
+    const [isHalfHour, setIsHalfHour] = useState(slot === 30);
 
-    // Convert incoming date string into a Date object
+    const modalRef = useRef(null);
+
+    // Close on outside click
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (modalRef.current && !modalRef.current.contains(event.target)) {
+                onClose?.();
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [onClose]);
+
     useEffect(() => {
         if (selectDay) {
             try {
@@ -25,12 +38,10 @@ function RescheduleModal({ selectDay, selectTime, user_name, slot, title }) {
         }
     }, [selectDay]);
 
-    // Assign initial selected time
     useEffect(() => {
         if (selectTime) setSelectedTime(selectTime);
     }, [selectTime]);
 
-    // Check if a change has been made
     const hasChanges = () => {
         const formattedSelectedDay = selectedDate
             ? format(selectedDate.raw, 'EEEE, MMMM dd, yyyy')
@@ -42,16 +53,28 @@ function RescheduleModal({ selectDay, selectTime, user_name, slot, title }) {
     };
 
     const handleSave = () => {
-        console.log("Saved changes:");
-        console.log("New Date:", selectedDate?.raw);
-        console.log("New Time:", selectedTime);
-        alert("Change is Save ")
-        // Add save logic (API call) here
+        const newDay = format(selectedDate.raw, 'EEEE, MMMM dd, yyyy');
+        const newTime = selectedTime;
+        console.log("Saved changes:", { newDay, newTime });
+
+        alert("Changes saved!");
+
+        // Call optional save callback
+        if (onSave) {
+            onSave({
+                ...meeting,
+                selectDay: newDay,
+                selectTime: newTime,
+                slot: isHalfHour ? 30 : 60
+            });
+        }
+
+        onClose?.(); // close the modal after saving
     };
 
     return (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-60 px-4">
-            <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-7xl w-full max-h-[90vh] overflow-y-auto">
+            <div ref={modalRef} className="bg-white rounded-2xl shadow-2xl p-8 max-w-7xl w-full max-h-[90vh] overflow-y-auto">
                 <h2 className="text-center text-3xl font-extrabold text-gray-800 mb-10 tracking-tight">
                     Reschedule Appointment
                 </h2>
@@ -75,11 +98,11 @@ function RescheduleModal({ selectDay, selectTime, user_name, slot, title }) {
                                 <span className="font-medium">
                                     {selectedDate
                                         ? format(selectedDate.raw, 'EEEE, MMMM dd, yyyy')
-                                        : formattedDate}
+                                        : formattedToday}
                                 </span>
                             </p>
                             <p className="flex items-center gap-2">
-                                ⏱️ {slot == 30 || isHalfHour ? '30 Minutes' : '1 Hour'}
+                                ⏱️ {slot === 30 || isHalfHour ? '30 Minutes' : '1 Hour'}
                             </p>
                             <p className="flex items-center gap-2">📍 Google Meet</p>
 
@@ -98,7 +121,6 @@ function RescheduleModal({ selectDay, selectTime, user_name, slot, title }) {
                                 )}
                             </div>
                         </div>
-
                     </div>
 
                     {/* Calendar Panel */}
