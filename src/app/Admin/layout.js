@@ -12,12 +12,11 @@ import { MeetingProvider } from "@/constants/MeetingContext";
 export default function AdminLayout({ children }) {
   return (
     <MeetingProvider>
-      <div className="flex min-h-screen bg-gray-100">
-        {/* Sidebar always visible */}
+      <div className="flex min-h-screen">
         <Sidebar />
-
-        {/* Page content */}
-        <main className="flex-1 p-4">{children}</main>
+        <main className="flex-1 bg-gray-100 p-6 overflow-y-auto">
+          {children}
+        </main>
       </div>
     </MeetingProvider>
   );

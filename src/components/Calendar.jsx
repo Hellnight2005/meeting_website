@@ -1,5 +1,5 @@
 "use client";
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
     format,
     addMonths,
@@ -9,9 +9,11 @@ import {
     isToday,
     getDay
 } from 'date-fns';
+import { gsap } from 'gsap';
 
 const Calendar = ({ selectedDate, setSelectedDate, theme = 'dark' }) => {
     const [currentMonth, setCurrentMonth] = React.useState(new Date());
+    const daysRef = useRef([]);
 
     const getDaysOfMonth = (date) => {
         const start = startOfMonth(date);
@@ -22,12 +24,26 @@ const Calendar = ({ selectedDate, setSelectedDate, theme = 'dark' }) => {
     const currentMonthStart = startOfMonth(currentMonth);
     const currentMonthDays = getDaysOfMonth(currentMonthStart);
 
+    useEffect(() => {
+        gsap.fromTo(
+            daysRef.current,
+            { opacity: 0, y: 20 },
+            {
+                opacity: 1,
+                y: 0,
+                stagger: 0.03,
+                duration: 0.6,
+                ease: 'power2.out',
+            }
+        );
+    }, [currentMonth]);
+
     const handleDayClick = (date) => {
         const formattedDate = format(date, 'EEE MMMM d, yyyy');
         setSelectedDate({ raw: date, display: formattedDate });
     };
 
-    const renderDay = (date) => {
+    const renderDay = (date, index) => {
         const dayText = format(date, 'd');
         const isSelected =
             selectedDate?.raw &&
@@ -58,6 +74,7 @@ const Calendar = ({ selectedDate, setSelectedDate, theme = 'dark' }) => {
         return (
             <div
                 key={date}
+                ref={(el) => (daysRef.current[index] = el)}
                 className={`${baseClasses} ${todayClass || selectedClass} ${hoverClass}`}
                 onClick={() => handleDayClick(date)}
             >
@@ -84,15 +101,20 @@ const Calendar = ({ selectedDate, setSelectedDate, theme = 'dark' }) => {
 
     return (
         <div
-            className={`rounded-xl shadow-lg w-full p-4 space-y-4 transition-colors ${theme === 'dark' ? 'bg-gray-900' : 'bg-white border border-gray-200'
+            className={`rounded-xl shadow-lg w-full max-w-md mx-auto p-4 space-y-4 transition-colors ${theme === 'dark'
+                ? 'bg-gray-900'
+                : 'bg-white border border-gray-200'
                 }`}
+            style={{
+                minHeight: '250px',
+            }}
         >
             {/* Header */}
             <div className="flex justify-between items-center">
                 <button
                     className={`text-xl px-3 py-1 rounded-full transition ${theme === 'dark'
-                            ? 'text-white hover:bg-gray-700'
-                            : 'text-gray-700 hover:bg-gray-100'
+                        ? 'text-white hover:bg-gray-700'
+                        : 'text-gray-700 hover:bg-gray-100'
                         }`}
                     onClick={() => setCurrentMonth(addMonths(currentMonth, -1))}
                 >
@@ -106,8 +128,8 @@ const Calendar = ({ selectedDate, setSelectedDate, theme = 'dark' }) => {
                 </h3>
                 <button
                     className={`text-xl px-3 py-1 rounded-full transition ${theme === 'dark'
-                            ? 'text-white hover:bg-gray-700'
-                            : 'text-gray-700 hover:bg-gray-100'
+                        ? 'text-white hover:bg-gray-700'
+                        : 'text-gray-700 hover:bg-gray-100'
                         }`}
                     onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
                 >
@@ -124,7 +146,7 @@ const Calendar = ({ selectedDate, setSelectedDate, theme = 'dark' }) => {
                     <div key={`empty-start-${i}`} />
                 ))}
 
-                {currentMonthDays.map((day) => renderDay(day))}
+                {currentMonthDays.map((day, index) => renderDay(day, index))}
 
                 {Array.from({ length: lastRowPadding }).map((_, i) => (
                     <div key={`empty-end-${i}`} />
