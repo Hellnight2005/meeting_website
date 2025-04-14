@@ -1,70 +1,72 @@
 "use client";
 import { createContext, useContext, useEffect, useState } from "react";
-import fakeAppointment from "./fakeAppointments";
-import { parse, isSameDay } from "date-fns";
+import axios from "axios";
 
 const MeetingContext = createContext();
-
 export const useMeetingContext = () => useContext(MeetingContext);
 
 export const MeetingProvider = ({ children }) => {
-  const [meetings, setMeetings] = useState([]);
+  const [meetingsData, setMeetingsData] = useState([]); // Only keeping full data
   const [upcomingMeetingIds, setUpcomingMeetingIds] = useState([]);
   const [lineupMeetingIds, setLineupMeetingIds] = useState([]);
+  const [blockedDays, setBlockedDays] = useState({});
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchMeetings = async () => {
     try {
-      const data = fakeAppointment;
+      const meetingResponse = await axios.get(
+        "http://localhost:5000/meeting/get"
+      );
+      const meetingsData = meetingResponse.data;
+      setMeetingsData(meetingsData); // Save all meeting data
 
-      setMeetings(data);
+      const approvedMeetingsResponse = await axios.get(
+        "http://localhost:5000/meeting/meetings"
+      );
+      const approvedMeetings = approvedMeetingsResponse.data.approvedMeetings;
 
-      const upcoming = data
-        .filter((item) => item.type === "upcoming")
-        .map((item) => item.id);
+      const blockedDaysData = {};
+      Object.keys(approvedMeetings).forEach((day) => {
+        const timeSlots = approvedMeetings[day];
+        blockedDaysData[day] = blockedDaysData[day] || {};
+        Object.keys(timeSlots).forEach((time) => {
+          blockedDaysData[day][time] = timeSlots[time];
+        });
+      });
+      setBlockedDays(blockedDaysData);
 
-      const lineup = data
-        .filter((item) => item.type === "lineup")
-        .map((item) => item.id);
-
+      const upcoming = [];
+      const lineup = [];
+      meetingsData.forEach((meeting) => {
+        if (meeting.type === "upcoming") upcoming.push(meeting._id);
+        else if (meeting.type === "line up") lineup.push(meeting._id);
+      });
       setUpcomingMeetingIds(upcoming);
       setLineupMeetingIds(lineup);
 
-      console.log("Upcoming Meeting IDs:", upcoming);
-      console.log("Lineup Meeting IDs:", lineup);
+      console.log("Upcommingmeeting", upcoming);
+      console.log("Line up", lineup);
+      console.log("Meeting Data", meetingsData);
+      console.log("Blocked Days", blockedDaysData);
     } catch (error) {
-      console.error("Error processing meetings:", error);
+      console.error("Error fetching meetings:", error);
+    } finally {
+      setLoading(false);
     }
-  }, []);
-
-  // ✅ Updated: Get full meeting objects by selected date
-  const getMeetingsByDay = (day) => {
-    const selectedDate = new Date(day);
-
-    return meetings.filter((meeting) => {
-      try {
-        if (typeof meeting.selectDay !== "string") return false;
-
-        const meetingDate = parse(
-          meeting.selectDay,
-          "EEEE, MMMM d, yyyy",
-          new Date()
-        );
-        return isSameDay(meetingDate, selectedDate);
-      } catch (err) {
-        console.warn("Invalid meeting date format:", meeting.selectDay, err);
-        return false;
-      }
-    });
   };
+
+  useEffect(() => {
+    fetchMeetings();
+  }, []);
 
   return (
     <MeetingContext.Provider
       value={{
-        meetings,
-        setMeetings,
+        meetingsData,
         upcomingMeetingIds,
         lineupMeetingIds,
-        getMeetingsByDay,
+        blockedDays,
+        loading,
       }}
     >
       {children}

@@ -1,8 +1,8 @@
-"use client";
-import React, { useState } from "react";
-import { useMeetingContext } from "@/constants/MeetingContext";
+import React, { useState, useEffect } from "react";
+import { useMeetingContext } from "../constants/MeetingContext"; // Import the custom hook
 import RescheduleModal from "./RescheduleModal";
 
+// Helper functions
 const getTimeOfDay = (timeStr) => {
     const date = new Date(`1970-01-01T${convertTo24Hour(timeStr)}`);
     const hour = date.getHours();
@@ -20,11 +20,17 @@ const convertTo24Hour = (timeStr) => {
 };
 
 export default function MeetingCard({ id, type }) {
-    const { meetings } = useMeetingContext();
-    const meeting = meetings.find((m) => m.id === id);
+    const { meetingsData, upcomingMeetingIds, lineupMeetingIds, loading } = useMeetingContext(); // Access the context data
+    const [meeting, setMeeting] = useState(null); // Local state for holding the meeting data
     const [showModal, setShowModal] = useState(false);
 
-    if (!meeting) return null;
+    // Fetch the meeting details based on the provided id
+    useEffect(() => {
+        const foundMeeting = meetingsData.find((m) => m._id === id); // Find the meeting by its _id
+        setMeeting(foundMeeting); // Set the meeting to state
+    }, [id, meetingsData]);
+
+    if (!meeting) return null; // If no meeting found, return null
 
     const timeOfDay = getTimeOfDay(meeting.selectTime);
     const bgColor = {
@@ -47,6 +53,7 @@ export default function MeetingCard({ id, type }) {
 
     return (
         <div className={`border rounded-2xl shadow-lg p-6 hover:shadow-xl transition duration-300 ${bgColor}`}>
+            {/* Header Section with Profile */}
             <div className="flex items-center gap-4">
                 <img
                     src={imageSrc}
@@ -59,6 +66,7 @@ export default function MeetingCard({ id, type }) {
                 </div>
             </div>
 
+            {/* Meeting Details Section */}
             <div className="mt-4 text-sm space-y-1 text-black">
                 <p><strong>Day:</strong> {meeting.selectDay}</p>
                 <p>
@@ -70,8 +78,9 @@ export default function MeetingCard({ id, type }) {
                 <p><strong>Slot:</strong> {formattedSlot}</p>
             </div>
 
+            {/* Actions Section */}
             <div className="flex gap-4 mt-6">
-                {type === "upcoming" && (
+                {type === "upcoming" && upcomingMeetingIds.includes(meeting._id) && (
                     <>
                         <button
                             className={`${buttonBase} bg-blue-500 text-white hover:bg-blue-600`}
@@ -81,23 +90,23 @@ export default function MeetingCard({ id, type }) {
                         </button>
                         <button
                             className={`${buttonBase} bg-red-500 text-white hover:bg-red-600`}
-                            onClick={() => alert(`Deleted meeting ${meeting.id}`)}
+                            onClick={() => alert(`Deleted meeting ${meeting._id}`)}
                         >
                             Delete
                         </button>
                     </>
                 )}
-                {type === "lineup" && (
+                {type === "lineup" && lineupMeetingIds.includes(meeting._id) && (
                     <>
                         <button
                             className={`${buttonBase} bg-green-500 text-white hover:bg-green-600`}
-                            onClick={() => alert(`Approved meeting ${meeting.id}`)}
+                            onClick={() => alert(`Approved meeting ${meeting._id}`)}
                         >
                             Approve
                         </button>
                         <button
                             className={`${buttonBase} bg-red-500 text-white hover:bg-red-600`}
-                            onClick={() => alert(`Deleted meeting ${meeting.id}`)}
+                            onClick={() => alert(`Deleted meeting ${meeting._id}`)}
                         >
                             Delete
                         </button>
@@ -105,9 +114,10 @@ export default function MeetingCard({ id, type }) {
                 )}
             </div>
 
+            {/* Reschedule Modal */}
             {showModal && (
                 <RescheduleModal
-                    meeting={meeting}
+                    meetingic={meeting._id}
                     onClose={() => setShowModal(false)}
                 />
             )}

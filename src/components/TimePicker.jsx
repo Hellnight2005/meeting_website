@@ -1,9 +1,7 @@
-"use client";
-
-import React, { useEffect, useRef, useState } from 'react';
-import { format, addMinutes, parse } from 'date-fns';
+import React, { useState, useEffect, useRef } from "react";
+import { format, addMinutes } from "date-fns";
+import gsap from "gsap";
 import { useMeetingContext } from "../constants/MeetingContext";
-import gsap from 'gsap';
 
 const TimePicker = ({
     selectedTime,
@@ -13,19 +11,26 @@ const TimePicker = ({
     highlightColor = "bg-blue-500",
     slot,
     selectedDate,
-    currentMeetingId // 👈 Passed from parent
+    currentMeetingId,
+    setSelectedDate,
 }) => {
     const timeRefs = useRef({});
     const [initialized, setInitialized] = useState(false);
     const [blockedTimes, setBlockedTimes] = useState([]);
-    const [editableTimes, setEditableTimes] = useState([]); // 💙 editable (current meeting) slots
+    const [editableTimes, setEditableTimes] = useState([]);
 
-    const { getMeetingsByDay } = useMeetingContext();
+    const { blockedDays } = useMeetingContext();
 
-    // Normalize selectedDate
-    const normalizedDate = selectedDate?.raw instanceof Date ? selectedDate.raw : selectedDate;
+    const defaultDate = selectedDate || new Date();
+    const normalizedDate = defaultDate?.raw instanceof Date ? defaultDate.raw : defaultDate;
+    const formattedDateKey = format(normalizedDate, "EEEE, MMMM d, yyyy");
 
-    // Initialize slot format (30-min or 1-hour)
+    useEffect(() => {
+        if (!selectedTime) {
+            setSelectedTime("10:00 PM");
+        }
+    }, [selectedTime, setSelectedTime]);
+
     useEffect(() => {
         if (!initialized) {
             setIsHalfHour(slot === 30);
@@ -33,14 +38,13 @@ const TimePicker = ({
         }
     }, [slot, initialized, setIsHalfHour]);
 
-    // Create all time slots between 9AM and 9PM
     const generateTimeSlots = () => {
         const interval = isHalfHour ? 30 : 60;
         const slots = [];
         let hour = 9;
         let minutes = 0;
 
-        while (hour < 21) {
+        while (hour < 21 || (hour === 21 && minutes === 0)) {
             const time = new Date(2020, 0, 1, hour, minutes);
             const formattedTime = format(time, 'hh:mm a');
             slots.push(formattedTime);
@@ -53,54 +57,47 @@ const TimePicker = ({
         return slots;
     };
 
+    const expandBlockedSlots = (startTimeStr, slotCount) => {
+        const start = new Date(`2020-01-01 ${startTimeStr}`);
+        const times = [];
+        for (let i = 0; i < slotCount; i++) {
+            const t = addMinutes(start, i * 30);
+            times.push(format(t, "hh:mm a"));
+        }
+        return times;
+    };
+
     const timeSlots = generateTimeSlots();
 
-    // ⏱️ Block times for selectedDate + highlight currentMeeting slots
     useEffect(() => {
-        if (!normalizedDate) return;
-
         const blocked = [];
         const editable = [];
+        const dayBlockedTimes = blockedDays[formattedDateKey] || {};
 
-        const dayMeetings = getMeetingsByDay(normalizedDate);
-        console.log("📅 Meetings for selected date:", normalizedDate, dayMeetings);
+        Object.entries(dayBlockedTimes).forEach(([startTime, info]) => {
+            const meetingId = info?.id;
+            const meetingSlot = (info?.slot || 1) * 30; // default 30 mins if slot missing
 
-        dayMeetings.forEach((meeting) => {
-            try {
-                if (!meeting.selectTime || typeof meeting.selectTime !== 'string') {
-                    console.warn("Invalid or missing selectTime:", meeting);
-                    return;
+            const slotCount = meetingSlot / 30;
+            const slots = expandBlockedSlots(startTime, slotCount);
+
+            slots.forEach((slotTime) => {
+                if (currentMeetingId && currentMeetingId === meetingId) {
+                    editable.push(slotTime);
+                } else {
+                    blocked.push(slotTime);
                 }
-
-                const start = parse(meeting.selectTime, 'hh:mm a', new Date(2020, 0, 1));
-                const intervalCount = meeting.slot / (isHalfHour ? 30 : 60);
-
-                for (let i = 0; i < intervalCount; i++) {
-                    const timeStr = format(
-                        addMinutes(start, i * (isHalfHour ? 30 : 60)),
-                        'hh:mm a'
-                    );
-
-                    if (meeting.id === currentMeetingId) {
-                        editable.push(timeStr); // 💙 allow & highlight
-                    } else {
-                        blocked.push(timeStr); // ❌ block
-                    }
-                }
-            } catch (error) {
-                console.warn("❌ Failed to parse meeting time:", meeting.selectTime, error);
-            }
+            });
         });
 
         setBlockedTimes(blocked);
-        setEditableTimes(editable); // 💙 store editable slots
-    }, [normalizedDate, isHalfHour, getMeetingsByDay, currentMeetingId]);
+        setEditableTimes(editable);
+    }, [formattedDateKey, blockedDays, currentMeetingId]);
 
-    // Animate on time select
     useEffect(() => {
         const el = timeRefs.current[selectedTime];
         if (el) {
-            gsap.to(el, { scale: 1.05, duration: 0.3, ease: 'power2.out' });
+            gsap.to(el, { scale: 1.05, duration: 0.3, ease: "power2.out" });
             el.scrollIntoView({ behavior: "smooth", block: "center" });
         }
     }, [selectedTime, isHalfHour]);
@@ -111,6 +108,10 @@ const TimePicker = ({
         }
     };
 
+    useEffect(() => {
+        setSelectedDate(formattedDateKey);
+    }, [formattedDateKey, setSelectedDate]);
+
     return (
         <div className="time-picker-container p-6 bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-auto">
             <div className="flex justify-between items-center mb-4">
@@ -119,7 +120,7 @@ const TimePicker = ({
                     onClick={() => setIsHalfHour(!isHalfHour)}
                     className="bg-blue-500 text-white px-3 py-1 text-xs rounded-full hover:bg-blue-600 transition"
                 >
-                    {isHalfHour ? "🕒 Switch to 1-hour" : "⏱️ Switch to 30-min"}
+                    {isHalfHour ? "🕒 1-Hour" : "⏱️ 30-Min"}
                 </button>
             </div>
 
@@ -138,12 +139,12 @@ const TimePicker = ({
                                 disabled={isBlocked && !isEditable}
                                 className={`py-2 px-4 rounded-lg text-center transition-all duration-200
                                     ${isBlocked && !isEditable
-                                        ? 'bg-gray-400 text-white cursor-not-allowed'
+                                        ? "bg-gray-400 text-white cursor-not-allowed"
                                         : isSelected
                                             ? `${highlightColor} text-white font-semibold shadow-lg`
                                             : isEditable
                                                 ? `${highlightColor} text-white`
-                                                : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                                                : "bg-gray-200 text-gray-800 hover:bg-gray-300"
                                     }`}
                             >
                                 {time}

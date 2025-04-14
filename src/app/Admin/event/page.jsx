@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { useMeetingContext } from "@/constants/MeetingContext";
-import MeetingList from "@/components/MeetingList";
+import MeetingList from "../../../components/MeetingList";
 import {
     Dialog,
     DialogContent,
@@ -23,7 +23,7 @@ import {
 import RescheduleModal from "@/components/RescheduleModal";
 
 export default function EventPage() {
-    const { meetings, upcomingMeetingIds, lineupMeetingIds } = useMeetingContext();
+    const { meetingsData, upcomingMeetingIds, lineupMeetingIds } = useMeetingContext();
 
     const [openDialog, setOpenDialog] = useState(false);
     const [openReschedule, setOpenReschedule] = useState(false);
@@ -34,7 +34,7 @@ export default function EventPage() {
     const contentRef = useRef(null);
 
     useEffect(() => {
-        if (typeof meetings !== "undefined") {
+        if (typeof meetingsData !== "undefined") {
             gsap.from(contentRef.current, {
                 opacity: 1,
                 y: 30,
@@ -42,7 +42,7 @@ export default function EventPage() {
                 ease: "power3.out",
             });
         }
-    }, [meetings]);
+    }, [meetingsData]);
 
     const handleNext = () => {
         const meeting = {
@@ -58,11 +58,12 @@ export default function EventPage() {
         setOpenReschedule(true);
     };
 
-    const upcomingMeetings = meetings?.filter((m) =>
-        upcomingMeetingIds.includes(m.id)
+    // Filter meetings based on upcoming and lineup meeting ids
+    const upcomingMeetings = meetingsData?.filter((m) =>
+        upcomingMeetingIds.includes(m._id)
     );
-    const lineupMeetings = meetings?.filter((m) =>
-        lineupMeetingIds.includes(m.id)
+    const lineupMeetings = meetingsData?.filter((m) =>
+        lineupMeetingIds.includes(m._id)
     );
 
     return (
@@ -86,7 +87,7 @@ export default function EventPage() {
                     {upcomingMeetings?.length === 0 ? (
                         <p className="text-gray-500 italic">No upcoming meetings found.</p>
                     ) : (
-                        <MeetingList meetings={upcomingMeetings} type="upcoming" />
+                        <MeetingList meetingIds={upcomingMeetingIds} type="upcoming" />
                     )}
                 </section>
 
@@ -98,7 +99,7 @@ export default function EventPage() {
                     {lineupMeetings?.length === 0 ? (
                         <p className="text-gray-500 italic">No lineup meetings found.</p>
                     ) : (
-                        <MeetingList meetings={lineupMeetings} type="lineup" />
+                        <MeetingList meetingIds={lineupMeetingIds} type="lineup" />
                     )}
                 </section>
             </div>
@@ -148,7 +149,10 @@ export default function EventPage() {
 
             {/* Reschedule Modal */}
             {openReschedule && newMeeting && (
-                <RescheduleModal meeting={newMeeting} onClose={() => setOpenReschedule(false)} />
+                <RescheduleModal
+                    meeting={newMeeting}
+                    onClose={() => setOpenReschedule(false)}
+                />
             )}
         </div>
     );

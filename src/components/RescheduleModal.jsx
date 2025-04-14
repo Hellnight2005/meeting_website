@@ -5,9 +5,13 @@ import Calendar from "./Calendar";
 import TimePicker from "./TimePicker";
 import { format, parse } from "date-fns";
 import gsap from "gsap";
+import { useMeetingContext } from "../constants/MeetingContext"; // Import the MeetingContext
 
-function RescheduleModal({ meeting, onClose, onSave }) {
-    const { selectDay, selectTime, user_name, slot, title } = meeting;
+function RescheduleModal({ meetingId, onClose, onSave }) {
+    const { meetingsData } = useMeetingContext(); // Access the meetingsData from context
+    const meeting = meetingsData.find((m) => m._id === meetingId); // Find the meeting by ID
+
+    const { selectDay, selectTime, user_name, slot, title } = meeting || {};
     const today = new Date();
     const formattedToday = format(today, "EEEE, MMMM d, yyyy");
 
@@ -91,6 +95,10 @@ function RescheduleModal({ meeting, onClose, onSave }) {
 
         onClose?.();
     };
+
+    if (!meeting) {
+        return <div>Loading...</div>; // Show a loading message if the meeting is not found
+    }
 
     return (
         <div

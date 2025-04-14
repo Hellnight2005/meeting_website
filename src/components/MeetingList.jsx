@@ -1,29 +1,38 @@
 "use client";
 import React, { useState, useMemo } from "react";
+import { useMeetingContext } from "../constants/MeetingContext"; // Import your MeetingContext
 import MeetingCard from "./MeetingCard";
 
-const MeetingList = ({ meetings = [], type, showSearchBar = true, visibleSlots }) => {
+export default function MeetingList({ meetingIds = [], type, showSearchBar = true, visibleSlots }) {
+    const { meetingsData } = useMeetingContext(); // Access meetingsData from context
     const [searchTerm, setSearchTerm] = useState("");
     const [page, setPage] = useState(0);
 
+    // Filter and sort meetings based on meetingIds and selectDay, selectTime
     const filteredMeetings = useMemo(() => {
-        const sorted = [...meetings].sort((a, b) => {
+        // Filter meetings based on meetingIds and the meeting type (upcoming or line up)
+        const meetingsForIds = meetingsData.filter(meeting => meetingIds.includes(meeting._id));
+
+        // Sort the meetings by selectDay and selectTime
+        const sorted = [...meetingsForIds].sort((a, b) => {
             const dateA = new Date(`${a.selectDay} ${a.selectTime}`);
             const dateB = new Date(`${b.selectDay} ${b.selectTime}`);
-            return dateA - dateB;
+            return dateA - dateB; // Sort in ascending order
         });
 
+        // Apply the search filter
         return sorted.filter(
             (meeting) =>
                 meeting.user_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 meeting.selectDay.toLowerCase().includes(searchTerm.toLowerCase())
         );
-    }, [meetings, searchTerm]);
+    }, [meetingsData, meetingIds, searchTerm]);
 
     const totalMeetings = filteredMeetings.length;
     const slotsPerPage = visibleSlots || totalMeetings; // default to all if not passed
     const totalPages = Math.ceil(totalMeetings / slotsPerPage);
 
+    // Paginate the filtered meetings
     const paginatedMeetings = filteredMeetings.slice(
         page * slotsPerPage,
         (page + 1) * slotsPerPage
@@ -42,7 +51,7 @@ const MeetingList = ({ meetings = [], type, showSearchBar = true, visibleSlots }
                             value={searchTerm}
                             onChange={(e) => {
                                 setSearchTerm(e.target.value);
-                                setPage(0); // reset to first page on search
+                                setPage(0); // Reset to first page on search
                             }}
                         />
                         <img
@@ -50,7 +59,6 @@ const MeetingList = ({ meetings = [], type, showSearchBar = true, visibleSlots }
                             alt="Search icon"
                             className="absolute left-3 top-3.5 w-5 h-5"
                         />
-
                     </div>
                 </div>
             )}
@@ -59,10 +67,9 @@ const MeetingList = ({ meetings = [], type, showSearchBar = true, visibleSlots }
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {paginatedMeetings.map((meeting) => (
                     <MeetingCard
-                        key={meeting.id}
-                        id={meeting.id}
+                        key={meeting._id} // Use meeting._id as the key
+                        id={meeting._id} // Pass the meeting._id
                         type={type}
-                        timeBadge
                     />
                 ))}
             </div>
@@ -73,7 +80,7 @@ const MeetingList = ({ meetings = [], type, showSearchBar = true, visibleSlots }
             )}
 
             {/* 🔁 Pagination controls */}
-            {/* {visibleSlots && totalMeetings > visibleSlots && (
+            {visibleSlots && totalMeetings > visibleSlots && (
                 <div className="flex justify-center items-center gap-4 mt-4">
                     <button
                         onClick={() => setPage((prev) => Math.max(0, prev - 1))}
@@ -82,18 +89,20 @@ const MeetingList = ({ meetings = [], type, showSearchBar = true, visibleSlots }
                     >
                         Prev
                     </button>
-                    <span className="text-gray-600">Page {page + 1} of {totalPages}</span>
+                    <span className="text-gray-600">
+                        Page {page + 1} of {totalPages}
+                    </span>
                     <button
-                        onClick={() => setPage((prev) => (prev + 1 < totalPages ? prev + 1 : prev))}
+                        onClick={() =>
+                            setPage((prev) => (prev + 1 < totalPages ? prev + 1 : prev))
+                        }
                         disabled={page + 1 >= totalPages}
                         className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
                     >
                         Next
                     </button>
                 </div>
-            )} */}
+            )}
         </div>
     );
-};
-
-export default MeetingList;
+}
