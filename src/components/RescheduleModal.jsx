@@ -7,7 +7,7 @@ import gsap from "gsap";
 import { useMeetingContext } from "../constants/MeetingContext";
 
 function RescheduleModal({ meetingId, onClose, onSave }) {
-    const { meetingsData } = useMeetingContext();
+    const { meetingsData, refreshMeetings } = useMeetingContext();
     const meeting = meetingsData.find((m) => m._id === meetingId);
 
     const { selectDay, selectTime, user_name, title } = meeting || {};
@@ -59,23 +59,47 @@ function RescheduleModal({ meetingId, onClose, onSave }) {
     };
 
     // Save the changes
-    const handleSave = () => {
+    const handleSave = async () => {
         if (!selectedDate || !selectedTime) return;
 
-        const newDay = selectedDate; // Use updated selected date
+        const newDay = selectedDate.display; // Use updated selected date
         const newTime = selectedTime;
 
-        console.log("Saved changes:", { newDay, newTime });
+        // Prepare the data to send in the request
+        const rescheduleData = {
+            selectDay: newDay,
+            selectTime: newTime,
+        };
 
-        if (onSave) {
-            onSave({
-                ...meeting,
-                selectDay: newDay,
-                selectTime: newTime,
-                slot: 60, // Slot is always 1 hour
+        // Make the POST request to reschedule the meeting
+        try {
+            const response = await fetch(`http://localhost:5000/meeting/reschedule/${meetingId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(rescheduleData),
             });
+
+            if (response.ok) {
+                // Call refreshMeetings to refresh the meetings list
+                refreshMeetings();
+
+                // Optionally, update the meeting state locally
+                if (onSave) {
+                    onSave({
+                        ...meeting,
+                        selectDay: newDay,
+                        selectTime: newTime,
+                        slot: 1, // Slot is always 1 hour
+                    });
+                }
+            }
+        } catch (error) {
+            console.error("Error rescheduling meeting:", error);
         }
 
+        // Close the modal after the request
         onClose?.();
     };
 

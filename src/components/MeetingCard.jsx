@@ -20,9 +20,9 @@ const convertTo24Hour = (timeStr) => {
 };
 
 export default function MeetingCard({ id, type }) {
-    const { meetingsData, upcomingMeetingIds, lineupMeetingIds, loading } = useMeetingContext(); // Access the context data
+    const { meetingsData, upcomingMeetingIds, lineupMeetingIds, loading, refreshMeetings } = useMeetingContext(); // Access the context data
     const [meeting, setMeeting] = useState(null); // Local state for holding the meeting data
-    const [showModal, setShowModal] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false); // Track modal open/close state
 
     // Fetch the meeting details based on the provided id
     useEffect(() => {
@@ -50,6 +50,59 @@ export default function MeetingCard({ id, type }) {
     const formattedSlot = meeting.slot === "30" || meeting.slot === 30
         ? "30 minutes"
         : "1 hour";
+
+    // Function to handle deleting the meeting
+    const deleteMeeting = async () => {
+        try {
+            const response = await fetch(`http://localhost:5000/meeting/meetings/${meeting._id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.ok) {
+                // Call the refreshMeetings function to reload the meetings data
+                refreshMeetings(); // Refresh the meetings list
+            }
+        } catch (error) {
+            console.error("Error deleting meeting:", error);
+        }
+    };
+
+    // Function to handle approving the meeting
+    const approveMeeting = async () => {
+        try {
+            const response = await fetch(`http://localhost:5000/meeting/approve-meeting/${meeting._id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.ok) {
+                // Call the refreshMeetings function to reload the meetings data
+                refreshMeetings(); // Refresh the meetings list
+                alert("Meeting approved successfully!");
+            } else {
+                alert("Failed to approve the meeting.");
+            }
+        } catch (error) {
+            console.error("Error approving meeting:", error);
+        }
+    };
+
+    // Handle closing the modal
+    const handleCloseModal = () => {
+        setIsModalOpen(false); // Close the modal
+    };
+
+    // Handle saving the meeting (this could be a form submission or any other action)
+    const handleSaveMeeting = (updatedMeeting) => {
+        console.log("Meeting saved:", updatedMeeting);
+        // Logic to save the updated meeting can go here
+        handleCloseModal(); // Close the modal after saving
+    };
 
     return (
         <div className={`border rounded-2xl shadow-lg p-6 hover:shadow-xl transition duration-300 ${bgColor}`}>
@@ -84,13 +137,13 @@ export default function MeetingCard({ id, type }) {
                     <>
                         <button
                             className={`${buttonBase} bg-blue-500 text-white hover:bg-blue-600`}
-                            onClick={() => setShowModal(true)}
+                            onClick={() => setIsModalOpen(true)} // Open the modal when clicked
                         >
                             Reschedule
                         </button>
                         <button
                             className={`${buttonBase} bg-red-500 text-white hover:bg-red-600`}
-                            onClick={() => alert(`Deleted meeting ${meeting._id}`)}
+                            onClick={deleteMeeting} // Call the deleteMeeting function when clicked
                         >
                             Delete
                         </button>
@@ -100,13 +153,13 @@ export default function MeetingCard({ id, type }) {
                     <>
                         <button
                             className={`${buttonBase} bg-green-500 text-white hover:bg-green-600`}
-                            onClick={() => alert(`Approved meeting ${meeting._id}`)}
+                            onClick={approveMeeting} // Call the approveMeeting function when clicked
                         >
                             Approve
                         </button>
                         <button
                             className={`${buttonBase} bg-red-500 text-white hover:bg-red-600`}
-                            onClick={() => alert(`Deleted meeting ${meeting._id}`)}
+                            onClick={deleteMeeting} // Call the deleteMeeting function when clicked
                         >
                             Delete
                         </button>
@@ -115,10 +168,11 @@ export default function MeetingCard({ id, type }) {
             </div>
 
             {/* Reschedule Modal */}
-            {showModal && (
+            {isModalOpen && (
                 <RescheduleModal
-                    meetingic={meeting._id}
-                    onClose={() => setShowModal(false)}
+                    meetingId={meeting._id} // Pass the meeting ID to the modal
+                    onClose={handleCloseModal} // Pass the close handler to the modal
+                    onSave={handleSaveMeeting} // Pass the save handler to the modal
                 />
             )}
         </div>
