@@ -1,12 +1,13 @@
 "use client";
 import { createContext, useContext, useEffect, useState } from "react";
 import axios from "axios";
+import { format } from "date-fns";
 
 const MeetingContext = createContext();
 export const useMeetingContext = () => useContext(MeetingContext);
 
 export const MeetingProvider = ({ children }) => {
-  const [meetingsData, setMeetingsData] = useState([]); // Only keeping full data
+  const [meetingsData, setMeetingsData] = useState([]);
   const [upcomingMeetingIds, setUpcomingMeetingIds] = useState([]);
   const [lineupMeetingIds, setLineupMeetingIds] = useState([]);
   const [blockedDays, setBlockedDays] = useState({});
@@ -18,7 +19,7 @@ export const MeetingProvider = ({ children }) => {
         "http://localhost:5000/meeting/get"
       );
       const meetingsData = meetingResponse.data;
-      setMeetingsData(meetingsData); // Save all meeting data
+      setMeetingsData(meetingsData);
 
       const approvedMeetingsResponse = await axios.get(
         "http://localhost:5000/meeting/meetings"
@@ -26,13 +27,21 @@ export const MeetingProvider = ({ children }) => {
       const approvedMeetings = approvedMeetingsResponse.data.approvedMeetings;
 
       const blockedDaysData = {};
-      Object.keys(approvedMeetings).forEach((day) => {
-        const timeSlots = approvedMeetings[day];
-        blockedDaysData[day] = blockedDaysData[day] || {};
-        Object.keys(timeSlots).forEach((time) => {
-          blockedDaysData[day][time] = timeSlots[time];
+
+      approvedMeetings.forEach((meeting) => {
+        const day = meeting.day;
+        blockedDaysData[day] = blockedDaysData[day] || [];
+
+        meeting.times.forEach((timeSlot) => {
+          const startTime = timeSlot.time;
+          const endTime = getNextSlot(startTime);
+
+          blockedDaysData[day].push(startTime);
+          blockedDaysData[day].push(endTime);
         });
       });
+
+      // Update the blockedDays state with the new meeting data
       setBlockedDays(blockedDaysData);
 
       const upcoming = [];
@@ -43,11 +52,6 @@ export const MeetingProvider = ({ children }) => {
       });
       setUpcomingMeetingIds(upcoming);
       setLineupMeetingIds(lineup);
-
-      console.log("Upcommingmeeting", upcoming);
-      console.log("Line up", lineup);
-      console.log("Meeting Data", meetingsData);
-      console.log("Blocked Days", blockedDaysData);
     } catch (error) {
       console.error("Error fetching meetings:", error);
     } finally {
@@ -55,9 +59,29 @@ export const MeetingProvider = ({ children }) => {
     }
   };
 
+  const getNextSlot = (time) => {
+    const [hour, minutePart] = time.split(":");
+    const isPM = time.includes("PM");
+    let hr = parseInt(hour);
+    let min = time.includes("30") ? 30 : 0;
+
+    if (hr === 12) {
+      if (!isPM) hr = 0;
+    } else if (isPM) {
+      hr += 12;
+    }
+
+    let date = new Date(2020, 0, 1, hr, min);
+    date.setMinutes(date.getMinutes() + 60); // Default 1 hour block
+
+    return format(date, "h:mm a");
+  };
+
   useEffect(() => {
     fetchMeetings();
   }, []);
+
+  console.log(blockedDays);
 
   return (
     <MeetingContext.Provider
