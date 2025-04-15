@@ -3,21 +3,17 @@
 import React, { useEffect, useRef, useState } from "react";
 import Calendar from "./Calendar";
 import TimePicker from "./TimePicker";
-import { format, parse } from "date-fns";
 import gsap from "gsap";
-import { useMeetingContext } from "../constants/MeetingContext"; // Import the MeetingContext
+import { useMeetingContext } from "../constants/MeetingContext";
 
 function RescheduleModal({ meetingId, onClose, onSave }) {
-    const { meetingsData } = useMeetingContext(); // Access the meetingsData from context
-    const meeting = meetingsData.find((m) => m._id === meetingId); // Find the meeting by ID
+    const { meetingsData } = useMeetingContext();
+    const meeting = meetingsData.find((m) => m._id === meetingId);
 
-    const { selectDay, selectTime, user_name, slot, title } = meeting || {};
+    const { selectDay, selectTime, user_name, title } = meeting || {};
     const today = new Date();
-    const formattedToday = format(today, "EEEE, MMMM d, yyyy");
-
-    const [selectedDate, setSelectedDate] = useState(null);
-    const [selectedTime, setSelectedTime] = useState("");
-    const [isHalfHour, setIsHalfHour] = useState(slot === 30);
+    const [selectedTime, setSelectedTime] = useState(selectTime || "");
+    const [selectedDate, setSelectedDate] = useState(selectDay || ""); // Default to selectDay
 
     const modalRef = useRef(null);
     const containerRef = useRef(null);
@@ -57,31 +53,18 @@ function RescheduleModal({ meetingId, onClose, onSave }) {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [onClose]);
 
-    useEffect(() => {
-        if (selectDay) {
-            try {
-                const parsed = parse(selectDay, "EEEE, MMMM dd, yyyy", new Date());
-                setSelectedDate({ raw: parsed });
-            } catch (error) {
-                console.error("Invalid selectDay format:", error);
-            }
-        }
-    }, [selectDay]);
-
-    useEffect(() => {
-        if (selectTime) setSelectedTime(selectTime);
-    }, [selectTime]);
-
+    // Check if there are any changes to save
     const hasChanges = () => {
-        const formattedSelectedDay = selectedDate
-            ? format(selectedDate.raw, "EEEE, MMMM dd, yyyy")
-            : "";
-        return selectedTime !== selectTime || formattedSelectedDay !== selectDay;
+        return selectedTime !== selectTime || selectedDate !== selectDay;
     };
 
+    // Save the changes
     const handleSave = () => {
-        const newDay = format(selectedDate.raw, "EEEE, MMMM dd, yyyy");
+        if (!selectedDate || !selectedTime) return;
+
+        const newDay = selectedDate; // Use updated selected date
         const newTime = selectedTime;
+
         console.log("Saved changes:", { newDay, newTime });
 
         if (onSave) {
@@ -89,7 +72,7 @@ function RescheduleModal({ meetingId, onClose, onSave }) {
                 ...meeting,
                 selectDay: newDay,
                 selectTime: newTime,
-                slot: isHalfHour ? 30 : 60,
+                slot: 60, // Slot is always 1 hour
             });
         }
 
@@ -97,7 +80,7 @@ function RescheduleModal({ meetingId, onClose, onSave }) {
     };
 
     if (!meeting) {
-        return <div>Loading...</div>; // Show a loading message if the meeting is not found
+        return <div>Loading...</div>;
     }
 
     return (
@@ -128,15 +111,10 @@ function RescheduleModal({ meetingId, onClose, onSave }) {
 
                         <div className="text-[15px] space-y-3 flex flex-col items-start">
                             <p className="flex items-center gap-2">
-                                📅{" "}
+                                📅
                                 <span className="font-medium">
-                                    {selectedDate
-                                        ? format(selectedDate.raw, "EEEE, MMMM dd, yyyy")
-                                        : formattedToday}
+                                    {selectedDate?.display || selectedDate || new Date().toLocaleDateString()}
                                 </span>
-                            </p>
-                            <p className="flex items-center gap-2">
-                                ⏱️ {slot === 30 || isHalfHour ? "30 Minutes" : "1 Hour"}
                             </p>
                             <p className="flex items-center gap-2">📍 Google Meet</p>
 
@@ -160,8 +138,8 @@ function RescheduleModal({ meetingId, onClose, onSave }) {
                     {/* Calendar Panel */}
                     <div className="modal-section bg-[#1e293b] rounded-2xl py-6 px-4 text-white shadow-lg">
                         <Calendar
-                            selectedDate={selectedDate}
-                            setSelectedDate={setSelectedDate}
+                            selectedDate={selectedDate}  // Pass selectedDate directly
+                            setSelectedDate={setSelectedDate}  // Handle date updates
                             highlightColor="bg-blue-500"
                         />
                     </div>
@@ -169,13 +147,10 @@ function RescheduleModal({ meetingId, onClose, onSave }) {
                     {/* Time Picker Panel */}
                     <div className="modal-section flex-1 overflow-y-auto pr-1 hide-scrollbar space-y-3">
                         <TimePicker
+                            selectedDate={selectedDate}  // Pass selectedDate as prop
+                            setSelectedDate={setSelectedDate}  // Handle updates
                             selectedTime={selectedTime}
                             setSelectedTime={setSelectedTime}
-                            isHalfHour={isHalfHour}
-                            setIsHalfHour={setIsHalfHour}
-                            slot={slot}
-                            selectedDate={selectedDate}
-                            currentMeetingId={meeting.id}
                         />
                     </div>
                 </div>

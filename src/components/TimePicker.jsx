@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { format } from "date-fns";
-import { useMeetingContext } from "../constants/MeetingContext"; // <-- adjust path if needed
+import { useMeetingContext } from "../constants/MeetingContext";
 
 const TimePicker = ({
     selectedTime,
@@ -9,60 +8,59 @@ const TimePicker = ({
     selectedDate,
     setSelectedDate,
     highlightColor = "bg-blue-500",
-    isHalfHour,
-    setIsHalfHour,
 }) => {
-    const { blockedDays } = useMeetingContext(); // 🔥 get from context
+    const { blockedDays, refreshBlockedDays } = useMeetingContext(); // Always updated from context
     const timeRefs = useRef({});
-    const [initialized, setInitialized] = useState(false);
 
+    const didRun = useRef(false);
+
+    useEffect(() => {
+        if (!didRun.current) {
+            refreshBlockedDays();
+            didRun.current = true;
+        }
+    }, []);
+    // Format the selected date to match the blockedDays keys
+    const formattedSelectedDate = selectedDate?.display || "";
+
+    // ⛔ Blocked times for that day
+    const actualBlockedTimes = blockedDays[formattedSelectedDate] || [];
+
+    // ⏰ Generate hourly time slots from 9 AM to 9 PM
     const timeSlots = useCallback(() => {
-        const interval = isHalfHour ? 30 : 60;
         const slots = [];
-        let hour = 9;
-        let minutes = 0;
-
-        while (hour < 21 || (hour === 21 && minutes === 0)) {
-            const time = new Date(2020, 0, 1, hour, minutes);
-            slots.push(format(time, "h:mm a"));
-            minutes += interval;
-            if (minutes >= 60) {
-                minutes = 0;
-                hour += 1;
-            }
+        for (let hour = 9; hour <= 21; hour++) {
+            const time = new Date(2020, 0, 1, hour, 0);
+            const formatted = `${hour % 12 === 0 ? 12 : hour % 12}:00 ${hour >= 12 ? "PM" : "AM"
+                }`;
+            slots.push(formatted);
         }
         return slots;
-    }, [isHalfHour]);
+    }, []);
 
     const timeSlotArray = timeSlots();
 
-    const formattedSelectedDate = format(new Date(selectedDate), "EEEE, MMMM d, yyyy");
-    const actualBlockedTimes = blockedDays[formattedSelectedDate] || [];
-
+    // 🕘 Set default time when component loads or date changes
     useEffect(() => {
-        if (!selectedTime) {
-            setSelectedTime(timeSlotArray[0]);
+        if (!selectedTime && selectedDate) {
+            const firstAvailable = timeSlotArray.find(
+                (slot) => !actualBlockedTimes.includes(slot)
+            );
+            setSelectedTime(firstAvailable || null);
         }
-    }, [selectedTime, setSelectedTime, timeSlotArray]);
+    }, [selectedTime, selectedDate, actualBlockedTimes, setSelectedTime, timeSlotArray]);
 
-    useEffect(() => {
-        if (!selectedDate) return;
-        setInitialized(true);
-    }, [blockedDays, selectedDate]);
-
+    // ✅ Time selection handler
     const handleTimeSelect = (time) => {
-        const isBlocked = actualBlockedTimes.includes(time);
-        if (!isBlocked) {
+        if (!actualBlockedTimes.includes(time)) {
             setSelectedTime(time);
+            console.log("Selected Time:", time);
         }
     };
 
     return (
         <div className="time-picker-container p-6 bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-auto">
-            <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-semibold text-white">Select a Time Slot</h2>
-            </div>
-
+            <h2 className="text-lg font-semibold text-white mb-4">Select a Time Slot</h2>
             <div className="time-slot-list overflow-auto max-h-96 bg-gray-700 rounded-lg p-2 hide-scrollbar">
                 <div className="flex flex-col gap-2">
                     {timeSlotArray.map((time, index) => {

@@ -1,29 +1,21 @@
 "use client";
-import React, { useEffect, useRef } from 'react';
-import {
-    format,
-    addMonths,
-    startOfMonth,
-    endOfMonth,
-    eachDayOfInterval,
-    isToday,
-    getDay
-} from 'date-fns';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { format, addMonths, startOfMonth, endOfMonth, eachDayOfInterval, isToday, getDay } from 'date-fns';
 import { gsap } from 'gsap';
+import { formatDate } from '../utils/formatDate'; // Importing the formatDate function
 
 const Calendar = ({ selectedDate, setSelectedDate, theme = 'dark' }) => {
-    const [currentMonth, setCurrentMonth] = React.useState(new Date());
+    const [currentMonth, setCurrentMonth] = useState(new Date());
     const daysRef = useRef([]);
 
-    const getDaysOfMonth = (date) => {
-        const start = startOfMonth(date);
-        const end = endOfMonth(date);
-        return eachDayOfInterval({ start, end });
-    };
-
+    // Memoize days of the current month to avoid unnecessary recalculations
     const currentMonthStart = startOfMonth(currentMonth);
-    const currentMonthDays = getDaysOfMonth(currentMonthStart);
+    const currentMonthDays = useMemo(() => {
+        const end = endOfMonth(currentMonthStart);
+        return eachDayOfInterval({ start: currentMonthStart, end });
+    }, [currentMonth]);
 
+    // GSAP animation only triggers on month change
     useEffect(() => {
         gsap.fromTo(
             daysRef.current,
@@ -38,21 +30,22 @@ const Calendar = ({ selectedDate, setSelectedDate, theme = 'dark' }) => {
         );
     }, [currentMonth]);
 
+    // Use formatDate function to format the date
     const handleDayClick = (date) => {
-        const formattedDate = format(date, 'EEE MMMM d, yyyy');
+        const formattedDate = formatDate(date);
         setSelectedDate({ raw: date, display: formattedDate });
+        console.log('Selected Date:', formattedDate);  // Log the selected date to the console
     };
 
     const renderDay = (date, index) => {
         const dayText = format(date, 'd');
-        const isSelected =
-            selectedDate?.raw &&
-            format(selectedDate.raw, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
-
+        const isSelected = selectedDate?.raw && format(selectedDate.raw, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
         const isDark = theme === 'dark';
 
+        // Base classes for all days
         const baseClasses = `p-3 cursor-pointer text-center rounded-lg text-sm font-medium transition-all duration-200 ease-in-out`;
 
+        // Today's highlight and selected day styles
         const todayClass = isToday(date)
             ? isDark
                 ? 'bg-blue-600 text-white font-semibold'
@@ -88,8 +81,7 @@ const Calendar = ({ selectedDate, setSelectedDate, theme = 'dark' }) => {
         return daysOfWeek.map((day, index) => (
             <div
                 key={index}
-                className={`text-center font-semibold text-sm py-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-                    }`}
+                className={`text-center font-semibold text-sm py-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}
             >
                 {day}
             </div>
@@ -101,36 +93,22 @@ const Calendar = ({ selectedDate, setSelectedDate, theme = 'dark' }) => {
 
     return (
         <div
-            className={`rounded-xl shadow-lg w-full max-w-md mx-auto p-4 space-y-4 transition-colors ${theme === 'dark'
-                ? 'bg-gray-900'
-                : 'bg-white border border-gray-200'
-                }`}
-            style={{
-                minHeight: '250px',
-            }}
+            className={`rounded-xl shadow-lg w-full max-w-md mx-auto p-4 space-y-4 transition-colors ${theme === 'dark' ? 'bg-gray-900' : 'bg-white border border-gray-200'}`}
+            style={{ minHeight: '250px' }}
         >
             {/* Header */}
             <div className="flex justify-between items-center">
                 <button
-                    className={`text-xl px-3 py-1 rounded-full transition ${theme === 'dark'
-                        ? 'text-white hover:bg-gray-700'
-                        : 'text-gray-700 hover:bg-gray-100'
-                        }`}
+                    className={`text-xl px-3 py-1 rounded-full transition ${theme === 'dark' ? 'text-white hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`}
                     onClick={() => setCurrentMonth(addMonths(currentMonth, -1))}
                 >
                     &lt;
                 </button>
-                <h3
-                    className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'
-                        }`}
-                >
+                <h3 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
                     {format(currentMonthStart, 'MMMM yyyy')}
                 </h3>
                 <button
-                    className={`text-xl px-3 py-1 rounded-full transition ${theme === 'dark'
-                        ? 'text-white hover:bg-gray-700'
-                        : 'text-gray-700 hover:bg-gray-100'
-                        }`}
+                    className={`text-xl px-3 py-1 rounded-full transition ${theme === 'dark' ? 'text-white hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`}
                     onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
                 >
                     &gt;
@@ -145,9 +123,7 @@ const Calendar = ({ selectedDate, setSelectedDate, theme = 'dark' }) => {
                 {Array.from({ length: firstDayOfMonth }).map((_, i) => (
                     <div key={`empty-start-${i}`} />
                 ))}
-
                 {currentMonthDays.map((day, index) => renderDay(day, index))}
-
                 {Array.from({ length: lastRowPadding }).map((_, i) => (
                     <div key={`empty-end-${i}`} />
                 ))}
