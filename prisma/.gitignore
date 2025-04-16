@@ -1,0 +1,4 @@
+# Ignore Prisma Client generated in prisma/
+prisma/node_modules/
+# Ignore Prisma Client generated in prisma/
+prisma/node_modules/

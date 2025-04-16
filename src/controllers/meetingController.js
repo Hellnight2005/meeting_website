@@ -1,27 +1,19 @@
 const { google } = require("googleapis");
-const Meeting = require("../models/messageModel");
-const User = require("../models/User");
-const logger = require("../utils/logger"); // Use a logging utility for structured logs
+const prisma = require("@/lib/prisma");
+const logger = require("@/lib/logger");
 const {
   createCalendarEvent,
-  refreshAccessToken,
   deleteCalendarEvent,
-} = require("../config/googleCalendar");
+} = require("@/config/googleCalendar");
 
-// Allowed values for type and user_role fields
 const validTypes = ["upcoming", "line up"];
 const validRoles = ["user", "Admin"];
 
-/**
- * Utility function to handle error responses
- */
 const handleErrorResponse = (res, statusCode, message) => {
-  logger.error(message); // Log error message for production visibility
-  return res.status(statusCode).json({
-    success: false,
-    message,
-  });
+  logger.error(message);
+  return res.status(statusCode).json({ success: false, message });
 };
+
 const validateMeetingData = ({
   user_name,
   title,
@@ -31,7 +23,6 @@ const validateMeetingData = ({
   user_role,
   type,
 }) => {
-  // Basic required fields check
   if (
     !user_name ||
     !title ||
@@ -40,57 +31,45 @@ const validateMeetingData = ({
     !slot ||
     !user_role
   ) {
-    return "All required fields (user_name, title, selectDay, selectTime, slot, user_role) must be filled.";
+    return "All required fields must be filled.";
   }
 
-  // Slot must be a positive number
   if (typeof slot !== "number" || slot <= 0) {
     return "Slot must be a positive number.";
   }
 
-  // Validate meeting type if provided
   if (type && !validTypes.includes(type)) {
-    return `Invalid meeting type. Allowed: ${validTypes.join(", ")}.`;
+    return `Invalid meeting type. Allowed: ${validTypes.join(", ")}`;
   }
 
-  // Validate role
   if (!validRoles.includes(user_role)) {
-    return `Invalid user role. Allowed: ${validRoles.join(", ")}.`;
+    return `Invalid user role. Allowed: ${validRoles.join(", ")}`;
   }
 
-  return null; // ✅ All good
+  return null;
 };
 
-/**
- * ✅ Create a new meeting
- */
+// ✅ Create a new meeting
 const createMeeting = async (req, res) => {
   try {
     const data = req.body;
 
-    // Validate input
     const validationError = validateMeetingData(data);
-    if (validationError) {
-      return handleErrorResponse(res, 400, validationError);
-    }
+    if (validationError) return handleErrorResponse(res, 400, validationError);
 
-    // Ensure userId is provided manually (no auth middleware)
-    if (!data.userId) {
+    if (!data.userId)
       return handleErrorResponse(res, 400, "userId is required.");
-    }
 
-    // Fetch user from DB to get name and role
-    const user = await User.findById(data.userId);
-    if (!user) {
-      return handleErrorResponse(res, 404, "User not found.");
-    }
+    const user = await prisma.user.findUnique({ where: { id: data.userId } });
+    if (!user) return handleErrorResponse(res, 404, "User not found.");
 
-    // Attach user info manually
-    data.user_name = user.displayName;
-    data.user_role = user.role || "user"; // Default to user role if not specified
-
-    // Save the meeting to DB
-    const meeting = await Meeting.create(data);
+    const meeting = await prisma.meeting.create({
+      data: {
+        ...data,
+        user_name: user.displayName,
+        user_role: user.role || "user",
+      },
+    });
 
     res.status(201).json({
       success: true,
@@ -103,65 +82,47 @@ const createMeeting = async (req, res) => {
   }
 };
 
-/**
- * ✅ Reschedule an existing meeting by ID
- */
+// ✅ Reschedule meeting
 const rescheduleMeeting = async (req, res) => {
   try {
     const { id } = req.params;
     const { selectDay, selectTime, slot, type } = req.body;
 
     if (!selectDay || !selectTime) {
-      return handleErrorResponse(res, 400, "New date, time,  are required");
+      return handleErrorResponse(res, 400, "New date and time are required");
     }
 
-    // Check if meeting exists
-    const existingMeeting = await Meeting.findById(id);
-    if (!existingMeeting) {
-      return handleErrorResponse(res, 404, "Meeting not found");
-    }
+    const meeting = await prisma.meeting.findUnique({ where: { id } });
+    if (!meeting) return handleErrorResponse(res, 404, "Meeting not found");
 
-    // Retrieve the user based on userId from the meeting document
-    const user = await User.findById(existingMeeting.userId);
-    if (!user) {
-      return handleErrorResponse(res, 404, "User not found");
-    }
+    const user = await prisma.user.findUnique({
+      where: { id: meeting.userId },
+    });
+    if (!user) return handleErrorResponse(res, 404, "User not found");
 
-    // If the meeting has an eventId, delete the existing Google Calendar event
-    if (existingMeeting.eventId) {
-      const deleteEventResponse = await deleteCalendarEvent(
-        existingMeeting.eventId,
+    if (meeting.eventId) {
+      const deleted = await deleteCalendarEvent(
+        meeting.eventId,
         user.refreshToken
       );
-
-      if (!deleteEventResponse.success) {
-        return handleErrorResponse(
-          res,
-          500,
-          "Failed to delete the calendar event"
-        );
+      if (!deleted.success) {
+        return handleErrorResponse(res, 500, "Failed to delete calendar event");
       }
     }
 
-    // Update meeting type to "line up"
-    const updatedType =
-      existingMeeting.type === "upcoming" ? "line up" : type || "line up";
-
-    // Update meeting in the database, setting startDateTime and endDateTime to null
-    const updatedMeeting = await Meeting.findByIdAndUpdate(
-      id,
-      {
+    const updatedMeeting = await prisma.meeting.update({
+      where: { id },
+      data: {
         selectDay,
         selectTime,
         slot,
-        type: updatedType,
+        type: type || "line_up",
         startDateTime: null,
         endDateTime: null,
         meetingLink: null,
         eventId: null,
       },
-      { new: true }
-    );
+    });
 
     res.status(200).json({
       success: true,
@@ -174,19 +135,25 @@ const rescheduleMeeting = async (req, res) => {
   }
 };
 
-/**
- * ✅ Approve a meeting by changing its type to "upcoming"
- */
+// ✅ Approve a meeting
 const approveMeeting = async (req, res) => {
   try {
-    const meetingId = req.params.id;
+    const { id } = req.params;
 
-    const meeting = await Meeting.findById(meetingId).populate("userId");
+    const meeting = await prisma.meeting.findUnique({
+      where: { id },
+      include: { user: true },
+    });
+
     if (!meeting) return handleErrorResponse(res, 404, "Meeting not found.");
 
-    const user = meeting.userId;
-    const admin = await User.findOne({ role: "admin" });
-    if (!admin) return handleErrorResponse(res, 404, "Admin not found.");
+    const user = await prisma.user.findUnique({
+      where: { id: meeting.userId },
+    });
+    const admin = await prisma.user.findFirst({ where: { role: "admin" } });
+
+    if (!user || !admin)
+      return handleErrorResponse(res, 404, "User/Admin not found");
 
     const startDate = new Date(meeting.startDateTime);
     const endDate = new Date(meeting.endDateTime);
@@ -212,16 +179,18 @@ const approveMeeting = async (req, res) => {
       attendees: [{ email: user.email }, { email: admin.email }],
     });
 
-    meeting.status = "approved";
-    meeting.type = "upcoming";
-    meeting.meetingLink = calendarData.user.meetingLink;
-    meeting.eventId = calendarData.user.eventId;
-
-    await meeting.save();
+    const updatedMeeting = await prisma.meeting.update({
+      where: { id },
+      data: {
+        type: "upcoming",
+        meetingLink: calendarData.user.meetingLink,
+        eventId: calendarData.user.eventId,
+      },
+    });
 
     res.json({
       message: "Meeting approved and calendar event created.",
-      meeting,
+      meeting: updatedMeeting,
       calendarData,
     });
   } catch (error) {
@@ -230,47 +199,34 @@ const approveMeeting = async (req, res) => {
   }
 };
 
-/**
- * ✅ Delete a meeting by ID
- */
+// ✅ Delete a meeting
 const deleteMeeting = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const meeting = await Meeting.findById(id);
-    if (!meeting) {
-      return handleErrorResponse(res, 404, "Meeting not found");
-    }
+    const meeting = await prisma.meeting.findUnique({ where: { id } });
+    if (!meeting) return handleErrorResponse(res, 404, "Meeting not found");
 
-    const user = await User.findById(meeting.userId);
-    if (!user) {
-      return handleErrorResponse(res, 404, "User not found");
-    }
+    const user = await prisma.user.findUnique({
+      where: { id: meeting.userId },
+    });
+    if (!user) return handleErrorResponse(res, 404, "User not found");
 
     if (meeting.eventId) {
-      const deleteEventResponse = await deleteCalendarEvent(
+      const deleted = await deleteCalendarEvent(
         meeting.eventId,
         user.refreshToken
       );
-
-      if (!deleteEventResponse.success) {
-        return handleErrorResponse(
-          res,
-          500,
-          "Failed to delete the calendar event"
-        );
+      if (!deleted.success) {
+        return handleErrorResponse(res, 500, "Failed to delete calendar event");
       }
     }
 
-    const deletedMeeting = await Meeting.findByIdAndDelete(id);
-    if (!deletedMeeting) {
-      return handleErrorResponse(res, 404, "Meeting deletion failed");
-    }
+    await prisma.meeting.delete({ where: { id } });
 
     res.status(200).json({
       success: true,
       message: "Meeting deleted successfully",
-      data: deletedMeeting,
     });
   } catch (error) {
     logger.error(`Error in deleteMeeting: ${error.message}`);
@@ -278,20 +234,20 @@ const deleteMeeting = async (req, res) => {
   }
 };
 
-/**
- * ✅ Get meetings for a specific month and year based on "selectDay"
- */
+// ✅ Get grouped meetings by selectDay
 const getAllMeetings = async (req, res) => {
   try {
-    const meetings = await Meeting.find({
-      eventId: { $exists: true, $ne: null },
+    const meetings = await prisma.meeting.findMany({
+      where: {
+        eventId: { not: null },
+      },
     });
 
-    if (!meetings || meetings.length === 0) {
+    if (!meetings.length) {
       return res.status(200).json({
         message: "No meetings found with eventId",
         noData: true,
-        approvedMeetings: [], // Return an empty array as the result
+        approvedMeetings: [],
       });
     }
 
@@ -301,44 +257,35 @@ const getAllMeetings = async (req, res) => {
       const day = meeting.selectDay;
       const time = meeting.selectTime;
 
-      if (!grouped[day]) {
-        grouped[day] = {
-          day,
-          times: [],
-        };
-      }
+      if (!grouped[day]) grouped[day] = { day, times: [] };
 
       grouped[day].times.push({
         time,
-        meetingId: meeting._id.toString(),
+        meetingId: meeting.id,
       });
     });
 
-    const approvedMeetings = Object.values(grouped); // turn grouped object into array
-
-    res.status(200).json({ approvedMeetings });
+    res.status(200).json({ approvedMeetings: Object.values(grouped) });
   } catch (err) {
-    console.error("Error fetching meetings:", err);
+    logger.error(`Error in getAllMeetings: ${err.message}`);
     res.status(500).json({ message: "Server error while fetching meetings" });
   }
 };
 
+// ✅ Raw list of meetings
 const meetings = async (req, res) => {
   try {
-    const meetings = await Meeting.find(); // Fetch all meetings from the database
-
-    if (!meetings || meetings.length === 0) {
+    const allMeetings = await prisma.meeting.findMany();
+    if (!allMeetings.length) {
       return res.status(404).json({ message: "No meetings found" });
     }
-
-    res.status(200).json(meetings); // Return the list of meetings
+    res.status(200).json(allMeetings);
   } catch (err) {
-    console.error("Error fetching meetings:", err);
+    logger.error(`Error in meetings: ${err.message}`);
     res.status(500).json({ message: "Server error while fetching meetings" });
   }
 };
 
-// Export all functions
 module.exports = {
   createMeeting,
   rescheduleMeeting,

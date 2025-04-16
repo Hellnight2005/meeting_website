@@ -1,6 +1,6 @@
 const { google } = require("googleapis");
-const User = require("@/models/User");
-const logger = require("@/utils/logger"); // Import the logger
+const prisma = require("@/lib/prisma"); // Prisma client
+const logger = require("@/lib/logger"); // Using the same logger as your original
 require("dotenv").config();
 
 // Create reusable OAuth client
@@ -86,7 +86,7 @@ const createCalendarEvent = async ({
   // Fetch the admin's email from the user model based on the role "Admin"
   let adminEmail;
   try {
-    const adminUser = await User.findOne({ role: "admin" });
+    const adminUser = await prisma.user.findFirst({ where: { role: "admin" } });
     if (adminUser) {
       adminEmail = adminUser.email;
     } else {
@@ -99,13 +99,12 @@ const createCalendarEvent = async ({
 
   // Add admin as a guest in the attendees array
   const admin = {
-    email: adminEmail, // Admin's email fetched from the User model
+    email: adminEmail,
     displayName: "Admin",
   };
 
-  attendees.push(admin); // Add admin to the attendees list
+  attendees.push(admin);
 
-  // Setup OAuth clients
   const userAuth = createOAuthClient();
   userAuth.setCredentials({ access_token: accessToken });
 
@@ -123,7 +122,7 @@ const createCalendarEvent = async ({
       timeZone: "Asia/Kolkata",
     },
     ...(location && { location }),
-    attendees, // Add both user and admin as attendees
+    attendees,
     conferenceData: {
       createRequest: {
         requestId: Math.random().toString(36).substring(2),
@@ -134,7 +133,6 @@ const createCalendarEvent = async ({
   };
 
   try {
-    // 1️⃣ Check for event conflict in user's calendar
     const exists = await checkForExistingEvent(
       userCalendar,
       startDateTime,
@@ -142,14 +140,12 @@ const createCalendarEvent = async ({
     );
     if (exists) throw new Error("Event already exists during this time.");
 
-    // 2️⃣ Insert event into user's calendar
     const userEvent = await userCalendar.events.insert({
       calendarId: "primary",
       resource: event,
       conferenceDataVersion: 1,
     });
 
-    // 3️⃣ Return the event details
     const videoLink =
       userEvent.data.conferenceData?.entryPoints?.find(
         (e) => e.entryPointType === "video"
@@ -165,9 +161,9 @@ const createCalendarEvent = async ({
         endDateTime: userEvent.data.end.dateTime,
       },
       admin: {
-        eventId: userEvent.data.id, // Same event ID for admin
-        htmlLink: userEvent.data.htmlLink, // Same event link for admin
-        meetingLink: videoLink, // Same meeting link for admin
+        eventId: userEvent.data.id,
+        htmlLink: userEvent.data.htmlLink,
+        meetingLink: videoLink,
         startDateTime: userEvent.data.start.dateTime,
         endDateTime: userEvent.data.end.dateTime,
       },
