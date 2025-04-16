@@ -73,7 +73,7 @@ function RescheduleModal({ meetingId, onClose, onSave }) {
 
         // Make the POST request to reschedule the meeting
         try {
-            const response = await fetch(`http://localhost:5000/meeting/reschedule/${meetingId}`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/meeting/reschedule/${meetingId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

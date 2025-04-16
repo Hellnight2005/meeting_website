@@ -13,6 +13,8 @@ export const MeetingProvider = ({ children }) => {
   const [blockedDays, setBlockedDays] = useState({});
   const [loading, setLoading] = useState(true);
 
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
   const getNextSlot = (time) => {
     const [hour, minutePart] = time.split(":");
     const isPM = time.includes("PM");
@@ -30,18 +32,13 @@ export const MeetingProvider = ({ children }) => {
     return format(date, "h:mm a");
   };
 
-  // ✅ Full fetch: all meetings and blockedDays
   const fetchMeetings = async () => {
     try {
-      const meetingResponse = await axios.get(
-        "http://localhost:5000/meeting/get"
-      );
+      const meetingResponse = await axios.get(`${API_URL}/meeting/get`);
       const allMeetings = meetingResponse.data;
       setMeetingsData(allMeetings);
 
-      const approvedResponse = await axios.get(
-        "http://localhost:5000/meeting/meetings"
-      );
+      const approvedResponse = await axios.get(`${API_URL}/meeting/meetings`);
       const approvedMeetings = approvedResponse.data.approvedMeetings;
 
       const blockedDaysData = {};
@@ -74,10 +71,9 @@ export const MeetingProvider = ({ children }) => {
     }
   };
 
-  // ✅ Only refresh approved/blocked days
   const fetchApprovedMeetings = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/meeting/meetings");
+      const res = await axios.get(`${API_URL}/meeting/meetings`);
       const approvedMeetings = res.data.approvedMeetings;
 
       const blockedDaysData = {};
@@ -111,8 +107,8 @@ export const MeetingProvider = ({ children }) => {
         lineupMeetingIds,
         blockedDays,
         loading,
-        refreshMeetings: fetchMeetings, // 👈 full refresh
-        refreshBlockedDays: fetchApprovedMeetings, // 👈 only blocked times
+        refreshMeetings: fetchMeetings,
+        refreshBlockedDays: fetchApprovedMeetings,
       }}
     >
       {children}

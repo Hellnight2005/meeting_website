@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useMeetingContext } from "../constants/MeetingContext"; // Import the custom hook
+import { useMeetingContext } from "../constants/MeetingContext";
 import RescheduleModal from "./RescheduleModal";
 
 // Helper functions
@@ -19,18 +19,19 @@ const convertTo24Hour = (timeStr) => {
     return `${hours}:${minutes}`;
 };
 
-export default function MeetingCard({ id, type }) {
-    const { meetingsData, upcomingMeetingIds, lineupMeetingIds, loading, refreshMeetings } = useMeetingContext(); // Access the context data
-    const [meeting, setMeeting] = useState(null); // Local state for holding the meeting data
-    const [isModalOpen, setIsModalOpen] = useState(false); // Track modal open/close state
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-    // Fetch the meeting details based on the provided id
+export default function MeetingCard({ id, type }) {
+    const { meetingsData, upcomingMeetingIds, lineupMeetingIds, loading, refreshMeetings } = useMeetingContext();
+    const [meeting, setMeeting] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
     useEffect(() => {
-        const foundMeeting = meetingsData.find((m) => m._id === id); // Find the meeting by its _id
-        setMeeting(foundMeeting); // Set the meeting to state
+        const foundMeeting = meetingsData.find((m) => m._id === id);
+        setMeeting(foundMeeting);
     }, [id, meetingsData]);
 
-    if (!meeting) return null; // If no meeting found, return null
+    if (!meeting) return null;
 
     const timeOfDay = getTimeOfDay(meeting.selectTime);
     const bgColor = {
@@ -41,20 +42,17 @@ export default function MeetingCard({ id, type }) {
 
     const buttonBase = "px-4 py-2 rounded-full font-medium transition duration-200";
 
-    // 🧑‍💼 Image based on role
     const imageSrc = meeting.user_role === "Admin"
         ? "/icons/inmated.svg"
         : "/icons/client.svg";
 
-    // ⏳ Slot formatting
     const formattedSlot = meeting.slot === "30" || meeting.slot === 30
         ? "30 minutes"
         : "1 hour";
 
-    // Function to handle deleting the meeting
     const deleteMeeting = async () => {
         try {
-            const response = await fetch(`http://localhost:5000/meeting/meetings/${meeting._id}`, {
+            const response = await fetch(`${API_URL}/meeting/meetings/${meeting._id}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
@@ -62,18 +60,16 @@ export default function MeetingCard({ id, type }) {
             });
 
             if (response.ok) {
-                // Call the refreshMeetings function to reload the meetings data
-                refreshMeetings(); // Refresh the meetings list
+                refreshMeetings();
             }
         } catch (error) {
             console.error("Error deleting meeting:", error);
         }
     };
 
-    // Function to handle approving the meeting
     const approveMeeting = async () => {
         try {
-            const response = await fetch(`http://localhost:5000/meeting/approve-meeting/${meeting._id}`, {
+            const response = await fetch(`${API_URL}/meeting/approve-meeting/${meeting._id}`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -81,9 +77,8 @@ export default function MeetingCard({ id, type }) {
             });
 
             if (response.ok) {
-                // Call the refreshMeetings function to reload the meetings data
-                refreshMeetings(); // Refresh the meetings list
-                alert("Meeting approved successfully!");
+                refreshMeetings();
+
             } else {
                 alert("Failed to approve the meeting.");
             }
@@ -92,21 +87,17 @@ export default function MeetingCard({ id, type }) {
         }
     };
 
-    // Handle closing the modal
     const handleCloseModal = () => {
-        setIsModalOpen(false); // Close the modal
+        setIsModalOpen(false);
     };
 
-    // Handle saving the meeting (this could be a form submission or any other action)
     const handleSaveMeeting = (updatedMeeting) => {
-        console.log("Meeting saved:", updatedMeeting);
-        // Logic to save the updated meeting can go here
-        handleCloseModal(); // Close the modal after saving
+
+        handleCloseModal();
     };
 
     return (
         <div className={`border rounded-2xl shadow-lg p-6 hover:shadow-xl transition duration-300 ${bgColor}`}>
-            {/* Header Section with Profile */}
             <div className="flex items-center gap-4">
                 <img
                     src={imageSrc}
@@ -119,7 +110,6 @@ export default function MeetingCard({ id, type }) {
                 </div>
             </div>
 
-            {/* Meeting Details Section */}
             <div className="mt-4 text-sm space-y-1 text-black">
                 <p><strong>Day:</strong> {meeting.selectDay}</p>
                 <p>
@@ -131,19 +121,18 @@ export default function MeetingCard({ id, type }) {
                 <p><strong>Slot:</strong> {formattedSlot}</p>
             </div>
 
-            {/* Actions Section */}
             <div className="flex gap-4 mt-6">
                 {type === "upcoming" && upcomingMeetingIds.includes(meeting._id) && (
                     <>
                         <button
                             className={`${buttonBase} bg-blue-500 text-white hover:bg-blue-600`}
-                            onClick={() => setIsModalOpen(true)} // Open the modal when clicked
+                            onClick={() => setIsModalOpen(true)}
                         >
                             Reschedule
                         </button>
                         <button
                             className={`${buttonBase} bg-red-500 text-white hover:bg-red-600`}
-                            onClick={deleteMeeting} // Call the deleteMeeting function when clicked
+                            onClick={deleteMeeting}
                         >
                             Delete
                         </button>
@@ -153,13 +142,13 @@ export default function MeetingCard({ id, type }) {
                     <>
                         <button
                             className={`${buttonBase} bg-green-500 text-white hover:bg-green-600`}
-                            onClick={approveMeeting} // Call the approveMeeting function when clicked
+                            onClick={approveMeeting}
                         >
                             Approve
                         </button>
                         <button
                             className={`${buttonBase} bg-red-500 text-white hover:bg-red-600`}
-                            onClick={deleteMeeting} // Call the deleteMeeting function when clicked
+                            onClick={deleteMeeting}
                         >
                             Delete
                         </button>
@@ -167,12 +156,11 @@ export default function MeetingCard({ id, type }) {
                 )}
             </div>
 
-            {/* Reschedule Modal */}
             {isModalOpen && (
                 <RescheduleModal
-                    meetingId={meeting._id} // Pass the meeting ID to the modal
-                    onClose={handleCloseModal} // Pass the close handler to the modal
-                    onSave={handleSaveMeeting} // Pass the save handler to the modal
+                    meetingId={meeting._id}
+                    onClose={handleCloseModal}
+                    onSave={handleSaveMeeting}
                 />
             )}
         </div>
