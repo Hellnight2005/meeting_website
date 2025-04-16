@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+# Ignore Prisma Client generated in prisma/
+prisma/node_modules/
+# Ignore Prisma Client generated in prisma/
+prisma/node_modules/
