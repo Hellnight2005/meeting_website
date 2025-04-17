@@ -8,17 +8,23 @@ import { useMeetingContext } from "../constants/MeetingContext";
 
 function RescheduleModal({ meetingId, onClose, onSave }) {
     const { meetingsData, refreshMeetings } = useMeetingContext();
-    const meeting = meetingsData.find((m) => m._id === meetingId);
+
+    // Normalize IDs to ensure matching works
+    const normalizedMeetings = meetingsData.map((m) => ({
+        ...m,
+        _id: m._id?.$oid || m._id,
+        userId: m.userId?.$oid || m.userId,
+    }));
+
+    const meeting = normalizedMeetings.find((m) => m._id === meetingId);
 
     const { selectDay, selectTime, user_name, title } = meeting || {};
-    const today = new Date();
     const [selectedTime, setSelectedTime] = useState(selectTime || "");
-    const [selectedDate, setSelectedDate] = useState(selectDay || ""); // Default to selectDay
+    const [selectedDate, setSelectedDate] = useState(selectDay || "");
 
     const modalRef = useRef(null);
     const containerRef = useRef(null);
 
-    // GSAP animation
     useEffect(() => {
         const ctx = gsap.context(() => {
             gsap.from(modalRef.current, {
@@ -42,7 +48,6 @@ function RescheduleModal({ meetingId, onClose, onSave }) {
         return () => ctx.revert();
     }, []);
 
-    // Close modal when clicking outside
     useEffect(() => {
         function handleClickOutside(event) {
             if (modalRef.current && !modalRef.current.contains(event.target)) {
@@ -53,27 +58,23 @@ function RescheduleModal({ meetingId, onClose, onSave }) {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [onClose]);
 
-    // Check if there are any changes to save
     const hasChanges = () => {
         return selectedTime !== selectTime || selectedDate !== selectDay;
     };
 
-    // Save the changes
     const handleSave = async () => {
         if (!selectedDate || !selectedTime) return;
 
-        const newDay = selectedDate.display; // Use updated selected date
+        const newDay = selectedDate.display || selectedDate;
         const newTime = selectedTime;
 
-        // Prepare the data to send in the request
         const rescheduleData = {
             selectDay: newDay,
             selectTime: newTime,
         };
 
-        // Make the POST request to reschedule the meeting
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/meeting/reschedule/${meetingId}`, {
+            const response = await fetch(`/api/meeting/reschedule/${meetingId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -82,16 +83,13 @@ function RescheduleModal({ meetingId, onClose, onSave }) {
             });
 
             if (response.ok) {
-                // Call refreshMeetings to refresh the meetings list
                 refreshMeetings();
-
-                // Optionally, update the meeting state locally
                 if (onSave) {
                     onSave({
                         ...meeting,
                         selectDay: newDay,
                         selectTime: newTime,
-                        slot: 1, // Slot is always 1 hour
+                        slot: 1,
                     });
                 }
             }
@@ -99,12 +97,11 @@ function RescheduleModal({ meetingId, onClose, onSave }) {
             console.error("Error rescheduling meeting:", error);
         }
 
-        // Close the modal after the request
         onClose?.();
     };
 
     if (!meeting) {
-        return <div>Loading...</div>;
+        return <div className="text-center py-10 text-gray-600">Loading meeting details...</div>;
     }
 
     return (
@@ -121,7 +118,6 @@ function RescheduleModal({ meetingId, onClose, onSave }) {
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                    {/* Left Panel */}
                     <div className="modal-section space-y-6 text-gray-800 px-4">
                         <div className="flex items-center gap-4">
                             <div className="bg-gradient-to-br from-purple-600 to-blue-600 text-white text-xl font-semibold rounded-full w-14 h-14 flex items-center justify-center shadow-lg">
@@ -159,20 +155,18 @@ function RescheduleModal({ meetingId, onClose, onSave }) {
                         </div>
                     </div>
 
-                    {/* Calendar Panel */}
                     <div className="modal-section bg-[#1e293b] rounded-2xl py-6 px-4 text-white shadow-lg">
                         <Calendar
-                            selectedDate={selectedDate}  // Pass selectedDate directly
-                            setSelectedDate={setSelectedDate}  // Handle date updates
+                            selectedDate={selectedDate}
+                            setSelectedDate={setSelectedDate}
                             highlightColor="bg-blue-500"
                         />
                     </div>
 
-                    {/* Time Picker Panel */}
                     <div className="modal-section flex-1 overflow-y-auto pr-1 hide-scrollbar space-y-3">
                         <TimePicker
-                            selectedDate={selectedDate}  // Pass selectedDate as prop
-                            setSelectedDate={setSelectedDate}  // Handle updates
+                            selectedDate={selectedDate}
+                            setSelectedDate={setSelectedDate}
                             selectedTime={selectedTime}
                             setSelectedTime={setSelectedTime}
                         />

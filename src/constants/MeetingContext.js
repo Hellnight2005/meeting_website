@@ -34,11 +34,11 @@ export const MeetingProvider = ({ children }) => {
 
   const fetchMeetings = async () => {
     try {
-      const meetingResponse = await axios.get(`${API_URL}/meeting/get`);
+      const meetingResponse = await axios.get("/api/meeting/meeting_get");
       const allMeetings = meetingResponse.data;
       setMeetingsData(allMeetings);
 
-      const approvedResponse = await axios.get(`${API_URL}/meeting/meetings`);
+      const approvedResponse = await axios.get("/api/meeting/approve_meeting");
       const approvedMeetings = approvedResponse.data.approvedMeetings;
 
       const blockedDaysData = {};
@@ -73,7 +73,7 @@ export const MeetingProvider = ({ children }) => {
 
   const fetchApprovedMeetings = async () => {
     try {
-      const res = await axios.get(`${API_URL}/meeting/meetings`);
+      const res = await axios.get("/api/meeting/approve_meeting");
       const approvedMeetings = res.data.approvedMeetings;
 
       const blockedDaysData = {};

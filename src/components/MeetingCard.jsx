@@ -22,13 +22,19 @@ const convertTo24Hour = (timeStr) => {
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export default function MeetingCard({ id, type }) {
-    const { meetingsData, upcomingMeetingIds, lineupMeetingIds, loading, refreshMeetings } = useMeetingContext();
+    const {
+        meetingsData,
+        upcomingMeetingIds,
+        lineupMeetingIds,
+        refreshMeetings,
+    } = useMeetingContext();
+
     const [meeting, setMeeting] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
-        const foundMeeting = meetingsData.find((m) => m._id === id);
-        setMeeting(foundMeeting);
+        const found = meetingsData.find((m) => m._id === id);
+        setMeeting(found);
     }, [id, meetingsData]);
 
     if (!meeting) return null;
@@ -52,49 +58,41 @@ export default function MeetingCard({ id, type }) {
 
     const deleteMeeting = async () => {
         try {
-            const response = await fetch(`${API_URL}/meeting/meetings/${meeting._id}`, {
+            const res = await fetch(`/api/meeting/delete/${meeting._id}`, {
                 method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
             });
-
-            if (response.ok) {
-                refreshMeetings();
-            }
-        } catch (error) {
-            console.error("Error deleting meeting:", error);
+            if (res.ok) refreshMeetings();
+        } catch (err) {
+            console.error("Error deleting meeting:", err);
         }
     };
 
     const approveMeeting = async () => {
         try {
-            const response = await fetch(`${API_URL}/meeting/approve-meeting/${meeting._id}`, {
+            const res = await fetch(`/api/meeting/approve/${meeting._id}`, {
                 method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
             });
-
-            if (response.ok) {
+            if (res.ok) {
                 refreshMeetings();
-
             } else {
                 alert("Failed to approve the meeting.");
             }
-        } catch (error) {
-            console.error("Error approving meeting:", error);
+        } catch (err) {
+            console.error("Error approving meeting:", err);
         }
     };
 
-    const handleCloseModal = () => {
-        setIsModalOpen(false);
-    };
+    const handleCloseModal = () => setIsModalOpen(false);
 
-    const handleSaveMeeting = (updatedMeeting) => {
-
+    const handleSaveMeeting = () => {
+        // Do something with updated meeting
         handleCloseModal();
     };
+
+    const shouldShowReschedule = type === "upcoming" && upcomingMeetingIds.includes(meeting._id);
+    const shouldShowApprove = type === "lineup" && lineupMeetingIds.includes(meeting._id);
 
     return (
         <div className={`border rounded-2xl shadow-lg p-6 hover:shadow-xl transition duration-300 ${bgColor}`}>
@@ -122,7 +120,7 @@ export default function MeetingCard({ id, type }) {
             </div>
 
             <div className="flex gap-4 mt-6">
-                {type === "upcoming" && upcomingMeetingIds.includes(meeting._id) && (
+                {shouldShowReschedule && (
                     <>
                         <button
                             className={`${buttonBase} bg-blue-500 text-white hover:bg-blue-600`}
@@ -138,7 +136,8 @@ export default function MeetingCard({ id, type }) {
                         </button>
                     </>
                 )}
-                {type === "lineup" && lineupMeetingIds.includes(meeting._id) && (
+
+                {shouldShowApprove && (
                     <>
                         <button
                             className={`${buttonBase} bg-green-500 text-white hover:bg-green-600`}

@@ -4,9 +4,10 @@ import { deleteCalendarEvent } from "@/config/googleCalendar";
 
 const prisma = new PrismaClient();
 
-export async function POST(req, { params }) {
+export async function POST(req, context) {
   try {
-    const id = params.id;
+    const { params } = context;
+    const id = String(params.id);
     const body = await req.json();
     const { selectDay, selectTime, slot, type } = body;
 
