@@ -1,12 +1,10 @@
-// app/api/meetings/create/route.js
-
 import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
 
-const validTypes = ["upcoming", "line up"];
-const validRoles = ["user", "Admin"];
+const validTypes = ["upcoming", "line_up"];
+const validRoles = ["user", "admin"];
 
 function validateMeetingData({
   user_name,
@@ -36,7 +34,7 @@ function validateMeetingData({
     return `Invalid meeting type. Allowed: ${validTypes.join(", ")}.`;
   }
 
-  if (!validRoles.includes(user_role)) {
+  if (!validRoles.includes(user_role.toLowerCase())) {
     return `Invalid user role. Allowed: ${validRoles.join(", ")}.`;
   }
 
@@ -65,6 +63,25 @@ export async function POST(req) {
 
     if (!user) {
       return NextResponse.json({ error: "User not found." }, { status: 404 });
+    }
+
+    // 🕒 Parse booking date & time
+    const bookingDate = new Date(`${data.selectDay} ${data.selectTime}`);
+    const now = new Date();
+
+    if (isNaN(bookingDate)) {
+      return NextResponse.json(
+        { error: "Invalid date or time format." },
+        { status: 400 }
+      );
+    }
+
+    // ❌ Reject past bookings
+    if (bookingDate < now) {
+      return NextResponse.json(
+        { error: "Cannot book a meeting in the past." },
+        { status: 400 }
+      );
     }
 
     const meeting = await prisma.meeting.create({

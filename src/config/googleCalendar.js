@@ -47,11 +47,8 @@ const checkForExistingEvent = async (calendar, startDateTime, endDateTime) => {
 
     return events.data.items.length > 0;
   } catch (error) {
-    logger.error(
-      `❌ Error checking for existing events: ${
-        error?.response?.data || error.message
-      }`
-    );
+    logger.error("❌ Error during event creation:", error);
+
     throw new Error("Error checking for existing events.");
   }
 };

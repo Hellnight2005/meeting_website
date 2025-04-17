@@ -58,6 +58,6 @@ export async function GET(request) {
     return NextResponse.redirect("http://localhost:3000/Admin");
   } catch (error) {
     console.error("Google callback error:", error);
-    return NextResponse.redirect("http://localhost:3000/login");
+    return NextResponse.redirect("http://localhost:3000/Admin");
   }
 }

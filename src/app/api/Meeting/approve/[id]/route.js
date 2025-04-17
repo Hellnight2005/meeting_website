@@ -16,10 +16,21 @@ export async function PATCH(req, { params }) {
       );
     }
 
-    // ✅ Convert time before proceeding
+    // ✅ Convert meeting time (assumes this returns ISO strings)
     const { startDateTime, endDateTime } = await convertMeetingTime(id);
 
-    // ✅ Fetch updated meeting with user
+    const now = new Date();
+    const start = new Date(startDateTime);
+
+    // ⛔ Reject if meeting is in the past
+    if (start < now) {
+      return NextResponse.json(
+        { error: "Cannot approve meetings scheduled in the past." },
+        { status: 400 }
+      );
+    }
+
+    // ✅ Fetch meeting and related users
     const meeting = await prisma.meeting.findUnique({ where: { id } });
     const user = await prisma.user.findUnique({
       where: { id: meeting.userId },
@@ -28,11 +39,12 @@ export async function PATCH(req, { params }) {
 
     if (!user || !admin) {
       return NextResponse.json(
-        { error: "User/Admin not found" },
+        { error: "User or admin not found" },
         { status: 404 }
       );
     }
 
+    // ✅ Create Google Calendar Event
     const calendarData = await createCalendarEvent({
       accessToken: user.accessToken,
       refreshToken: user.refreshToken,
@@ -46,6 +58,7 @@ export async function PATCH(req, { params }) {
       attendees: [{ email: user.email }, { email: admin.email }],
     });
 
+    // ✅ Update meeting in DB
     const updatedMeeting = await prisma.meeting.update({
       where: { id },
       data: {
@@ -61,6 +74,7 @@ export async function PATCH(req, { params }) {
       calendarData,
     });
   } catch (error) {
+    console.error("Error approving meeting:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
