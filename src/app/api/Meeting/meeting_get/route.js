@@ -10,7 +10,7 @@ export async function GET() {
     if (!meetings || meetings.length === 0) {
       return NextResponse.json(
         { message: "No meetings found" },
-        { status: 404 }
+        { status: 200 }
       );
     }
 

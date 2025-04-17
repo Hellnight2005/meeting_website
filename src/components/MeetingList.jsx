@@ -1,26 +1,22 @@
 "use client";
 import React, { useState, useMemo } from "react";
-import { useMeetingContext } from "../constants/MeetingContext"; // Import your MeetingContext
+import { useMeetingContext } from "../constants/MeetingContext";
 import MeetingCard from "./MeetingCard";
 
 export default function MeetingList({ meetingIds = [], type, showSearchBar = true, visibleSlots }) {
-    const { meetingsData } = useMeetingContext(); // Access meetingsData from context
+    const { meetingsData } = useMeetingContext();
     const [searchTerm, setSearchTerm] = useState("");
     const [page, setPage] = useState(0);
 
-    // Filter and sort meetings based on meetingIds and selectDay, selectTime
     const filteredMeetings = useMemo(() => {
-        // Filter meetings based on meetingIds and the meeting type (upcoming or line up)
-        const meetingsForIds = meetingsData.filter(meeting => meetingIds.includes(meeting._id));
+        const meetingsForIds = meetingsData.filter(meeting => meetingIds.includes(meeting.id));
 
-        // Sort the meetings by selectDay and selectTime
         const sorted = [...meetingsForIds].sort((a, b) => {
             const dateA = new Date(`${a.selectDay} ${a.selectTime}`);
             const dateB = new Date(`${b.selectDay} ${b.selectTime}`);
-            return dateA - dateB; // Sort in ascending order
+            return dateA - dateB;
         });
 
-        // Apply the search filter
         return sorted.filter(
             (meeting) =>
                 meeting.user_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -29,10 +25,9 @@ export default function MeetingList({ meetingIds = [], type, showSearchBar = tru
     }, [meetingsData, meetingIds, searchTerm]);
 
     const totalMeetings = filteredMeetings.length;
-    const slotsPerPage = visibleSlots || totalMeetings; // default to all if not passed
+    const slotsPerPage = visibleSlots || totalMeetings;
     const totalPages = Math.ceil(totalMeetings / slotsPerPage);
 
-    // Paginate the filtered meetings
     const paginatedMeetings = filteredMeetings.slice(
         page * slotsPerPage,
         (page + 1) * slotsPerPage
@@ -40,7 +35,6 @@ export default function MeetingList({ meetingIds = [], type, showSearchBar = tru
 
     return (
         <div className="space-y-6">
-            {/* 🔍 Optional Search Bar */}
             {showSearchBar && (
                 <div className="w-full flex justify-start">
                     <div className="relative w-[300px]">
@@ -51,11 +45,11 @@ export default function MeetingList({ meetingIds = [], type, showSearchBar = tru
                             value={searchTerm}
                             onChange={(e) => {
                                 setSearchTerm(e.target.value);
-                                setPage(0); // Reset to first page on search
+                                setPage(0);
                             }}
                         />
                         <img
-                            src="/icons/searchbar.svg" // Replace with your actual image path
+                            src="/icons/searchbar.svg"
                             alt="Search icon"
                             className="absolute left-3 top-3.5 w-5 h-5"
                         />
@@ -63,23 +57,20 @@ export default function MeetingList({ meetingIds = [], type, showSearchBar = tru
                 </div>
             )}
 
-            {/* 📋 Meeting Cards Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {paginatedMeetings.map((meeting) => (
                     <MeetingCard
-                        key={meeting._id} // Use meeting._id as the key
-                        id={meeting._id} // Pass the meeting._id
+                        key={meeting.id}
+                        id={meeting.id}
                         type={type}
                     />
                 ))}
             </div>
 
-            {/* ⛔ No results */}
             {!filteredMeetings.length && (
                 <p className="text-gray-500 mt-4 text-center">No meetings found.</p>
             )}
 
-            {/* 🔁 Pagination controls */}
             {visibleSlots && totalMeetings > visibleSlots && (
                 <div className="flex justify-center items-center gap-4 mt-4">
                     <button

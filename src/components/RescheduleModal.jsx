@@ -9,14 +9,7 @@ import { useMeetingContext } from "../constants/MeetingContext";
 function RescheduleModal({ meetingId, onClose, onSave }) {
     const { meetingsData, refreshMeetings } = useMeetingContext();
 
-    // Normalize IDs to ensure matching works
-    const normalizedMeetings = meetingsData.map((m) => ({
-        ...m,
-        _id: m._id?.$oid || m._id,
-        userId: m.userId?.$oid || m.userId,
-    }));
-
-    const meeting = normalizedMeetings.find((m) => m._id === meetingId);
+    const meeting = meetingsData.find((m) => m.id === meetingId);
 
     const { selectDay, selectTime, user_name, title } = meeting || {};
     const [selectedTime, setSelectedTime] = useState(selectTime || "");
@@ -94,7 +87,7 @@ function RescheduleModal({ meetingId, onClose, onSave }) {
                 }
             }
         } catch (error) {
-            console.error("Error rescheduling meeting:", error);
+            // Error handling only (no console.log)
         }
 
         onClose?.();

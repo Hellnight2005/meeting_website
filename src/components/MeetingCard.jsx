@@ -33,7 +33,7 @@ export default function MeetingCard({ id, type }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
-        const found = meetingsData.find((m) => m._id === id);
+        const found = meetingsData.find((m) => m.id === id);
         setMeeting(found);
     }, [id, meetingsData]);
 
@@ -48,7 +48,7 @@ export default function MeetingCard({ id, type }) {
 
     const buttonBase = "px-4 py-2 rounded-full font-medium transition duration-200";
 
-    const imageSrc = meeting.user_role === "Admin"
+    const imageSrc = meeting.user_role === "admin"
         ? "/icons/inmated.svg"
         : "/icons/client.svg";
 
@@ -58,41 +58,44 @@ export default function MeetingCard({ id, type }) {
 
     const deleteMeeting = async () => {
         try {
-            const res = await fetch(`/api/meeting/delete/${meeting._id}`, {
+            const res = await fetch(`/api/meeting/delete/${meeting.id}`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
             });
-            if (res.ok) refreshMeetings();
+            if (res.ok)
+                refreshMeetings();
         } catch (err) {
-            console.error("Error deleting meeting:", err);
+            // Optionally handle/log error
         }
     };
 
     const approveMeeting = async () => {
         try {
-            const res = await fetch(`/api/meeting/approve/${meeting._id}`, {
+            const res = await fetch(`/api/meeting/approve/${meeting.id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
             });
+
             if (res.ok) {
-                refreshMeetings();
+                await refreshMeetings(); // Wait for refresh to complete
+                alert("Meeting approved successfully.");
             } else {
+                const errorData = await res.json();
+                console.error("Approval failed:", errorData);
                 alert("Failed to approve the meeting.");
             }
         } catch (err) {
             console.error("Error approving meeting:", err);
+            alert("An unexpected error occurred.");
         }
     };
 
+
     const handleCloseModal = () => setIsModalOpen(false);
+    const handleSaveMeeting = () => handleCloseModal();
 
-    const handleSaveMeeting = () => {
-        // Do something with updated meeting
-        handleCloseModal();
-    };
-
-    const shouldShowReschedule = type === "upcoming" && upcomingMeetingIds.includes(meeting._id);
-    const shouldShowApprove = type === "lineup" && lineupMeetingIds.includes(meeting._id);
+    const shouldShowReschedule = type === "upcoming" && upcomingMeetingIds.includes(meeting.id);
+    const shouldShowApprove = type === "line_up" && lineupMeetingIds.includes(meeting.id);
 
     return (
         <div className={`border rounded-2xl shadow-lg p-6 hover:shadow-xl transition duration-300 ${bgColor}`}>
@@ -157,7 +160,7 @@ export default function MeetingCard({ id, type }) {
 
             {isModalOpen && (
                 <RescheduleModal
-                    meetingId={meeting._id}
+                    meetingId={meeting.id}
                     onClose={handleCloseModal}
                     onSave={handleSaveMeeting}
                 />
