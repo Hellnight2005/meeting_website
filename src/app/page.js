@@ -25,6 +25,12 @@ export default function Home() {
         >
           Login
         </Link>
+        <Link
+          href="/user"
+          className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl transition duration-200"
+        >
+          User section
+        </Link>
       </div>
     </div>
   );

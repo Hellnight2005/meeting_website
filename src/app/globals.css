@@ -1,16 +1,32 @@
 @import "tailwindcss";
-/* @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"); */
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Optional font import if NOT using `next/font` */
+/* @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap"); */
+
+/* ============================= */
+/* Root Variables & Theme Setup */
+/* ============================= */
+@font-face {
+  font-family: "MyCustomFont";
+  src: url("/fonts/extralight.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
 }
+:root {
+  font-family: "MyCustomFont", sans-serif;
 
-theme inline {
+  /* Color system */
+  --background: rgb(240, 246, 248);
+  --foreground: #171717;
+  --color-sohub-black: #0c0c0c;
+
+  /* Typography */
+  --tracking-7: 0.07em;
+
+  /* Theme-friendly tokens */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -20,6 +36,15 @@ theme inline {
   }
 }
 
+/* ============== */
+/* Base Styling   */
+/* ============== */
+html {
+  font-family: var(--font-sans);
+  scroll-behavior: smooth;
+}
+
+/* Hide scrollbar (cross-browser) */
 body {
   overflow-y: scroll;
   scrollbar-width: none; /* Firefox */
@@ -30,10 +55,53 @@ body::-webkit-scrollbar {
   height: 0px;
   background: transparent;
 }
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
-.hide-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+
+/* ===================== */
+/* Typography Utilities  */
+/* ===================== */
+.text-sohubBlack {
+  color: var(--color-sohub-black);
+}
+.tracking-7 {
+  letter-spacing: var(--tracking-7);
+}
+
+/* ======================== */
+/* Responsive Hero Heading */
+/* ======================== */
+.hero-heading {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: var(--tracking-7);
+  color: var(--color-sohub-black);
+  font-size: 1.875rem; /* base: text-3xl */
+}
+
+@media (min-width: 768px) {
+  .hero-heading {
+    font-size: 3rem; /* md:text-5xl */
+  }
+}
+@media (min-width: 1024px) {
+  .hero-heading {
+    font-size: 3.75rem; /* lg:text-6xl */
+  }
+}
+@media (min-width: 1280px) {
+  .hero-heading {
+    font-size: 4.5rem; /* xl:text-7xl */
+  }
+}
+@media (min-width: 1536px) {
+  .hero-heading {
+    font-size: 7rem; /* 2xl:text-[7rem] */
+  }
 }
