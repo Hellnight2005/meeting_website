@@ -1,14 +1,17 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useContext } from 'react';
 import Image from 'next/image';
 import gsap from 'gsap';
+import { UserContext } from '@/constants/UserContext'; // Adjust path as needed
 
 export default function RegisterPage() {
     const router = useRouter();
     const [form, setForm] = useState({ name: '', email: '', password: '' });
     const formRef = useRef(null);
     const bgRef = useRef(null);
+
+    const { setUser, user } = useContext(UserContext);
 
     useEffect(() => {
         const tl = gsap.timeline();
@@ -47,10 +50,14 @@ export default function RegisterPage() {
                 body: JSON.stringify(payload),
             });
 
+            const data = await res.json();
+
             if (res.ok) {
+                setUser(data);
+                console.log("user data", user);
+
                 router.push('/Admin');
             } else {
-                const data = await res.json();
                 alert(data.message || 'Something went wrong');
             }
         } catch (err) {
@@ -62,10 +69,11 @@ export default function RegisterPage() {
         router.push('/api/auth/google');
     };
 
-    // 🔥 Animation removed from navigation
     const handleNavigateToLogin = () => {
         router.push('/sign_up');
     };
+
+    // ... rest of your component remains the same
 
     return (
         <div className="min-h-screen bg-gray-100 flex items-center justify-center">

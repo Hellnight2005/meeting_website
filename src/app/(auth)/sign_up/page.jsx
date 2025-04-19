@@ -1,13 +1,15 @@
 // app/(auth)/login/page.js
 'use client';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useContext } from 'react';
+import { UserContext } from '@/constants/UserContext';
 import Link from 'next/link';
 import Image from 'next/image';
 import gsap from 'gsap';
 
 export default function LoginPage() {
     const router = useRouter();
+    const { setUser, user } = useContext(UserContext);
     const [form, setForm] = useState({ email: '', password: '' });
     const formRef = useRef(null);
     const bgRef = useRef(null);
@@ -37,13 +39,19 @@ export default function LoginPage() {
         e.preventDefault();
 
         try {
-            const res = await fetch('/api/auth/signin', {
+            const res = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(form),
             });
+            const data = await res.json();
 
             if (res.ok) {
+                setUser({ ...data.user, token: data.token });
+                console.log("data", data);
+
+                console.log("User Data", user);
+
                 router.push('/Admin');
             } else {
                 const data = await res.json();

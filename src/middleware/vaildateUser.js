@@ -1,32 +1,58 @@
-const User = require("@/models/User");
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 
-const checkAuthType = async (req, res, next) => {
-  const userId = req.body.userId;
+export function checkAuthType(handler) {
+  return async (req, ctx) => {
+    try {
+      let userId =
+        req.headers.get("x-user-id") ||
+        ctx?.params?.id || // <== Use route param as fallback
+        (["POST", "PATCH", "PUT"].includes(req.method)
+          ? await req
+              .json()
+              .then((body) => body.userId)
+              .catch(() => null)
+          : null);
 
-  try {
-    if (!userId) {
-      return res.status(400).json({ message: "User ID is required" });
+      if (!userId) {
+        return new Response(
+          JSON.stringify({ message: "User ID is required" }),
+          {
+            status: 400,
+          }
+        );
+      }
+
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+
+      if (!user) {
+        return new Response(JSON.stringify({ message: "User not found" }), {
+          status: 404,
+        });
+      }
+
+      const hasTokens = user.accessToken && user.refreshToken;
+      const userType = hasTokens ? "google" : "guest";
+
+      if (user.type !== userType) {
+        await prisma.user.update({
+          where: { id: userId },
+          data: { type: userType },
+        });
+      }
+
+      ctx.user = { ...user, type: userType };
+
+      return handler(req, ctx);
+    } catch (error) {
+      console.error("checkAuthType error:", error);
+      return new Response(
+        JSON.stringify({
+          message: "Server error while checking auth type",
+          error: error.message,
+        }),
+        { status: 500 }
+      );
     }
-
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    const hasTokens = user.accessToken && user.refreshToken;
-    const userType = hasTokens ? "google" : "guest";
-
-    // Update only if the type has changed (optional optimization)
-    if (user.type !== userType) {
-      await User.findByIdAndUpdate(userId, { type: userType });
-    }
-
-    next();
-  } catch (error) {
-    console.error("checkAuthType error:", error.message);
-    res.status(500).json({ message: "Server error while checking auth type" });
-  }
-};
-
-module.exports = checkAuthType;
+  };
+}

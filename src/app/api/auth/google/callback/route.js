@@ -55,7 +55,11 @@ export async function GET(request) {
 
     // Optionally: generate a JWT here and set it in a cookie/session
 
-    return NextResponse.redirect("http://localhost:3000/Admin");
+    const redirectUrl = new URL(
+      "http://localhost:3000/google-callback?id=<user_id>"
+    );
+    redirectUrl.searchParams.set("id", user.id);
+    return NextResponse.redirect(redirectUrl);
   } catch (error) {
     console.error("Google callback error:", error);
     return NextResponse.redirect("http://localhost:3000/Admin");

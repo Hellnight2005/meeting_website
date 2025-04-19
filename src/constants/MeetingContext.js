@@ -2,11 +2,14 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import axios from "axios";
 import { format } from "date-fns";
+import { useUser } from "@/constants/UserContext"; // adjust path as needed
 
 const MeetingContext = createContext();
 export const useMeetingContext = () => useContext(MeetingContext);
 
 export const MeetingProvider = ({ children }) => {
+  const { user } = useUser();
+
   const [meetingsData, setMeetingsData] = useState([]);
   const [upcomingMeetingIds, setUpcomingMeetingIds] = useState([]);
   const [lineupMeetingIds, setLineupMeetingIds] = useState([]);
@@ -56,8 +59,13 @@ export const MeetingProvider = ({ children }) => {
     setUpcomingMeetingIds(upcoming);
     setLineupMeetingIds(lineup);
   };
-
+  // only acess by admin
   const fetchMeetings = async () => {
+    if (!user || user.role !== "admin") {
+      console.warn("Access denied: only admins can fetch meetings.");
+      return;
+    }
+
     try {
       const [meetingRes, approvedRes] = await Promise.all([
         axios.get("/api/meeting/meeting_get"),
@@ -76,7 +84,7 @@ export const MeetingProvider = ({ children }) => {
       setLoading(false);
     }
   };
-
+  // acess by both
   const fetchApprovedMeetings = async () => {
     try {
       const res = await axios.get("/api/meeting/approve_meeting");
@@ -90,8 +98,23 @@ export const MeetingProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    fetchMeetings();
-  }, []);
+    let didRun = false;
+
+    if (!user || didRun) return;
+
+    didRun = true;
+
+    if (user.role === "admin") {
+      fetchMeetings();
+    } else {
+      fetchApprovedMeetings();
+    }
+
+    // Optional: clean-up (not always needed)
+    return () => {
+      didRun = false;
+    };
+  }, [user]);
 
   return (
     <MeetingContext.Provider
