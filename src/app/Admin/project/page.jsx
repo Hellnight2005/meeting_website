@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import RescheduleModal from "@/components/RescheduleModal"; // Import your modal component
+import CreateMeetingModal from "@/components/CreateMeetingModal";
 
 function Project() {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -23,20 +24,19 @@ function Project() {
 
     return (
         <>
-            {/* Render the button to open the modal */}
-            <button onClick={handleOpenModal} className="btn-primary">
-                Reschedule Meeting
+            <button
+                onClick={() => setIsModalOpen(true)}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+            >
+                + Create Meeting
             </button>
 
-            {/* Display the RescheduleModal when it's open */}
-            {isModalOpen && (
-                <RescheduleModal
-                    meetingId={"67fce07fa6de5c5740e4f332"}
-                    onClose={handleCloseModal}
-                    onSave={handleSaveMeeting}
-                />
-            )}
+            <CreateMeetingModal
+                open={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+            />
         </>
+
     );
 }
 

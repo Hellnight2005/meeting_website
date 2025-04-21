@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef, useContext } from 'react';
 import Image from 'next/image';
 import gsap from 'gsap';
-import { UserContext } from '@/constants/UserContext'; // Adjust path as needed
+import { UserContext } from '@/constants/UserContext';
 
 export default function RegisterPage() {
     const router = useRouter();
@@ -15,7 +15,6 @@ export default function RegisterPage() {
 
     useEffect(() => {
         const tl = gsap.timeline();
-
         gsap.set(bgRef.current, { width: '100%' });
 
         tl.to(bgRef.current, {
@@ -54,8 +53,6 @@ export default function RegisterPage() {
 
             if (res.ok) {
                 setUser(data);
-                console.log("user data", user);
-
                 router.push('/Admin');
             } else {
                 alert(data.message || 'Something went wrong');
@@ -73,15 +70,13 @@ export default function RegisterPage() {
         router.push('/sign_up');
     };
 
-    // ... rest of your component remains the same
-
     return (
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-            <div className="bg-white rounded-3xl shadow-lg overflow-hidden flex w-full max-w-6xl">
+        <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white flex items-center justify-center transition-colors duration-300">
+            <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-xl overflow-hidden flex w-full max-w-6xl">
 
                 <div
                     ref={bgRef}
-                    className="hidden md:block bg-gradient-to-br from-purple-300 via-purple-400 to-pink-300"
+                    className="hidden md:block bg-gradient-to-br from-zinc-300 to-gray-400 dark:from-zinc-800 dark:to-zinc-700"
                     style={{ width: '50%' }}
                 ></div>
 
@@ -92,22 +87,22 @@ export default function RegisterPage() {
                     <h2 className="text-2xl font-semibold mb-2">
                         Keep your online business organized
                     </h2>
-                    <p className="text-gray-500 mb-6">
+                    <p className="text-gray-600 dark:text-gray-400 mb-6">
                         Sign up to start your 30 days free trial
                     </p>
 
                     <button
                         onClick={handleGoogleSignIn}
-                        className="flex items-center justify-center gap-2 border px-4 py-2 rounded-lg w-full hover:bg-gray-50"
+                        className="flex items-center justify-center gap-2 border px-4 py-2 rounded-lg w-full hover:bg-gray-100 dark:hover:bg-zinc-800"
                     >
                         <Image src="/icons/google.svg" alt="Google" width={20} height={20} />
                         <span>Sign in with Google</span>
                     </button>
 
                     <div className="flex items-center my-6">
-                        <hr className="flex-grow border-gray-300" />
+                        <hr className="flex-grow border-gray-300 dark:border-gray-600" />
                         <span className="mx-2 text-gray-400 text-sm">or</span>
-                        <hr className="flex-grow border-gray-300" />
+                        <hr className="flex-grow border-gray-300 dark:border-gray-600" />
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
@@ -121,7 +116,7 @@ export default function RegisterPage() {
                                 value={form.name}
                                 onChange={handleChange}
                                 required
-                                className="w-full mt-1 px-4 py-2 border rounded-lg"
+                                className="w-full mt-1 px-4 py-2 border rounded-lg bg-white dark:bg-zinc-800 dark:border-gray-600"
                                 placeholder="Enter your name"
                             />
                         </div>
@@ -135,7 +130,7 @@ export default function RegisterPage() {
                                 value={form.email}
                                 onChange={handleChange}
                                 required
-                                className="w-full mt-1 px-4 py-2 border rounded-lg"
+                                className="w-full mt-1 px-4 py-2 border rounded-lg bg-white dark:bg-zinc-800 dark:border-gray-600"
                                 placeholder="Enter your email"
                             />
                         </div>
@@ -149,23 +144,23 @@ export default function RegisterPage() {
                                 value={form.password}
                                 onChange={handleChange}
                                 required
-                                className="w-full mt-1 px-4 py-2 border rounded-lg"
+                                className="w-full mt-1 px-4 py-2 border rounded-lg bg-white dark:bg-zinc-800 dark:border-gray-600"
                                 placeholder="Enter your password"
                             />
                         </div>
                         <button
                             type="submit"
-                            className="w-full bg-black text-white py-2 rounded-lg hover:bg-gray-800"
+                            className="w-full bg-black text-white py-2 rounded-lg hover:bg-zinc-800 transition-colors"
                         >
                             Create Account
                         </button>
                     </form>
 
-                    <p className="text-sm text-gray-600 mt-4">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-4">
                         Already have an account?{' '}
                         <span
                             onClick={handleNavigateToLogin}
-                            className="text-black font-semibold hover:underline cursor-pointer"
+                            className="text-black dark:text-white font-semibold hover:underline cursor-pointer"
                         >
                             Login Here
                         </span>
