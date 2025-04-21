@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import { NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key"; // Replace in production with env
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key"; // Replace with real secret in production
 
 export async function POST(req) {
   try {
@@ -35,21 +35,36 @@ export async function POST(req) {
       },
     });
 
-    // Generate JWT token
+    // Create JWT token
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      {
+        userId: user.id,
+        email: user.email,
+        displayName: user.displayName,
+        photo: user.photo || null,
+      },
       JWT_SECRET,
-      { expiresIn: "7d" } // adjust expiry as needed
+      { expiresIn: "7d" }
     );
 
-    return NextResponse.json({
+    // Set token in HttpOnly cookie
+    const response = NextResponse.json({
       user: {
         id: user.id,
         email: user.email,
         displayName: user.displayName,
       },
-      token,
     });
+
+    response.cookies.set("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: "/",
+    });
+
+    return response;
   } catch (error) {
     console.error("Signup error:", error);
     return NextResponse.json(

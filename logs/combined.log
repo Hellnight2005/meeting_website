@@ -47,3 +47,5 @@
 {"level":"error","message":"❌ Error during event creation: Event already exists during this time.","timestamp":"2025-04-17T09:37:17.655Z"}
 {"level":"info","message":"📅 Validating date inputs for calendar event...","timestamp":"2025-04-17T09:37:33.772Z"}
 {"level":"info","message":"✅ Calendar event created successfully.","timestamp":"2025-04-17T09:37:35.377Z"}
+{"level":"info","message":"📅 Validating date inputs for calendar event...","timestamp":"2025-04-21T09:31:56.551Z"}
+{"level":"info","message":"✅ Calendar event created successfully.","timestamp":"2025-04-21T09:31:58.524Z"}

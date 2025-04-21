@@ -57,7 +57,7 @@ export default function HeroSection() {
     }, []);
 
     return (
-        <section className="dark:bg-zinc-900 py-20 px-6 md:px-12 lg:px-24 text-white">
+        <section className="bg-white dark:bg-zinc-900 text-black dark:text-white py-20 px-6 md:px-12 lg:px-24">
             <NavBar />
 
             {/* Optional Top Nav Title + CTA */}
@@ -66,7 +66,7 @@ export default function HeroSection() {
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => setModalOpen(true)}
-                        className="bg-black dark:bg-white text-white dark:text-black px-6 py-2 rounded-full text-sm font-semibold shadow-md hover:scale-[1.03] transition-transform"
+                        className="bg-zinc-900 dark:bg-white text-white dark:text-black px-6 py-2 rounded-full text-sm font-semibold shadow-md hover:scale-[1.03] transition-transform"
                     >
                         Let’s Talk
                     </button>
@@ -86,7 +86,7 @@ export default function HeroSection() {
                     </h1>
                     <p
                         ref={descRef}
-                        className="mt-4 text-lg md:text-xl text-zinc-700 dark:text-zinc-300 max-w-lg mx-auto md:mx-0"
+                        className="mt-4 text-lg md:text-xl text-zinc-800 dark:text-zinc-300 max-w-lg mx-auto md:mx-0"
                     >
                         <span className="text-black dark:text-white font-semibold">
                             Whether you're
@@ -99,7 +99,7 @@ export default function HeroSection() {
                     <div ref={ctaRef} className="mt-8">
                         <button
                             onClick={() => setModalOpen(true)}
-                            className="bg-black dark:bg-white text-white dark:text-black px-6 py-3 rounded-full text-base font-semibold shadow-md hover:scale-105 transition-transform"
+                            className="bg-zinc-900 dark:bg-white text-white dark:text-black px-6 py-3 rounded-full text-base font-semibold shadow-md hover:scale-105 transition-transform"
                         >
                             Book a Meeting
                         </button>

@@ -1,8 +1,10 @@
 import { google } from "googleapis";
 import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
+import jwt from "jsonwebtoken";
 
 const prisma = new PrismaClient();
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key"; // Replace in production
 
 export async function GET(request) {
   try {
@@ -18,20 +20,14 @@ export async function GET(request) {
     const { tokens } = await oauth2Client.getToken(code);
     oauth2Client.setCredentials(tokens);
 
-    const oauth2 = google.oauth2({
-      auth: oauth2Client,
-      version: "v2",
-    });
-
+    const oauth2 = google.oauth2({ auth: oauth2Client, version: "v2" });
     const { data: profile } = await oauth2.userinfo.get();
 
-    // Look up existing user
     let user = await prisma.user.findUnique({
       where: { googleId: profile.id },
     });
 
     if (user) {
-      // Update tokens if needed
       user = await prisma.user.update({
         where: { id: user.id },
         data: {
@@ -40,7 +36,6 @@ export async function GET(request) {
         },
       });
     } else {
-      // Create new user
       user = await prisma.user.create({
         data: {
           googleId: profile.id,
@@ -53,15 +48,33 @@ export async function GET(request) {
       });
     }
 
-    // Optionally: generate a JWT here and set it in a cookie/session
-
-    const redirectUrl = new URL(
-      "http://localhost:3000/google-callback?id=<user_id>"
+    // 🔐 Create JWT token
+    const token = jwt.sign(
+      {
+        userId: user.id,
+        email: user.email,
+        displayName: user.displayName,
+        photo: user.photo,
+      },
+      JWT_SECRET,
+      { expiresIn: "7d" }
     );
-    redirectUrl.searchParams.set("id", user.id);
-    return NextResponse.redirect(redirectUrl);
+
+    // 🍪 Set HttpOnly cookie
+    const response = NextResponse.redirect(new URL("/", request.url));
+    response.cookies.set("token", token, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+    });
+
+    return response;
   } catch (error) {
     console.error("Google callback error:", error);
-    return NextResponse.redirect("http://localhost:3000/Admin");
+    return NextResponse.redirect(
+      "http://localhost:3000/login?error=google_auth_failed"
+    );
   }
 }

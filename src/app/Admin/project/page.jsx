@@ -31,10 +31,10 @@ function Project() {
                 + Create Meeting
             </button>
 
-            <CreateMeetingModal
+            {/* <CreateMeetingModal
                 open={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-            />
+            /> */}
         </>
 
     );

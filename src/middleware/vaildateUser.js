@@ -4,9 +4,15 @@ const prisma = new PrismaClient();
 export function checkAuthType(handler) {
   return async (req, ctx) => {
     try {
-      let userId =
+      // ✅ Await ctx.params if it exists
+      const params =
+        ctx?.params && typeof ctx.params.then === "function"
+          ? await ctx.params
+          : ctx.params;
+
+      const userId =
         req.headers.get("x-user-id") ||
-        ctx?.params?.id || // <== Use route param as fallback
+        params?.id ||
         (["POST", "PATCH", "PUT"].includes(req.method)
           ? await req
               .json()
@@ -17,9 +23,7 @@ export function checkAuthType(handler) {
       if (!userId) {
         return new Response(
           JSON.stringify({ message: "User ID is required" }),
-          {
-            status: 400,
-          }
+          { status: 400 }
         );
       }
 

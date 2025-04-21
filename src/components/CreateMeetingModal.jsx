@@ -1,139 +1,245 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import Link from "next/link";
+import React, { useState, useEffect, useRef } from "react";
 import gsap from "gsap";
-import NavBar from "@/components/Navbar";
-import CreateMeetingModal from "@/components/CreateMeetingModal";
+import Calendar from "./Calendar";
+import TimePicker from "./TimePicker";
+import { useUser } from "@/constants/UserContext";
 
-export default function HeroSection() {
-    const [projectName] = useState("webapp");
-    const [modalOpen, setModalOpen] = useState(false);
+export default function CreateMeetingModal({ open, onClose }) {
+    const modalRef = useRef(null);
+    const containerRef = useRef(null);
+    const { user, setUser } = useUser();
 
-    const titleRef = useRef(null);
-    const descRef = useRef(null);
-    const ctaRef = useRef(null);
-    const videoRef = useRef(null);
+    const today = new Date();
+    const defaultDay = today.toLocaleDateString(undefined, {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+    });
+    const defaultTime = today.toLocaleTimeString(undefined, {
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+
+    const [title, setTitle] = useState("");
+    const [description, setDescription] = useState("");
+    const [sector, setSector] = useState("");
+    const [showForm, setShowForm] = useState(false);
+    const [selectedDate, setSelectedDate] = useState(defaultDay);
+    const [selectedTime, setSelectedTime] = useState(defaultTime);
+    const [showLoginWarning, setShowLoginWarning] = useState(false);
 
     useEffect(() => {
-        const tl = gsap.timeline({ delay: 0.3 });
-
-        tl.from(titleRef.current, {
-            y: 50,
-            opacity: 0,
-            duration: 1,
-            ease: "power3.out",
-        })
-            .from(
-                descRef.current,
-                {
-                    y: 30,
+        if (open) {
+            const ctx = gsap.context(() => {
+                gsap.from(modalRef.current, {
                     opacity: 0,
-                    duration: 1,
+                    y: 40,
+                    duration: 0.4,
                     ease: "power2.out",
-                },
-                "-=0.6"
-            )
-            .from(
-                ctaRef.current,
-                {
-                    scale: 0.9,
+                });
+                gsap.from(".modal-item", {
                     opacity: 0,
-                    duration: 0.6,
-                    ease: "back.out(1.7)",
-                },
-                "-=0.5"
-            )
-            .from(
-                videoRef.current,
-                {
-                    y: 50,
-                    opacity: 0,
-                    duration: 1.2,
-                    ease: "power3.out",
-                },
-                "-=0.8"
-            );
-    }, []);
+                    y: 20,
+                    stagger: 0.1,
+                    delay: 0.1,
+                });
+            }, containerRef);
+            return () => ctx.revert();
+        }
+    }, [open]);
+
+    useEffect(() => {
+        const handleOutsideClick = (e) => {
+            if (modalRef.current && !modalRef.current.contains(e.target)) {
+                onClose?.();
+            }
+        };
+        document.addEventListener("mousedown", handleOutsideClick);
+        return () => document.removeEventListener("mousedown", handleOutsideClick);
+    }, [onClose]);
+
+    const getUserFromToken = () => {
+        if (typeof window === "undefined") return null;
+        try {
+            const match = document.cookie.match(/(?:^|;\s*)token=([^;]*)/);
+            const token = match?.[1];
+            if (!token) return null;
+            const payload = token.split(".")[1];
+            const decoded = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
+            const parsed = JSON.parse(decoded);
+            return parsed?.userId || null;
+        } catch (err) {
+            console.error("Failed to decode token:", err);
+            return null;
+        }
+    };
+
+    const handleCreate = async () => {
+        let currentUser = user;
+
+        if (!currentUser?.id) {
+            const tokenUserId = getUserFromToken();
+            if (tokenUserId) {
+                try {
+                    const res = await fetch(`/api/user/${tokenUserId}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                    });
+                    const userData = await res.json();
+                    if (userData?.User?.id) {
+                        setUser(userData.User);
+                        currentUser = userData.User;
+                    } else {
+                        setShowLoginWarning(true);
+                        return;
+                    }
+                } catch (err) {
+                    console.error("Failed to fetch user data:", err);
+                    setShowLoginWarning(true);
+                    return;
+                }
+            } else {
+                setShowLoginWarning(true);
+                return;
+            }
+        }
+
+        if (!currentUser?.id) {
+            setShowLoginWarning(true);
+            return;
+        }
+
+        const fullTitle = `${title.trim()} - ${description.trim()} (Sector: ${sector.trim()})`;
+
+        const payload = {
+            userId: currentUser.id,
+            user_name: currentUser.displayName,
+            title: fullTitle,
+            selectDay: selectedDate.display || selectedDate,
+            selectTime: selectedTime,
+            slot: 1,
+        };
+
+        try {
+            const response = await fetch("/api/meeting/creating_meeting", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+
+            const result = await response.json();
+
+            if (result?.success && result?.data?.id) {
+                localStorage.setItem("createdMeetingId", result.data.id); // 🔥 Save meeting ID
+            }
+
+            onClose?.();
+        } catch (err) {
+            console.error("Failed to create meeting:", err);
+        }
+    };
+
+
+    if (!open) return null;
 
     return (
-        <section className="bg-white dark:bg-zinc-900 text-black dark:text-white py-20 px-6 md:px-12 lg:px-24">
-            <NavBar />
+        <div
+            ref={containerRef}
+            className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center px-4"
+        >
+            <div
+                ref={modalRef}
+                className="bg-zinc-900 text-white rounded-2xl shadow-2xl p-8 w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+            >
+                <h2 className="text-2xl font-bold text-center mb-6">Create a Meeting</h2>
 
-            {/* Optional Top Nav Title + CTA */}
-            <nav className="absolute top-6 left-0 right-0 px-6 flex justify-between items-center z-20">
-                <div className="text-2xl font-bold tracking-tight">{projectName}</div>
-                <div className="flex items-center gap-4">
-                    <button
-                        onClick={() => setModalOpen(true)}
-                        className="bg-zinc-900 dark:bg-white text-white dark:text-black px-6 py-2 rounded-full text-sm font-semibold shadow-md hover:scale-[1.03] transition-transform"
-                    >
-                        Let’s Talk
-                    </button>
-                </div>
-            </nav>
-
-            {/* Hero Content */}
-            <div className="container mx-auto flex flex-col-reverse md:flex-row items-center justify-between px-6 pt-36 md:pt-48 gap-16 relative z-10">
-                {/* Left Text */}
-                <div className="w-full md:w-1/2 text-center md:text-left -mt-8 md:-mt-12 mb-6">
-                    <h1
-                        ref={titleRef}
-                        className="text-[10vw] md:text-[4vw] font-extrabold leading-tight tracking-tight"
-                    >
-                        We Build Websites{" "}
-                        <br className="hidden md:block" /> That Get You Noticed.
-                    </h1>
-                    <p
-                        ref={descRef}
-                        className="mt-4 text-lg md:text-xl text-zinc-800 dark:text-zinc-300 max-w-lg mx-auto md:mx-0"
-                    >
-                        <span className="text-black dark:text-white font-semibold">
-                            Whether you're
-                        </span>{" "}
-                        a brand, creator, or business — we craft stunning web experiences
-                        that convert.
-                    </p>
-
-                    {/* CTA */}
-                    <div ref={ctaRef} className="mt-8">
+                {showLoginWarning ? (
+                    <div className="text-center space-y-4">
+                        <p className="text-lg font-semibold text-red-500">
+                            Please login first to create a meeting.
+                        </p>
                         <button
-                            onClick={() => setModalOpen(true)}
-                            className="bg-zinc-900 dark:bg-white text-white dark:text-black px-6 py-3 rounded-full text-base font-semibold shadow-md hover:scale-105 transition-transform"
+                            onClick={() => setShowLoginWarning(false)}
+                            className="bg-white text-black rounded px-4 py-2 font-medium"
                         >
-                            Book a Meeting
+                            Got it
                         </button>
                     </div>
-                </div>
-
-                {/* Right Mockup + Video */}
-                <div className="w-full md:w-1/2 flex justify-center mb-4 relative">
-                    <div
-                        ref={videoRef}
-                        className="w-full max-w-[860px] aspect-[16/10] rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-2xl bg-white dark:bg-zinc-900 overflow-hidden"
-                    >
-                        {/* Top Bar */}
-                        <div className="bg-zinc-100 dark:bg-zinc-800 h-10 flex items-center px-4 border-b border-zinc-200 dark:border-zinc-700">
-                            <span className="w-3 h-3 bg-red-400 rounded-full mr-2"></span>
-                            <span className="w-3 h-3 bg-yellow-400 rounded-full mr-2"></span>
-                            <span className="w-3 h-3 bg-green-400 rounded-full"></span>
+                ) : !showForm ? (
+                    <div className="modal-item space-y-4">
+                        <label className="block font-medium">What's the meeting about?</label>
+                        <input
+                            type="text"
+                            placeholder="Enter meeting title"
+                            className="w-full bg-zinc-800 border border-zinc-600 rounded-md px-4 py-2 text-white"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                        />
+                        <input
+                            type="text"
+                            placeholder="Brief description"
+                            className="w-full bg-zinc-800 border border-zinc-600 rounded-md px-4 py-2 text-white"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                        />
+                        <input
+                            type="text"
+                            placeholder="Main sector (e.g., FinTech, Education)"
+                            className="w-full bg-zinc-800 border border-zinc-600 rounded-md px-4 py-2 text-white"
+                            value={sector}
+                            onChange={(e) => setSector(e.target.value)}
+                        />
+                        <button
+                            onClick={() =>
+                                title.trim() && description.trim() && sector.trim() && setShowForm(true)
+                            }
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded mt-4 transition"
+                        >
+                            Next
+                        </button>
+                    </div>
+                ) : (
+                    <div className="space-y-8">
+                        <div className="modal-item text-white space-y-2">
+                            <p className="text-lg font-medium">{title}</p>
+                            <p>{description}</p>
+                            <p className="italic text-sm text-blue-300">Sector: {sector}</p>
+                            <p>📅 {selectedDate?.display || selectedDate}</p>
+                            <p>⏰ {selectedTime}</p>
                         </div>
 
-                        {/* Video */}
-                        <video
-                            src="/video/mockup_vido.mp4"
-                            autoPlay
-                            loop
-                            muted
-                            playsInline
-                            className="w-full h-full object-cover"
-                        />
-                    </div>
-                </div>
-            </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="modal-item bg-zinc-800 p-4 rounded-xl shadow">
+                                <Calendar
+                                    selectedDate={selectedDate}
+                                    setSelectedDate={setSelectedDate}
+                                    highlightColor="bg-blue-500"
+                                />
+                            </div>
+                            <div className="modal-item">
+                                <TimePicker
+                                    selectedDate={selectedDate}
+                                    setSelectedDate={setSelectedDate}
+                                    selectedTime={selectedTime}
+                                    setSelectedTime={setSelectedTime}
+                                />
+                            </div>
+                        </div>
 
-            {/* Modal */}
-            <CreateMeetingModal open={modalOpen} onClose={() => setModalOpen(false)} />
-        </section>
+                        <div className="text-center">
+                            <button
+                                onClick={handleCreate}
+                                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded transition"
+                            >
+                                Create Meeting
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
     );
 }

@@ -12,30 +12,13 @@ function validateMeetingData({
   selectDay,
   selectTime,
   slot,
-  user_role,
-  type,
 }) {
-  if (
-    !user_name ||
-    !title ||
-    !selectDay ||
-    !selectTime ||
-    !slot ||
-    !user_role
-  ) {
-    return "All required fields (user_name, title, selectDay, selectTime, slot, user_role) must be filled.";
+  if (!user_name || !title || !selectDay || !selectTime || !slot) {
+    return "All required fields (user_name, title, selectDay, selectTime, slot, ) must be filled.";
   }
 
   if (typeof slot !== "number" || slot <= 0) {
     return "Slot must be a positive number.";
-  }
-
-  if (type && !validTypes.includes(type)) {
-    return `Invalid meeting type. Allowed: ${validTypes.join(", ")}.`;
-  }
-
-  if (!validRoles.includes(user_role.toLowerCase())) {
-    return `Invalid user role. Allowed: ${validRoles.join(", ")}.`;
   }
 
   return null;
@@ -88,12 +71,12 @@ export async function POST(req) {
       data: {
         userId: user.id,
         user_name: user.displayName,
-        user_role: user.role || "user",
+        user_role: "user",
         title: data.title,
         selectDay: data.selectDay,
         selectTime: data.selectTime,
         slot: data.slot,
-        type: data.type || "line_up",
+        type: "line_up",
       },
     });
 

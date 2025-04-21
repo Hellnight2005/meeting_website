@@ -16,7 +16,7 @@ export const UserProvider = ({ children }) => {
 
         if (res.ok) {
           const result = await res.json();
-          setUserState({ ...result.User }); // Add 'type' manually if not returned
+          setUserState({ ...result.User });
         } else {
           console.error("Failed to fetch user from API");
         }
@@ -27,6 +27,31 @@ export const UserProvider = ({ children }) => {
       setUserState(data);
     }
   };
+
+  const getUserFromToken = () => {
+    if (typeof window === "undefined") return null;
+    try {
+      const match = document.cookie.match(/(?:^|;\s*)token=([^;]*)/);
+      const token = match?.[1];
+      if (!token) return null;
+      const payload = token.split(".")[1];
+      const decoded = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
+      const parsed = JSON.parse(decoded);
+      return parsed?.userId || null;
+    } catch (err) {
+      console.error("Failed to decode token:", err);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    if (!user) {
+      const userId = getUserFromToken();
+      if (userId) {
+        setUser({ id: userId });
+      }
+    }
+  }, []);
 
   return (
     <UserContext.Provider value={{ user, setUser }}>

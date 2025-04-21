@@ -16,44 +16,46 @@ export async function POST(req) {
       );
     }
 
-    // Find user
     const user = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
     });
 
-    if (!user) {
+    if (!user || !(await bcrypt.compare(password, user.password))) {
       return NextResponse.json(
         { error: "Invalid credentials" },
         { status: 401 }
       );
     }
 
-    // Compare password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return NextResponse.json(
-        { error: "Invalid credentials" },
-        { status: 401 }
-      );
-    }
-
-    // Sign JWT
     const token = jwt.sign(
-      { userId: user.id, email: user.email },
+      {
+        userId: user.id,
+        email: user.email,
+        displayName: user.displayName,
+        photo: user.photo,
+      },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
 
-    // Return user + token
-    return NextResponse.json({
+    const res = NextResponse.json({
       user: {
         id: user.id,
         email: user.email,
         displayName: user.displayName,
         photo: user.photo,
       },
-      token,
     });
+
+    res.cookies.set("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 60 * 60, // 1 hour
+      path: "/",
+    });
+
+    return res;
   } catch (error) {
     console.error("Login error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

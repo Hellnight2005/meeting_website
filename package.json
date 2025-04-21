@@ -27,6 +27,7 @@
     "framer-motion": "^12.7.4",
     "googleapis": "^148.0.0",
     "gsap": "^3.12.7",
+    "js-cookie": "^3.0.5",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.487.0",
     "moment": "^2.30.1",
