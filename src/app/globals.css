@@ -1,17 +1,5 @@
 @import "tailwindcss";
 
-/* Optional font import if NOT using `next/font` */
-/* @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap"); */
-
-/* ============================= */
-/* Root Variables & Theme Setup */
-/* ============================= */
-@font-face {
-  font-family: "MyCustomFont";
-  src: url("/fonts/extralight.ttf") format("truetype");
-  font-weight: normal;
-  font-style: normal;
-}
 :root {
   font-family: "MyCustomFont", sans-serif;
 

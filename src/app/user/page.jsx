@@ -10,7 +10,7 @@ function User_Section() {
     return (
         <>
             <HeroSection />
-            {/*  */}
+            {/* <ServiceSection /> */}
             <WhyUs />
             <HowItWorks />
             <Showcase />

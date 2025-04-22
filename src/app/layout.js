@@ -2,6 +2,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { MeetingProvider } from "@/constants/MeetingContext";
 import { UserProvider } from "@/constants/UserContext";
+import { Toaster } from "react-hot-toast"; // ✅ Import this
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,7 +24,11 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body>
         <UserProvider>
-          <MeetingProvider>{children}</MeetingProvider>
+          <MeetingProvider>
+            {children}
+            <Toaster position="top-right" reverseOrder={false} />{" "}
+            {/* ✅ Add this */}
+          </MeetingProvider>
         </UserProvider>
       </body>
     </html>

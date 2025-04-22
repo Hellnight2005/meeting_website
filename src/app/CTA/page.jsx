@@ -28,9 +28,9 @@ export default function PricingCTA() {
 
     return (
         <section className="dark:bg-zinc-900 py-20 px-6 md:px-12 lg:px-24 text-white">
-            <div ref={ctaRef} className="max-w-3xl mx-auto px-6">
-                <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                    Every project is unique. Let’s chat.
+            <div ref={ctaRef} className="max-w-3xl mx-auto px-6 ">
+                <h2 className="text-3xl md:text-4xl font-bold mb-4 ">
+                    Every project is unique. Let’s Meet
                 </h2>
                 <p className="text-lg mb-8 text-zinc-400">
                     Whether you have a full vision or just an idea, we’ll help bring it to life.

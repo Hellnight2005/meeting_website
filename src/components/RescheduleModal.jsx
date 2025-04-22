@@ -5,15 +5,21 @@ import Calendar from "./Calendar";
 import TimePicker from "./TimePicker";
 import gsap from "gsap";
 import { useMeetingContext } from "../constants/MeetingContext";
+import { useUser } from "../constants/UserContext";
+import Image from "next/image";
+import toast from "react-hot-toast";
 
 function RescheduleModal({ meetingId, onClose, onSave }) {
     const { meetingsData, refreshMeetings } = useMeetingContext();
+    const { user, fetchUserByAdmin } = useUser();
 
     const meeting = meetingsData.find((m) => m.id === meetingId);
+    const { selectDay, selectTime, userId, user_name, title } = meeting || {};
 
-    const { selectDay, selectTime, user_name, title } = meeting || {};
     const [selectedTime, setSelectedTime] = useState(selectTime || "");
     const [selectedDate, setSelectedDate] = useState(selectDay || "");
+    const [targetUser, setTargetUser] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const modalRef = useRef(null);
     const containerRef = useRef(null);
@@ -42,59 +48,75 @@ function RescheduleModal({ meetingId, onClose, onSave }) {
     }, []);
 
     useEffect(() => {
-        function handleClickOutside(event) {
-            if (modalRef.current && !modalRef.current.contains(event.target)) {
+        const handleClickOutside = (e) => {
+            if (modalRef.current && !modalRef.current.contains(e.target)) {
                 onClose?.();
             }
-        }
+        };
+
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [onClose]);
 
-    const hasChanges = () => {
-        return selectedTime !== selectTime || selectedDate !== selectDay;
-    };
+    useEffect(() => {
+        const fetchUserDetails = async () => {
+            if (user?.role === "admin" && meeting?.userId) {
+                const fetchedUser = await fetchUserByAdmin(meeting.userId);
+                if (fetchedUser) setTargetUser(fetchedUser);
+            }
+        };
+        fetchUserDetails();
+    }, [user, meeting, fetchUserByAdmin]);
+
+    const hasChanges = () =>
+        selectedTime !== selectTime || selectedDate !== selectDay;
 
     const handleSave = async () => {
-        if (!selectedDate || !selectedTime) return;
+        if (!selectedDate || !selectedTime || isSubmitting) return;
 
-        const newDay = selectedDate.display || selectedDate;
-        const newTime = selectedTime;
-
-        const rescheduleData = {
-            selectDay: newDay,
-            selectTime: newTime,
+        setIsSubmitting(true);
+        const payload = {
+            selectDay: selectedDate.display || selectedDate,
+            selectTime,
         };
 
         try {
-            const response = await fetch(`/api/meeting/reschedule/${meetingId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(rescheduleData),
+            const res = await fetch(`/api/meeting/reschedule/${meetingId}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
             });
 
-            if (response.ok) {
+            if (res.ok) {
+                toast.success("✅ Meeting rescheduled successfully!");
                 refreshMeetings();
-                if (onSave) {
-                    onSave({
-                        ...meeting,
-                        selectDay: newDay,
-                        selectTime: newTime,
-                        slot: 1,
-                    });
-                }
+                onSave?.({
+                    ...meeting,
+                    ...payload,
+                    slot: 1,
+                });
+                onClose?.();
+            } else {
+                toast.error("❌ Failed to reschedule the meeting.");
             }
         } catch (error) {
-            // Error handling only (no console.log)
+            console.error("Reschedule failed", error);
+            toast.error("⚠️ Something went wrong.");
+        } finally {
+            setIsSubmitting(false);
         }
-
-        onClose?.();
     };
 
+    const displayUser = targetUser || user || {};
+    const displayName = displayUser.displayName || user_name || "User";
+    const profileImage = displayUser.photo;
+
     if (!meeting) {
-        return <div className="text-center py-10 text-gray-600">Loading meeting details...</div>;
+        return (
+            <div className="text-center py-10 text-gray-600 dark:text-gray-300">
+                Loading meeting details...
+            </div>
+        );
     }
 
     return (
@@ -104,20 +126,37 @@ function RescheduleModal({ meetingId, onClose, onSave }) {
         >
             <div
                 ref={modalRef}
-                className="bg-white rounded-2xl shadow-2xl p-8 max-w-7xl w-full max-h-[90vh] overflow-y-auto"
+                className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-8 max-w-7xl w-full max-h-[90vh] overflow-y-auto"
             >
-                <h2 className="text-center text-3xl font-extrabold text-gray-800 mb-10 tracking-tight">
+                <h2 className="text-center text-3xl font-extrabold text-gray-800 dark:text-white mb-10 tracking-tight">
                     Reschedule Appointment
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                    <div className="modal-section space-y-6 text-gray-800 px-4">
+                    {/* Left Section - User Info */}
+                    <div className="modal-section space-y-6 text-gray-800 dark:text-white px-4">
                         <div className="flex items-center gap-4">
-                            <div className="bg-gradient-to-br from-purple-600 to-blue-600 text-white text-xl font-semibold rounded-full w-14 h-14 flex items-center justify-center shadow-lg">
-                                {user_name?.split(" ").map((n) => n[0]).join("").toUpperCase()}
-                            </div>
+                            {profileImage ? (
+                                <div className="relative w-16 h-16 rounded-full overflow-hidden ring-2 ring-gray-300 shadow-md">
+                                    <Image
+                                        src={profileImage}
+                                        alt={displayName}
+                                        fill
+                                        className="object-cover"
+                                        sizes="64px"
+                                    />
+                                </div>
+                            ) : (
+                                <div className="bg-gradient-to-br from-purple-600 to-blue-600 text-white text-xl font-semibold rounded-full w-16 h-16 flex items-center justify-center shadow-md ring-2 ring-gray-300">
+                                    {displayName
+                                        .split(" ")
+                                        .map((n) => n[0])
+                                        .join("")
+                                        .toUpperCase()}
+                                </div>
+                            )}
                             <div>
-                                <p className="font-semibold text-xl">{user_name}</p>
+                                <p className="font-semibold text-xl">{displayName}</p>
                                 <p className="text-sm text-gray-500">{title}</p>
                             </div>
                         </div>
@@ -139,15 +178,17 @@ function RescheduleModal({ meetingId, onClose, onSave }) {
                                 {hasChanges() && (
                                     <button
                                         onClick={handleSave}
-                                        className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition"
+                                        disabled={isSubmitting}
+                                        className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition disabled:opacity-50"
                                     >
-                                        Save Changes
+                                        {isSubmitting ? "Saving..." : "Save Changes"}
                                     </button>
                                 )}
                             </div>
                         </div>
                     </div>
 
+                    {/* Middle Section - Calendar */}
                     <div className="modal-section bg-[#1e293b] rounded-2xl py-6 px-4 text-white shadow-lg">
                         <Calendar
                             selectedDate={selectedDate}
@@ -156,6 +197,7 @@ function RescheduleModal({ meetingId, onClose, onSave }) {
                         />
                     </div>
 
+                    {/* Right Section - Time Picker */}
                     <div className="modal-section flex-1 overflow-y-auto pr-1 hide-scrollbar space-y-3">
                         <TimePicker
                             selectedDate={selectedDate}

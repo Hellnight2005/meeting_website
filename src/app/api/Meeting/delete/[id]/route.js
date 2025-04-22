@@ -1,12 +1,12 @@
 import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { deleteCalendarEvent } from "@/config/googleCalendar";
-import { logger } from "@/lib/logger"; // Optional logging
+import { logger } from "@/lib/logger.server"; // Optional logging
 
 const prisma = new PrismaClient();
 
-export async function DELETE(req, { params }) {
-  const id = params.id;
+export async function DELETE(req, context) {
+  const { id } = context.params;
 
   try {
     // 1. Find the meeting
@@ -33,7 +33,7 @@ export async function DELETE(req, { params }) {
         user.refreshToken
       );
 
-      if (!deleteEventResponse.success) {
+      if (!deleteEventResponse?.success) {
         return NextResponse.json(
           { message: "Failed to delete the calendar event" },
           { status: 500 }
@@ -57,5 +57,8 @@ export async function DELETE(req, { params }) {
       { message: "Failed to delete meeting" },
       { status: 500 }
     );
+  } finally {
+    // Optional: Only use this if you're not relying on connection pooling
+    // await prisma.$disconnect();
   }
 }

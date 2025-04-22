@@ -8,14 +8,25 @@ const Calendar = ({ selectedDate, setSelectedDate, theme = 'dark' }) => {
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const daysRef = useRef([]);
 
-    // Memoize days of the current month to avoid unnecessary recalculations
     const currentMonthStart = startOfMonth(currentMonth);
+
+    // Jump to the selected month if selectedDate changes
+    useEffect(() => {
+        if (selectedDate?.raw) {
+            const selectedMonthStart = startOfMonth(selectedDate.raw);
+            if (format(currentMonthStart, 'yyyy-MM') !== format(selectedMonthStart, 'yyyy-MM')) {
+                setCurrentMonth(selectedMonthStart);
+            }
+        }
+    }, [selectedDate?.raw]);
+
+    // Memoize days of the current month
     const currentMonthDays = useMemo(() => {
         const end = endOfMonth(currentMonthStart);
         return eachDayOfInterval({ start: currentMonthStart, end });
     }, [currentMonth]);
 
-    // GSAP animation only triggers on month change
+    // Animate days on month change
     useEffect(() => {
         gsap.fromTo(
             daysRef.current,
@@ -30,11 +41,10 @@ const Calendar = ({ selectedDate, setSelectedDate, theme = 'dark' }) => {
         );
     }, [currentMonth]);
 
-    // Use formatDate function to format the date
+    // Handle selecting a day
     const handleDayClick = (date) => {
         const formattedDate = formatDate(date);
         setSelectedDate({ raw: date, display: formattedDate });
-        console.log('Selected Date:', formattedDate);  // Log the selected date to the console
     };
 
     const renderDay = (date, index) => {
@@ -42,10 +52,7 @@ const Calendar = ({ selectedDate, setSelectedDate, theme = 'dark' }) => {
         const isSelected = selectedDate?.raw && format(selectedDate.raw, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
         const isDark = theme === 'dark';
 
-        // Base classes for all days
         const baseClasses = `p-3 cursor-pointer text-center rounded-lg text-sm font-medium transition-all duration-200 ease-in-out`;
-
-        // Today's highlight and selected day styles
         const todayClass = isToday(date)
             ? isDark
                 ? 'bg-blue-600 text-white font-semibold'

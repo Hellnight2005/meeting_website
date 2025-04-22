@@ -44,6 +44,31 @@ export const UserProvider = ({ children }) => {
     }
   };
 
+  // ✅ Admin-only fetch user by ID
+  const fetchUserByAdmin = async (targetUserId) => {
+    if (user?.role !== "admin") {
+      console.warn("Unauthorized: Only admin can fetch other users.");
+      return null;
+    }
+
+    try {
+      const res = await fetch(`/api/user/${targetUserId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (res.ok) {
+        const result = await res.json();
+        return result.User;
+      } else {
+        console.error("Failed to fetch user by ID");
+        return null;
+      }
+    } catch (error) {
+      console.error("Error fetching user by ID:", error);
+      return null;
+    }
+  };
+
   useEffect(() => {
     if (!user) {
       const userId = getUserFromToken();
@@ -54,7 +79,7 @@ export const UserProvider = ({ children }) => {
   }, []);
 
   return (
-    <UserContext.Provider value={{ user, setUser }}>
+    <UserContext.Provider value={{ user, setUser, fetchUserByAdmin }}>
       {children}
     </UserContext.Provider>
   );

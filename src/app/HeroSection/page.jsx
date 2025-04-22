@@ -58,23 +58,18 @@ export default function HeroSection() {
 
     return (
         <section className="bg-white dark:bg-zinc-900 text-black dark:text-white py-20 px-6 md:px-12 lg:px-24">
-            <NavBar />
 
             {/* Optional Top Nav Title + CTA */}
             <nav className="absolute top-6 left-0 right-0 px-6 flex justify-between items-center z-20">
                 <div className="text-2xl font-bold tracking-tight">{projectName}</div>
                 <div className="flex items-center gap-4">
-                    <button
-                        onClick={() => setModalOpen(true)}
-                        className="bg-zinc-900 dark:bg-white text-white dark:text-black px-6 py-2 rounded-full text-sm font-semibold shadow-md hover:scale-[1.03] transition-transform"
-                    >
-                        Let’s Talk
-                    </button>
+
+                    <NavBar />
                 </div>
             </nav>
 
             {/* Hero Content */}
-            <div className="container mx-auto flex flex-col-reverse md:flex-row items-center justify-between px-6 pt-36 md:pt-48 gap-16 relative z-10">
+            <div className="container mx-auto flex flex-col md:flex-row items-center justify-between px-6 pt-36 md:pt-48 gap-16 relative z-10">
                 {/* Left Text */}
                 <div className="w-full md:w-1/2 text-center md:text-left -mt-8 md:-mt-12 mb-6">
                     <h1
