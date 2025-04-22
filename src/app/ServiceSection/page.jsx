@@ -16,83 +16,71 @@ gsap.registerPlugin(ScrollTrigger);
 
 const services = [
     {
-        icon: <Globe size={40} />,
+        icon: <Globe size={40} color="white" />,
         title: "Website Creation",
         description:
-            "Beautiful, high-performance websites tailored to your brand and goals.",
+            "We craft stunning, responsive websites that not only look great but work flawlessly across devices—designed to convert visitors into loyal customers.",
     },
     {
-        icon: <Brush size={40} />,
+        icon: <Brush size={40} color="white" />,
         title: "UI/UX Design",
         description:
-            "Modern, intuitive user interfaces that deliver seamless experiences.",
+            "User-first design is at our core. We create smooth, intuitive digital experiences that keep your users engaged and coming back.",
     },
     {
-        icon: <BarChart2 size={40} />,
+        icon: <BarChart2 size={40} color="white" />,
         title: "SEO Optimization",
         description:
-            "We build with SEO in mind to help your content rank and grow traffic.",
+            "What good is a great website if no one sees it? We build and optimize your site to climb search engine rankings and attract organic traffic that grows over time.",
     },
     {
-        icon: <Settings size={40} />,
+        icon: <Settings size={40} color="white" />,
         title: "Backend Development",
         description:
-            "Smart, scalable systems built with solid database and API logic.",
+            "We build reliable, scalable backend systems that power your business—APIs, databases, and server logic—all tuned for performance and security.",
     },
     {
-        icon: <Brain size={40} />,
+        icon: <Brain size={40} color="white" />,
         title: "Strategy & Consulting",
         description:
-            "From discovery to deployment, we guide your digital roadmap.",
+            "Need direction? We help businesses define their digital strategy, avoid pitfalls, and make tech decisions with confidence—from planning to execution.",
     },
     {
-        icon: <LineChart size={40} />,
+        icon: <LineChart size={40} color="white" />,
         title: "Analytics & Performance",
         description:
-            "Data-driven insights to improve site speed, conversion & ROI.",
+            "Numbers tell a story. We set up smart tracking and performance metrics so you can make informed decisions and boost your ROI effectively.",
     },
 ];
 
+
 export default function ServiceSection() {
     const sectionRef = useRef(null);
-    const bubbleRef = useRef(null);
 
     useEffect(() => {
         const ctx = gsap.context(() => {
             gsap.from(".card", {
                 scrollTrigger: {
                     trigger: sectionRef.current,
-                    start: "top 70%",
+                    start: "top 80%",
                     once: true,
                 },
                 opacity: 0,
-                y: 60,
-                duration: 1,
-                stagger: 0.2,
-                ease: "power3.out",
+                y: 50,
+                duration: 0.6,
+                stagger: 0.1,
+                ease: "power2.out",
             });
 
             gsap.from(".heading", {
                 scrollTrigger: {
                     trigger: sectionRef.current,
-                    start: "top 75%",
+                    start: "top 85%",
                     once: true,
                 },
                 opacity: 0,
-                y: 40,
-                duration: 1,
-                ease: "power2.out",
-            });
-
-            gsap.to(bubbleRef.current, {
-                scrollTrigger: {
-                    trigger: sectionRef.current,
-                    start: "top bottom",
-                    end: "bottom top",
-                    scrub: true,
-                },
-                y: 60,
-                opacity: 1,
+                y: 30,
+                duration: 0.8,
                 ease: "power2.out",
             });
         }, sectionRef);
@@ -105,27 +93,6 @@ export default function ServiceSection() {
             ref={sectionRef}
             className="relative dark:bg-zinc-900 bg-white py-20 px-6 md:px-12 lg:px-24 text-white overflow-hidden"
         >
-            {/* Background bubbles */}
-            <div
-                ref={bubbleRef}
-                className="absolute inset-0 opacity-10 pointer-events-none z-0"
-                aria-hidden="true"
-            >
-                <svg
-                    className="w-full h-full"
-                    viewBox="0 0 600 600"
-                    xmlns="http://www.w3.org/2000/svg"
-                >
-                    <g fill="none" stroke="currentColor" strokeWidth="0.3">
-                        <circle cx="150" cy="150" r="40" />
-                        <circle cx="400" cy="100" r="20" />
-                        <circle cx="500" cy="300" r="50" />
-                        <circle cx="100" cy="400" r="25" />
-                        <circle cx="300" cy="500" r="30" />
-                    </g>
-                </svg>
-            </div>
-
             {/* Heading */}
             <div className="relative z-10 max-w-7xl mx-auto text-center mb-16">
                 <h2 className="heading text-4xl md:text-5xl font-extrabold mb-4 tracking-tight text-black dark:text-white">
@@ -142,19 +109,17 @@ export default function ServiceSection() {
                 {services.map(({ icon, title, description }, index) => (
                     <div
                         key={index}
-                        className="card group transform transition duration-300 ease-out hover:scale-[1.03] hover:-rotate-1 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-3xl p-10 text-center shadow-md hover:shadow-xl"
+                        className="card group relative overflow-hidden transform transition-all duration-300 ease-out border border-zinc-200 dark:border-zinc-700 rounded-3xl p-10 text-center shadow-md hover:scale-105 bg-zinc-100 dark:bg-zinc-900 group-hover:bg-black dark:group-hover:bg-white"
                     >
-                        <div className="relative z-10">
-                            <div className="flex items-center justify-center w-16 h-16 mx-auto mb-6 rounded-full bg-white/20 dark:bg-white/10 backdrop-blur-md group-hover:scale-110 transition-transform">
-                                {icon}
-                            </div>
-                            <h3 className="text-xl font-semibold mb-2 tracking-wide text-black dark:text-white">
-                                {title}
-                            </h3>
-                            <p className="text-zinc-700 dark:text-zinc-300 text-sm leading-relaxed">
-                                {description}
-                            </p>
+                        <div className="flex items-center justify-center w-16 h-16 mx-auto mb-6 rounded-full bg-white/40 dark:bg-white/20 backdrop-blur-md group-hover:bg-white dark:group-hover:bg-black transition-colors duration-300">
+                            {icon}
                         </div>
+                        <h3 className="text-xl font-semibold mb-2 tracking-wide text-black dark:text-white group-hover:text-white dark:group-hover:text-black transition-colors duration-300">
+                            {title}
+                        </h3>
+                        <p className="text-zinc-700 dark:text-zinc-100 text-sm leading-relaxed group-hover:text-white dark:group-hover:text-black transition-colors duration-300">
+                            {description}
+                        </p>
                     </div>
                 ))}
             </div>
