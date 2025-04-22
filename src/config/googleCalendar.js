@@ -1,9 +1,8 @@
 const { google } = require("googleapis");
-const prisma = require("@/lib/prisma"); // Prisma client
-const logger = require("@/lib/logger"); // Using the same logger as your original
+const prisma = require("@/lib/prisma");
+const logger = require("@/lib/logger.server");
 require("dotenv").config();
 
-// Create reusable OAuth client
 const createOAuthClient = () => {
   return new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
@@ -12,7 +11,6 @@ const createOAuthClient = () => {
   );
 };
 
-// Refresh Access Token using Refresh Token
 const refreshAccessToken = async (refreshToken) => {
   try {
     const oauth2Client = createOAuthClient();
@@ -31,7 +29,24 @@ const refreshAccessToken = async (refreshToken) => {
   }
 };
 
-// Check if overlapping event already exists
+const getAuthorizedClient = async ({ accessToken, refreshToken }) => {
+  const auth = createOAuthClient();
+  auth.setCredentials({ access_token: accessToken });
+
+  try {
+    await google.calendar({ version: "v3", auth }).calendarList.list();
+    return auth;
+  } catch (err) {
+    if (refreshToken) {
+      const newAccessToken = await refreshAccessToken(refreshToken);
+      auth.setCredentials({ access_token: newAccessToken });
+      return auth;
+    } else {
+      throw new Error("No valid access or refresh token provided.");
+    }
+  }
+};
+
 const checkForExistingEvent = async (calendar, startDateTime, endDateTime) => {
   try {
     const timeMin = new Date(startDateTime).toISOString();
@@ -47,13 +62,11 @@ const checkForExistingEvent = async (calendar, startDateTime, endDateTime) => {
 
     return events.data.items.length > 0;
   } catch (error) {
-    logger.error("❌ Error during event creation:", error);
-
+    logger.error("❌ Error during event check:", error);
     throw new Error("Error checking for existing events.");
   }
 };
 
-// Create calendar event
 const createCalendarEvent = async ({
   accessToken,
   refreshToken,
@@ -76,11 +89,10 @@ const createCalendarEvent = async ({
     startDateTime = new Date(startDateTime).toISOString();
     endDateTime = new Date(endDateTime).toISOString();
   } catch (err) {
-    logger.error(`❌ Invalid date format provided: ${err.message}`);
+    logger.error(`❌ Invalid date format: ${err.message}`);
     throw new Error("Invalid date format for start or end time.");
   }
 
-  // Fetch the admin's email from the user model based on the role "Admin"
   let adminEmail;
   try {
     const adminUser = await prisma.user.findFirst({ where: { role: "admin" } });
@@ -94,17 +106,12 @@ const createCalendarEvent = async ({
     throw new Error("Error fetching admin email.");
   }
 
-  // Add admin as a guest in the attendees array
-  const admin = {
+  attendees.push({
     email: adminEmail,
     displayName: "Admin",
-  };
+  });
 
-  attendees.push(admin);
-
-  const userAuth = createOAuthClient();
-  userAuth.setCredentials({ access_token: accessToken });
-
+  const userAuth = await getAuthorizedClient({ accessToken, refreshToken });
   const userCalendar = google.calendar({ version: "v3", auth: userAuth });
 
   const event = {
@@ -167,7 +174,7 @@ const createCalendarEvent = async ({
     };
   } catch (error) {
     logger.error(
-      `❌ Error during event creation: ${
+      `❌ Error creating calendar event: ${
         error?.response?.data || error.message
       }`
     );
@@ -175,18 +182,13 @@ const createCalendarEvent = async ({
   }
 };
 
-// Delete calendar event
 const deleteCalendarEvent = async (eventId, refreshToken) => {
   try {
     const oauth2Client = createOAuthClient();
     oauth2Client.setCredentials({ refresh_token: refreshToken });
 
     const calendar = google.calendar({ version: "v3", auth: oauth2Client });
-
-    await calendar.events.delete({
-      calendarId: "primary",
-      eventId: eventId,
-    });
+    await calendar.events.delete({ calendarId: "primary", eventId });
 
     logger.info(`✅ Event ${eventId} deleted successfully.`);
     return { success: true };
