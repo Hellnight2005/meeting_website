@@ -133,7 +133,15 @@ const createCalendarEvent = async ({
         conferenceSolutionKey: { type: "hangoutsMeet" },
       },
     },
-    reminders: { useDefault: true },
+    reminders: {
+      useDefault: false,
+      overrides: [
+        { method: "email", minutes: 1440 }, // 1 day = 1440 minutes
+        { method: "popup", minutes: 1440 },
+        { method: "email", minutes: 30 },
+        { method: "popup", minutes: 10 },
+      ],
+    },
   };
 
   try {

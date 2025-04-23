@@ -2,7 +2,6 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { Dot, X } from "lucide-react";
-import { useRouter, usePathname } from "next/navigation";
 
 const NavBar = () => {
     const [open, setOpen] = useState(false);
@@ -11,11 +10,10 @@ const NavBar = () => {
     const backdropRef = useRef(null);
     const itemRefs = useRef([]);
     const tl = useRef(null);
-    const router = useRouter();
-    const pathname = usePathname();
 
-    const menuItems = ["Home", "Studio", "Work", "Contact"];
-    const routeItems = ["/Home", "/Studio", "/Work", "/Contact"];
+    const menuItems = ["Home", "Services", "Why Us", "How It Works", "Showcase", "Pricing"];
+    const routeItems = ["/user", "#services", "#whyus", "#how", "#showcase", "#pricing"];
+
     itemRefs.current = [];
 
     const addToItemRefs = (el) => {
@@ -111,7 +109,8 @@ const NavBar = () => {
                 {open && (
                     <div
                         ref={menuBox}
-                        className="absolute top-14 right-4 w-[90vw] sm:w-[320px] 
+                        className="absolute top-14 left-1/2 -translate-x-1/2 sm:left-auto sm:translate-x-0 sm:right-4 
+                                   w-[90vw] sm:w-[320px] 
                                    bg-white dark:bg-[#1A1A1A] 
                                    text-black dark:text-white 
                                    p-6 rounded-2xl shadow-2xl overflow-hidden"
@@ -124,10 +123,9 @@ const NavBar = () => {
                         </div>
 
                         {/* Menu Items */}
-                        <div className="flex flex-col gap-4 text-xl font-semibold mt-2">
+                        <div className="flex flex-col gap-4 text-xl font-semibold mt-2 text-center sm:text-left items-center sm:items-start">
                             {menuItems.map((item, index) => {
                                 const route = routeItems[index];
-                                const isActive = pathname === route;
 
                                 return (
                                     <div
@@ -135,10 +133,7 @@ const NavBar = () => {
                                         ref={addToItemRefs}
                                         className={`group flex items-center gap-2 cursor-pointer px-4 py-2 rounded-lg 
                                                     transition-transform duration-300
-                                                    ${isActive
-                                                ? "bg-gray-100 dark:bg-black text-black dark:text-white"
-                                                : "text-gray-700 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-black hover:text-black dark:hover:text-white"
-                                            }`}
+                                                    text-gray-700 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-black hover:text-black dark:hover:text-white`}
                                         style={{ transformOrigin: "center" }}
                                         onMouseEnter={(e) =>
                                             gsap.to(e.currentTarget, {
@@ -160,13 +155,19 @@ const NavBar = () => {
                                                 duration: 0.25,
                                                 ease: "bounce.out",
                                                 onComplete: () => {
-                                                    router.push(route);
+                                                    const target = document.getElementById(route.replace("#", ""));
+                                                    if (target) {
+                                                        target.scrollIntoView({
+                                                            behavior: "smooth",
+                                                            block: "start",
+                                                        });
+                                                    }
                                                     setOpen(false);
                                                 },
                                             });
                                         }}
                                     >
-                                        <span className={`transition ${isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>→</span>
+                                        <span className="opacity-0 group-hover:opacity-100 transition">→</span>
                                         <span>{item}</span>
                                     </div>
                                 );

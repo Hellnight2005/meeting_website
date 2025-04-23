@@ -33,6 +33,11 @@ export const MeetingProvider = ({ children }) => {
   const computeBlockedDays = (approvedMeetings) => {
     const blocked = {};
 
+    if (!Array.isArray(approvedMeetings)) {
+      console.warn("Expected approvedMeetings to be an array");
+      return blocked;
+    }
+
     approvedMeetings.forEach((meeting) => {
       const day = meeting.day;
       blocked[day] = blocked[day] || [];
@@ -51,6 +56,11 @@ export const MeetingProvider = ({ children }) => {
     const upcoming = [];
     const lineup = [];
 
+    if (!Array.isArray(allMeetings)) {
+      console.warn("Expected allMeetings to be an array");
+      return;
+    }
+
     allMeetings.forEach((meeting) => {
       if (meeting.type === "upcoming") upcoming.push(meeting.id);
       else if (meeting.type === "line_up") lineup.push(meeting.id);
@@ -59,7 +69,7 @@ export const MeetingProvider = ({ children }) => {
     setUpcomingMeetingIds(upcoming);
     setLineupMeetingIds(lineup);
   };
-  // only acess by admin
+
   const fetchMeetings = async () => {
     if (!user || user.role !== "admin") {
       console.warn("Access denied: only admins can fetch meetings.");
@@ -72,8 +82,10 @@ export const MeetingProvider = ({ children }) => {
         axios.get("/api/meeting/approve_meeting"),
       ]);
 
-      const allMeetings = meetingRes.data;
-      const approvedMeetings = approvedRes.data.approvedMeetings;
+      const allMeetings = Array.isArray(meetingRes.data) ? meetingRes.data : [];
+      const approvedMeetings = Array.isArray(approvedRes.data.approvedMeetings)
+        ? approvedRes.data.approvedMeetings
+        : [];
 
       setMeetingsData(allMeetings);
       setBlockedDays(computeBlockedDays(approvedMeetings));
@@ -84,11 +96,13 @@ export const MeetingProvider = ({ children }) => {
       setLoading(false);
     }
   };
-  // acess by both
+
   const fetchApprovedMeetings = async () => {
     try {
       const res = await axios.get("/api/meeting/approve_meeting");
-      const approvedMeetings = res.data.approvedMeetings;
+      const approvedMeetings = Array.isArray(res.data.approvedMeetings)
+        ? res.data.approvedMeetings
+        : [];
 
       const updatedBlockedDays = computeBlockedDays(approvedMeetings);
       setBlockedDays(updatedBlockedDays);
@@ -101,7 +115,6 @@ export const MeetingProvider = ({ children }) => {
     let didRun = false;
 
     if (!user || didRun) return;
-
     didRun = true;
 
     if (user.role === "admin") {
@@ -110,7 +123,6 @@ export const MeetingProvider = ({ children }) => {
       fetchApprovedMeetings();
     }
 
-    // Optional: clean-up (not always needed)
     return () => {
       didRun = false;
     };

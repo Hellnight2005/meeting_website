@@ -34,14 +34,14 @@ export default function MeetingList({ meetingIds = [], type, showSearchBar = tru
     );
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 text-gray-900">
             {showSearchBar && (
                 <div className="w-full flex justify-start">
                     <div className="relative w-[300px]">
                         <input
                             type="text"
                             placeholder="Search by name or day..."
-                            className="w-full pl-10 pr-4 py-3 rounded-full border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
+                            className="w-full pl-10 pr-4 py-3 rounded-full border border-gray-300 bg-white text-gray-900 placeholder-gray-500 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                             value={searchTerm}
                             onChange={(e) => {
                                 setSearchTerm(e.target.value);
@@ -68,7 +68,7 @@ export default function MeetingList({ meetingIds = [], type, showSearchBar = tru
             </div>
 
             {!filteredMeetings.length && (
-                <p className="text-gray-500 mt-4 text-center">No meetings found.</p>
+                <p className="text-gray-500 mt-4 text-center italic">No meetings found.</p>
             )}
 
             {visibleSlots && totalMeetings > visibleSlots && (
@@ -76,7 +76,7 @@ export default function MeetingList({ meetingIds = [], type, showSearchBar = tru
                     <button
                         onClick={() => setPage((prev) => Math.max(0, prev - 1))}
                         disabled={page === 0}
-                        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
                     >
                         Prev
                     </button>
@@ -88,7 +88,7 @@ export default function MeetingList({ meetingIds = [], type, showSearchBar = tru
                             setPage((prev) => (prev + 1 < totalPages ? prev + 1 : prev))
                         }
                         disabled={page + 1 >= totalPages}
-                        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
                     >
                         Next
                     </button>

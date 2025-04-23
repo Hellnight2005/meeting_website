@@ -58,8 +58,8 @@ const Sidebar = () => {
                         <Link
                             href={path}
                             className={`flex items-center gap-3 px-4 py-2 rounded-2xl transition-all duration-300 ${pathname === path
-                                    ? "bg-blue-600 text-white"
-                                    : "text-gray-800 hover:bg-blue-400/40 hover:text-blue-700"
+                                ? "bg-blue-600 text-white"
+                                : "text-gray-800 hover:bg-blue-400/40 hover:text-blue-700"
                                 }`}
                         >
                             <Image

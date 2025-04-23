@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useMeetingContext } from "../constants/MeetingContext";
 import RescheduleModal from "./RescheduleModal";
+import toast from "react-hot-toast";
 
-// Helper functions
 const getTimeOfDay = (timeStr) => {
     const date = new Date(`1970-01-01T${convertTo24Hour(timeStr)}`);
     const hour = date.getHours();
@@ -31,6 +31,7 @@ export default function MeetingCard({ id, type }) {
 
     const [meeting, setMeeting] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [loadingAction, setLoadingAction] = useState(null);
 
     useEffect(() => {
         const found = meetingsData.find((m) => m.id === id);
@@ -46,7 +47,7 @@ export default function MeetingCard({ id, type }) {
         evening: "bg-purple-50",
     }[timeOfDay];
 
-    const buttonBase = "px-4 py-2 rounded-full font-medium transition duration-200";
+    const buttonBase = "px-4 py-2 rounded-full font-medium transition duration-200 disabled:opacity-50";
 
     const imageSrc = meeting.user_role === "admin"
         ? "/icons/inmated.svg"
@@ -57,19 +58,30 @@ export default function MeetingCard({ id, type }) {
         : "1 hour";
 
     const deleteMeeting = async () => {
+        if (loadingAction) return;
+        setLoadingAction("delete");
         try {
             const res = await fetch(`/api/meeting/delete/${meeting.id}`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
             });
-            if (res.ok)
+            if (res.ok) {
                 refreshMeetings();
+                toast.success("Meeting deleted successfully.");
+            } else {
+                toast.error("Failed to delete the meeting.");
+            }
         } catch (err) {
-            // Optionally handle/log error
+            console.error(err);
+            toast.error("An unexpected error occurred.");
+        } finally {
+            setLoadingAction(null);
         }
     };
 
     const approveMeeting = async () => {
+        if (loadingAction) return;
+        setLoadingAction("approve");
         try {
             const res = await fetch(`/api/meeting/approve/${meeting.id}`, {
                 method: 'PATCH',
@@ -77,19 +89,20 @@ export default function MeetingCard({ id, type }) {
             });
 
             if (res.ok) {
-                await refreshMeetings(); // Wait for refresh to complete
-                alert("Meeting approved successfully.");
+                await refreshMeetings();
+                toast.success("Meeting approved successfully.");
             } else {
                 const errorData = await res.json();
                 console.error("Approval failed:", errorData);
-                alert("Failed to approve the meeting.");
+                toast.error("Failed to approve the meeting.");
             }
         } catch (err) {
             console.error("Error approving meeting:", err);
-            alert("An unexpected error occurred.");
+            toast.error("An unexpected error occurred.");
+        } finally {
+            setLoadingAction(null);
         }
     };
-
 
     const handleCloseModal = () => setIsModalOpen(false);
     const handleSaveMeeting = () => handleCloseModal();
@@ -106,36 +119,39 @@ export default function MeetingCard({ id, type }) {
                     className="w-14 h-14 rounded-full"
                 />
                 <div>
-                    <h3 className="font-bold text-black text-lg">{meeting.user_name}</h3>
-                    <p className="text-sm text-gray-900">{meeting.title}</p>
+                    <h3 className="font-bold text-lg text-gray-900">{meeting.user_name}</h3>
+                    <p className="text-sm text-gray-700">{meeting.title}</p>
                 </div>
             </div>
 
-            <div className="mt-4 text-sm space-y-1 text-black">
+            <div className="mt-4 text-sm space-y-1 text-gray-800">
                 <p><strong>Day:</strong> {meeting.selectDay}</p>
                 <p>
                     <strong>Time:</strong> {meeting.selectTime}
-                    <span className="ml-2 inline-block bg-white border px-3 py-1 text-xs rounded-full shadow-sm">
+                    <span className="ml-2 inline-block bg-white border px-3 py-1 text-xs rounded-full shadow-sm text-black">
                         ⏰ {timeOfDay.charAt(0).toUpperCase() + timeOfDay.slice(1)}
                     </span>
                 </p>
                 <p><strong>Slot:</strong> {formattedSlot}</p>
+                <p><strong>Board:</strong> {meeting.board || "N/A"}</p>
             </div>
 
             <div className="flex gap-4 mt-6">
                 {shouldShowReschedule && (
                     <>
                         <button
-                            className={`${buttonBase} bg-blue-500 text-white hover:bg-blue-600`}
-                            onClick={() => setIsModalOpen(true)}
+                            className={`${buttonBase} bg-blue-600 text-white hover:bg-blue-700`}
+                            onClick={() => !loadingAction && setIsModalOpen(true)}
+                            disabled={!!loadingAction}
                         >
                             Reschedule
                         </button>
                         <button
-                            className={`${buttonBase} bg-red-500 text-white hover:bg-red-600`}
+                            className={`${buttonBase} bg-red-600 text-white hover:bg-red-700`}
                             onClick={deleteMeeting}
+                            disabled={loadingAction === "delete"}
                         >
-                            Delete
+                            {loadingAction === "delete" ? "Deleting..." : "Delete"}
                         </button>
                     </>
                 )}
@@ -143,16 +159,18 @@ export default function MeetingCard({ id, type }) {
                 {shouldShowApprove && (
                     <>
                         <button
-                            className={`${buttonBase} bg-green-500 text-white hover:bg-green-600`}
+                            className={`${buttonBase} bg-green-600 text-white hover:bg-green-700`}
                             onClick={approveMeeting}
+                            disabled={loadingAction === "approve"}
                         >
-                            Approve
+                            {loadingAction === "approve" ? "Approving..." : "Approve"}
                         </button>
                         <button
-                            className={`${buttonBase} bg-red-500 text-white hover:bg-red-600`}
+                            className={`${buttonBase} bg-red-600 text-white hover:bg-red-700`}
                             onClick={deleteMeeting}
+                            disabled={loadingAction === "delete"}
                         >
-                            Delete
+                            {loadingAction === "delete" ? "Deleting..." : "Delete"}
                         </button>
                     </>
                 )}

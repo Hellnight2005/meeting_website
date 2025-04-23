@@ -5,11 +5,13 @@ import gsap from "gsap";
 import Calendar from "./Calendar";
 import TimePicker from "./TimePicker";
 import { useUser } from "@/constants/UserContext";
+import { useRouter } from "next/navigation";
 
 export default function CreateMeetingModal({ open, onClose }) {
     const modalRef = useRef(null);
     const containerRef = useRef(null);
     const { user, setUser } = useUser();
+    const router = useRouter();
 
     const today = new Date();
     const defaultDay = today.toLocaleDateString(undefined, {
@@ -30,9 +32,13 @@ export default function CreateMeetingModal({ open, onClose }) {
     const [selectedDate, setSelectedDate] = useState(defaultDay);
     const [selectedTime, setSelectedTime] = useState(defaultTime);
     const [showLoginWarning, setShowLoginWarning] = useState(false);
+    const [alreadyBooked, setAlreadyBooked] = useState(false);
 
     useEffect(() => {
         if (open) {
+            const meetingCookieExists = document.cookie.includes("meeting=");
+            setAlreadyBooked(meetingCookieExists);
+
             const ctx = gsap.context(() => {
                 gsap.from(modalRef.current, {
                     opacity: 0,
@@ -133,7 +139,7 @@ export default function CreateMeetingModal({ open, onClose }) {
             const result = await response.json();
 
             if (result?.success && result?.data?.id) {
-                localStorage.setItem("createdMeetingId", result.data.id); // 🔥 Save meeting ID
+                document.cookie = `meeting=${result.data.id}; path=/; max-age=${7 * 24 * 60 * 60}`;
             }
 
             onClose?.();
@@ -141,7 +147,6 @@ export default function CreateMeetingModal({ open, onClose }) {
             console.error("Failed to create meeting:", err);
         }
     };
-
 
     if (!open) return null;
 
@@ -156,7 +161,19 @@ export default function CreateMeetingModal({ open, onClose }) {
             >
                 <h2 className="text-2xl font-bold text-center mb-6">Create a Meeting</h2>
 
-                {showLoginWarning ? (
+                {alreadyBooked ? (
+                    <div className="text-center space-y-4">
+                        <p className="text-lg font-semibold text-green-400">
+                            You've already booked a meeting.
+                        </p>
+                        <button
+                            onClick={() => router.push("/meeting")}
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded transition"
+                        >
+                            Want to see?
+                        </button>
+                    </div>
+                ) : showLoginWarning ? (
                     <div className="text-center space-y-4">
                         <p className="text-lg font-semibold text-red-500">
                             Please login first to create a meeting.
@@ -168,9 +185,23 @@ export default function CreateMeetingModal({ open, onClose }) {
                             Got it
                         </button>
                     </div>
+                ) : user && user.type !== "google" ? (
+                    <div className="text-center space-y-4">
+                        <p className="text-lg font-semibold text-yellow-400">
+                            Please login with Google to get meeting entry into your Google Calendar.
+                        </p>
+                        <button
+                            onClick={() => router.push("/auth/google")}
+                            className="bg-white text-black font-medium px-6 py-2 rounded hover:bg-gray-200 transition"
+                        >
+                            Login with Google
+                        </button>
+                    </div>
                 ) : !showForm ? (
                     <div className="modal-item space-y-4">
-                        <label className="block font-medium">What's the meeting about?</label>
+                        <label className="block font-medium">
+                            What's the meeting about?
+                        </label>
                         <input
                             type="text"
                             placeholder="Enter meeting title"
@@ -194,7 +225,10 @@ export default function CreateMeetingModal({ open, onClose }) {
                         />
                         <button
                             onClick={() =>
-                                title.trim() && description.trim() && sector.trim() && setShowForm(true)
+                                title.trim() &&
+                                description.trim() &&
+                                sector.trim() &&
+                                setShowForm(true)
                             }
                             className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded mt-4 transition"
                         >

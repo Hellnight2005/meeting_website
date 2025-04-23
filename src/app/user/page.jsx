@@ -9,14 +9,32 @@ import Footer from '../Footer/page'
 function User_Section() {
     return (
         <>
-            <HeroSection />
-            {/* <ServiceSection /> */}
-            <WhyUs />
-            <HowItWorks />
-            <Showcase />
-            <PricingCTA />
-            <Footer />
+            <section id="home">
+                <HeroSection />
+            </section>
 
+            {/* Optional, if you add ServiceSection */}
+            <section id="services">
+                <ServiceSection />
+            </section>
+
+            <section id="whyus">
+                <WhyUs />
+            </section>
+
+            <section id="how">
+                <HowItWorks />
+            </section>
+
+            <section id="showcase">
+                <Showcase />
+            </section>
+
+            <section id="pricing">
+                <PricingCTA />
+            </section>
+
+            <Footer />
         </>
     )
 }
