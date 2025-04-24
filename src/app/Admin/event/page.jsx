@@ -10,7 +10,9 @@ export default function EventPage() {
         meetingsData = [],
         upcomingMeetingIds = [],
         lineupMeetingIds = [],
-        completedMeetingIds = []
+        completedMeetingIds = [],
+
+
     } = useMeetingContext();
 
     const contentRef = useRef(null);
@@ -24,7 +26,10 @@ export default function EventPage() {
                 ease: "power3.out",
             });
         }
+
+
     }, [meetingsData]);
+    window.reload
 
     const upcomingMeetings = meetingsData.filter((m) =>
         upcomingMeetingIds.includes(m.id)
@@ -71,16 +76,7 @@ export default function EventPage() {
                 </section>
 
                 {/* Completed Meetings Section */}
-                <section>
-                    <h2 className="text-2xl font-semibold mb-4 text-green-600">
-                        ✅ Completed Meetings
-                    </h2>
-                    {completedMeetings.length === 0 ? (
-                        <p className="text-gray-600 italic">No completed meetings found.</p>
-                    ) : (
-                        <MeetingList meetingIds={completedMeetingIds} type="completed" />
-                    )}
-                </section>
+
             </div>
         </div>
     );

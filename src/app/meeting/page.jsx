@@ -5,6 +5,7 @@ import ProfileTag from "@/components/Profile";
 import { useUser } from "@/constants/UserContext";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import toast from "react-hot-toast";
 
 function getTimeOfDay(timeStr) {
     const date = new Date(`1970-01-01T${convertTo24Hour(timeStr)}`);
@@ -25,17 +26,18 @@ function convertTo24Hour(timeStr) {
 function Meeting() {
     const [projectName] = useState("webapp");
     const [meeting, setMeeting] = useState(null);
-    const [meetingExpired, setMeetingExpired] = useState(false);
     const [canJoin, setCanJoin] = useState(false);
     const [meetingStatus, setMeetingStatus] = useState(null);
     const { user, logout } = useUser();
     const searchParams = useSearchParams();
     const router = useRouter();
+    const [hasHandledCompleted, setHasHandledCompleted] = useState(false);
+    const [prevStatus, setPrevStatus] = useState(null);
+    const [hasReloaded, setHasReloaded] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     const getCookieValue = (name) => {
-        const match = document.cookie.match(
-            new RegExp("(^| )" + name + "=([^;]+)")
-        );
+        const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
         return match ? decodeURIComponent(match[2]) : null;
     };
 
@@ -48,7 +50,10 @@ function Meeting() {
         }
     };
 
+    let isMarkingComplete = false;
+
     const fetchMeetingData = async (meetingId) => {
+        setIsLoading(true);
         try {
             const res = await fetch(`/api/meeting/meeting_by_id/${meetingId}`);
             const data = await res.json();
@@ -59,48 +64,56 @@ function Meeting() {
             const endTime = new Date(fetchedMeeting.endDateTime);
             const startTime = new Date(fetchedMeeting.startDateTime);
             const canJoinWindowStart = new Date(startTime.getTime() - 5 * 60 * 1000);
-
             const isWithinJoinTime = now >= canJoinWindowStart && now < endTime;
-            setCanJoin(isWithinJoinTime);
 
-            // If the meeting is completed or the meeting link time has passed
-            if (
-                fetchedMeeting.type === "completed" ||
-                (fetchedMeeting.meetingLink && now >= endTime)
-            ) {
+            setCanJoin(isWithinJoinTime);
+            setMeeting(fetchedMeeting);
+
+            const isAlreadyCompleted = fetchedMeeting.type === "completed";
+            const hasEnded = now >= endTime;
+            const hasMeetingLink = Boolean(fetchedMeeting.meetingLink);
+
+            if ((isAlreadyCompleted || hasEnded) && hasMeetingLink && !isMarkingComplete) {
+                isMarkingComplete = true;
+
                 try {
                     const res = await fetch(`/api/meeting/markComplete`, {
                         method: "POST",
-                        body: JSON.stringify({ meetingId: meetingId }),
+                        body: JSON.stringify({ meetingId }),
                         headers: { "Content-Type": "application/json" },
                     });
+
                     const result = await res.json();
+
                     if (res.ok && result.success) {
                         setMeetingStatus("completed");
 
-                        // Delete the meeting cookie immediately after marking as complete
-                        document.cookie = "meeting=; path=/; max-age=0;";
+                        await Promise.all([
+                            fetch(`/api/exportMeetings?id=${meetingId}`),
+                            fetch(`/api/meeting/delete/${meetingId}`, { method: "DELETE" }),
+                        ]);
 
-                        // Optionally reset meeting state if you don't want to keep it in the UI
-                        setMeeting(null);  // Clear meeting state
-                        // Optionally, redirect after completion
-                        router.push("/thank-you");  // Redirect to another page after meeting is completed
+                        document.cookie = "meeting=; path=/; max-age=0;";
+                        setMeeting(null);
+                        toast.success("✅ The meeting is complete. You can now book a new one!");
+                        setTimeout(() => router.push("/thank-you"), 2500);
                     } else {
                         console.warn("Failed to mark meeting as complete");
                     }
                 } catch (err) {
                     console.error("Error marking meeting complete:", err);
+                } finally {
+                    isMarkingComplete = false;
                 }
             } else if (fetchedMeeting.type === "line_up") {
                 setMeetingStatus("line_up");
             } else if (fetchedMeeting.type === "upcoming") {
                 setMeetingStatus("upcoming");
             }
-
-            // Update the meeting data state with the latest fetched meeting
-            setMeeting(fetchedMeeting);
         } catch (err) {
             console.error("Error fetching meeting data:", err);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -116,6 +129,7 @@ function Meeting() {
 
         if (!meetingId) {
             console.warn("No meeting ID found.");
+            setIsLoading(false);
             return;
         }
 
@@ -125,10 +139,71 @@ function Meeting() {
         return () => clearInterval(interval);
     }, [searchParams]);
 
+    useEffect(() => {
+        const handleCompletedMeeting = async () => {
+            if (!meeting || hasHandledCompleted || meeting.type !== "completed") return;
+
+            try {
+                await Promise.all([
+                    fetch(`/api/exportMeetings?id=${meeting.id}`),
+                    fetch(`/api/meeting/delete/${meeting.id}`, { method: "DELETE" }),
+                ]);
+
+                document.cookie = "meeting=; path=/; max-age=0;";
+                setHasHandledCompleted(true);
+
+                toast.success("✅ Completed meeting", {
+                    position: "top-center",
+                });
+
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2500);
+            } catch (error) {
+                console.error("Error handling completed meeting:", error);
+            }
+        };
+
+        handleCompletedMeeting();
+    }, [meeting, hasHandledCompleted]);
+
+    useEffect(() => {
+        if (meetingStatus && meeting) {
+            const toastKey = `toast_shown_${meeting.id}_${meetingStatus}`;
+            const hasShownToast = localStorage.getItem(toastKey);
+
+            if (!hasShownToast && meetingStatus !== prevStatus) {
+                toast.success(`🔔 Meeting status updated to: ${meetingStatus}`, {
+                    position: "top-center",
+                });
+                localStorage.setItem(toastKey, "true");
+                setPrevStatus(meetingStatus);
+            }
+        }
+    }, [meetingStatus, meeting, prevStatus]);
+
+    useEffect(() => {
+        if (canJoin && !hasReloaded) {
+            setHasReloaded(true);
+            window.location.reload();
+        }
+    }, [canJoin, hasReloaded]);
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-900 text-zinc-400 px-4 text-center">
+                <div className="spinner-border animate-spin h-16 w-16 border-t-4 border-blue-500 rounded-full"></div>
+                <p className="mt-4">Loading meeting details...</p>
+            </div>
+        );
+    }
+
     if (!meeting) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-900 text-zinc-400 px-4 text-center">
-                <h2 className="text-lg sm:text-xl md:text-2xl font-medium mb-4">No meeting currently lined up.</h2>
+                <h2 className="text-lg sm:text-xl md:text-2xl font-medium mb-4">
+                    No meeting currently lined up.
+                </h2>
                 <Link
                     href="/"
                     className="inline-block mt-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition"
@@ -143,21 +218,13 @@ function Meeting() {
     const formattedSlot = meeting.slot === "30" || meeting.slot === 30 ? "30 minutes" : "1 hour";
     const imageSrc = meeting.user_role === "admin" ? "/icons/inmated.svg" : "/icons/client.svg";
 
-    const stepLabels = meeting.type === "line_up"
-        ? ["Booked", "Line-Up"]
-        : meeting.type === "upcoming"
-            ? ["Upcoming"]
-            : meeting.type === "completed"
-                ? ["Completed"]
-                : ["Unknown"];
+    const stepLabels = meeting.type === "line_up" ? ["Booked", "Line-Up"] :
+        meeting.type === "upcoming" ? ["Upcoming"] :
+            meeting.type === "completed" ? ["Completed"] : ["Unknown"];
 
-    const stepStatuses = meeting.type === "line_up"
-        ? ["booked", "line_up"]
-        : meeting.type === "upcoming"
-            ? ["upcoming"]
-            : meeting.type === "completed"
-                ? ["completed"]
-                : ["unknown"];
+    const stepStatuses = meeting.type === "line_up" ? ["booked", "line_up"] :
+        meeting.type === "upcoming" ? ["upcoming"] :
+            meeting.type === "completed" ? ["completed"] : ["unknown"];
 
     const currentStepIndex = stepStatuses.indexOf(meetingStatus);
 
@@ -197,9 +264,25 @@ function Meeting() {
                     <p><strong className="text-white">Status:</strong> {meetingStatus}</p>
                 </div>
 
-                {meetingExpired && (
-                    <div className="p-3 bg-yellow-900 text-yellow-300 text-sm rounded-lg border border-yellow-600">
-                        ⚠️ Admin has not approved the meeting yet.
+                {meeting.type === "upcoming" && (
+                    <div className="pt-4">
+                        {canJoin ? (
+                            <a
+                                href={meeting.meetingLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full inline-block text-center px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition"
+                            >
+                                🔗 Join Meeting
+                            </a>
+                        ) : (
+                            <button
+                                disabled
+                                className="w-full px-5 py-2.5 bg-zinc-800 text-zinc-500 font-semibold rounded-4xl border border-zinc-700 cursor-not-allowed"
+                            >
+                                🔒 You can join 5 minutes before the meeting
+                            </button>
+                        )}
                     </div>
                 )}
 
@@ -216,26 +299,6 @@ function Meeting() {
                         })}
                     </div>
                 </div>
-
-                {meeting.type === "upcoming" && meeting.meetingLink && (
-                    <div className="text-center pt-4">
-                        <p className="text-sm text-zinc-300 mb-2">Your meeting is ready:</p>
-                        <a
-                            href={canJoin ? meeting.meetingLink : "#"}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={`inline-block ${canJoin
-                                ? "bg-green-500 hover:bg-green-600"
-                                : "bg-zinc-700 cursor-not-allowed"
-                                } text-white font-semibold px-5 py-2.5 rounded-full shadow transition-colors`}
-                            onClick={(e) => {
-                                if (!canJoin) e.preventDefault();
-                            }}
-                        >
-                            Join Meeting
-                        </a>
-                    </div>
-                )}
             </div>
         </div>
     );

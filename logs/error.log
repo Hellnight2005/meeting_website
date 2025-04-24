@@ -14,3 +14,23 @@
 {"level":"error","message":"❌ Error creating calendar event: Event already exists during this time.","timestamp":"2025-04-22T16:35:58.377Z"}
 {"level":"error","message":"❌ Error creating calendar event: Event already exists during this time.","timestamp":"2025-04-22T16:37:30.314Z"}
 {"level":"error","message":"❌ Error deleting calendar event: Resource has been deleted","timestamp":"2025-04-24T08:02:58.843Z"}
+{"level":"error","message":"❌ Error deleting calendar event: Resource has been deleted","timestamp":"2025-04-24T14:36:11.440Z"}
+{"level":"error","message":"❌ Error creating calendar event: Event already exists during this time.","timestamp":"2025-04-24T15:31:02.735Z"}
+{"level":"error","message":"❌ Error creating calendar event: Event already exists during this time.","timestamp":"2025-04-24T15:31:26.708Z"}
+{"level":"error","message":"❌ Error creating calendar event: Event already exists during this time.","timestamp":"2025-04-24T15:31:31.094Z"}
+{"level":"error","message":"❌ Error creating calendar event: [object Object]","timestamp":"2025-04-24T15:38:18.053Z"}
+{"level":"error","message":"❌ Error creating calendar event: [object Object]","timestamp":"2025-04-24T15:41:12.341Z"}
+{"level":"error","message":"❌ Error creating calendar event: Missing attendee email.","timestamp":"2025-04-24T15:59:45.774Z"}
+{"level":"error","message":"❌ Missing attendee email.","timestamp":"2025-04-24T16:01:38.226Z"}
+{"level":"error","message":"❌ Error creating calendar event: Missing attendee email.","timestamp":"2025-04-24T16:01:38.228Z"}
+{"level":"error","message":"❌ Missing attendee email.","timestamp":"2025-04-24T16:03:01.192Z"}
+{"level":"error","message":"❌ Error creating calendar event: Missing attendee email.","timestamp":"2025-04-24T16:03:01.193Z"}
+{"level":"error","message":"❌ Event already exists during this time: 2025-04-26T06:30:00.000Z to 2025-04-26T07:30:00.000Z","timestamp":"2025-04-24T16:08:51.703Z"}
+{"level":"error","message":"❌ Error creating calendar event: Event already exists during this time.","timestamp":"2025-04-24T16:08:51.704Z"}
+{"level":"error","message":"❌ Error creating calendar event: Event already exists during this time.","timestamp":"2025-04-24T16:11:29.841Z"}
+{"level":"error","message":"❌ Error creating calendar event: [object Object]","timestamp":"2025-04-24T16:27:36.781Z"}
+{"level":"error","message":"❌ Error deleting calendar event: Resource has been deleted","timestamp":"2025-04-24T16:40:50.310Z"}
+{"level":"error","message":"❌ Error deleting calendar event: Resource has been deleted","timestamp":"2025-04-24T16:41:14.694Z"}
+{"level":"error","message":"❌ Error deleting calendar event: Resource has been deleted","timestamp":"2025-04-24T16:41:51.004Z"}
+{"level":"error","message":"❌ Error deleting calendar event: Resource has been deleted","timestamp":"2025-04-24T16:42:53.664Z"}
+{"level":"error","message":"❌ Error creating calendar event: Event already exists during this time.","timestamp":"2025-04-24T16:57:40.014Z"}
