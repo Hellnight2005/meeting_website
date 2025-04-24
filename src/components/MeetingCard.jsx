@@ -93,13 +93,13 @@ export default function MeetingCard({ id, type }) {
             });
             if (res.ok) {
                 await refreshMeetings();
-                toast.success("Meeting deleted successfully.");
+                toast.success("Meeting deleted successfully.", { position: "top-center" });
             } else {
-                toast.error("Failed to delete the meeting.");
+                toast.error("Failed to delete the meeting.", { position: "top-center" });
             }
         } catch (err) {
             console.error(err);
-            toast.error("An unexpected error occurred.");
+            toast.error("An unexpected error occurred.", { position: "top-center" });
         } finally {
             setLoadingAction(null);
         }
@@ -116,15 +116,26 @@ export default function MeetingCard({ id, type }) {
 
             if (res.ok) {
                 await refreshMeetings();
-                toast.success("Meeting approved successfully.");
+                toast.success("Meeting approved successfully.", { position: "top-center" });
             } else {
-                toast.error("Failed to approve the meeting.");
+                toast.error("Failed to approve the meeting.", { position: "top-center" });
             }
         } catch (err) {
             console.error(err);
-            toast.error("An unexpected error occurred.");
+            toast.error("An unexpected error occurred.", { position: "top-center" });
         } finally {
             setLoadingAction(null);
+        }
+    };
+
+    const handleJoinClick = () => {
+        if (isJoinEnabled) {
+            toast.success("The meeting is ready to join! You will be redirected shortly.", { position: "top-center" });
+            setTimeout(() => {
+                window.location.reload(); // This reloads the page after clicking "Join"
+            }, 2000);
+        } else {
+            toast.error("The meeting isn't ready to join yet. Please wait until it's time.", { position: "top-center" });
         }
     };
 
@@ -166,14 +177,12 @@ export default function MeetingCard({ id, type }) {
                 {showRescheduleButtons && (
                     <>
                         {isJoinEnabled ? (
-                            <a
-                                href={meeting.meetingLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                            <button
+                                onClick={handleJoinClick}
                                 className="px-4 py-2 rounded-full font-medium bg-green-600 text-white hover:bg-green-700 transition duration-200"
                             >
                                 Join
-                            </a>
+                            </button>
                         ) : (
                             <button
                                 disabled
