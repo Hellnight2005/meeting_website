@@ -13,6 +13,7 @@ export const MeetingProvider = ({ children }) => {
   const [meetingsData, setMeetingsData] = useState([]);
   const [upcomingMeetingIds, setUpcomingMeetingIds] = useState([]);
   const [lineupMeetingIds, setLineupMeetingIds] = useState([]);
+  const [completeMeetingIds, setCompleteMeetingIds] = useState([]); // Added for complete meetings
   const [blockedDays, setBlockedDays] = useState({});
   const [loading, setLoading] = useState(true);
 
@@ -55,6 +56,7 @@ export const MeetingProvider = ({ children }) => {
   const updateMeetingTypes = (allMeetings) => {
     const upcoming = [];
     const lineup = [];
+    const complete = []; // Added array for complete meetings
 
     if (!Array.isArray(allMeetings)) {
       console.warn("Expected allMeetings to be an array");
@@ -64,10 +66,12 @@ export const MeetingProvider = ({ children }) => {
     allMeetings.forEach((meeting) => {
       if (meeting.type === "upcoming") upcoming.push(meeting.id);
       else if (meeting.type === "line_up") lineup.push(meeting.id);
+      else if (meeting.type === "Completed") complete.push(meeting.id); // Added logic for complete meetings
     });
 
     setUpcomingMeetingIds(upcoming);
     setLineupMeetingIds(lineup);
+    setCompleteMeetingIds(complete); // Update the complete meetings
   };
 
   const fetchMeetings = async () => {
@@ -134,6 +138,7 @@ export const MeetingProvider = ({ children }) => {
         meetingsData,
         upcomingMeetingIds,
         lineupMeetingIds,
+        completeMeetingIds, // Provide completeMeetingIds in context
         blockedDays,
         loading,
         refreshMeetings: fetchMeetings,

@@ -13,3 +13,4 @@
 {"level":"error","message":"❌ Error creating calendar event: Event already exists during this time.","timestamp":"2025-04-22T16:35:46.109Z"}
 {"level":"error","message":"❌ Error creating calendar event: Event already exists during this time.","timestamp":"2025-04-22T16:35:58.377Z"}
 {"level":"error","message":"❌ Error creating calendar event: Event already exists during this time.","timestamp":"2025-04-22T16:37:30.314Z"}
+{"level":"error","message":"❌ Error deleting calendar event: Resource has been deleted","timestamp":"2025-04-24T08:02:58.843Z"}

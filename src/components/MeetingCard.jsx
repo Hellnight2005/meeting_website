@@ -1,15 +1,9 @@
+"use client"
 import React, { useState, useEffect } from "react";
 import { useMeetingContext } from "../constants/MeetingContext";
 import RescheduleModal from "./RescheduleModal";
 import toast from "react-hot-toast";
-
-const getTimeOfDay = (timeStr) => {
-    const date = new Date(`1970-01-01T${convertTo24Hour(timeStr)}`);
-    const hour = date.getHours();
-    if (hour < 12) return "morning";
-    if (hour < 17) return "afternoon";
-    return "evening";
-};
+import { CheckCircle } from "lucide-react";
 
 const convertTo24Hour = (timeStr) => {
     const [time, modifier] = timeStr.split(" ");
@@ -19,26 +13,56 @@ const convertTo24Hour = (timeStr) => {
     return `${hours}:${minutes}`;
 };
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const getTimeOfDay = (timeStr) => {
+    const date = new Date(`1970-01-01T${convertTo24Hour(timeStr)}`);
+    const hour = date.getHours();
+    if (hour < 12) return "morning";
+    if (hour < 17) return "afternoon";
+    return "evening";
+};
 
 export default function MeetingCard({ id, type }) {
     const {
         meetingsData,
         upcomingMeetingIds,
         lineupMeetingIds,
+        completeMeetingIds,
         refreshMeetings,
     } = useMeetingContext();
 
     const [meeting, setMeeting] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [loadingAction, setLoadingAction] = useState(null);
+    const [isJoinEnabled, setIsJoinEnabled] = useState(false);
 
     useEffect(() => {
         const found = meetingsData.find((m) => m.id === id);
         setMeeting(found);
     }, [id, meetingsData]);
 
-    if (!meeting) return null;
+    useEffect(() => {
+        const updateJoinStatus = () => {
+            if (!meeting) return;
+            const now = new Date();
+            const meetingDateTime = new Date(`${meeting.selectDay} ${convertTo24Hour(meeting.selectTime)}`);
+            const slotMinutes = meeting.slot === "30" || meeting.slot === 30 ? 30 : 60;
+            const startWindow = new Date(meetingDateTime.getTime() - 5 * 60000);
+            const endWindow = new Date(meetingDateTime.getTime() + slotMinutes * 60000);
+            setIsJoinEnabled(now >= startWindow && now <= endWindow);
+        };
+
+        updateJoinStatus();
+        const interval = setInterval(updateJoinStatus, 30000);
+        return () => clearInterval(interval);
+    }, [meeting]);
+
+    if (!meeting) {
+        return (
+            <div className="p-6 border rounded-xl shadow animate-pulse bg-white h-48">
+                <p className="text-gray-400">Loading meeting...</p>
+            </div>
+        );
+    }
 
     const timeOfDay = getTimeOfDay(meeting.selectTime);
     const bgColor = {
@@ -47,8 +71,6 @@ export default function MeetingCard({ id, type }) {
         evening: "bg-purple-50",
     }[timeOfDay];
 
-    const buttonBase = "px-4 py-2 rounded-full font-medium transition duration-200 disabled:opacity-50";
-
     const imageSrc = meeting.user_role === "admin"
         ? "/icons/inmated.svg"
         : "/icons/client.svg";
@@ -56,6 +78,10 @@ export default function MeetingCard({ id, type }) {
     const formattedSlot = meeting.slot === "30" || meeting.slot === 30
         ? "30 minutes"
         : "1 hour";
+
+    const isCompleted = type === "Completed" && completeMeetingIds.includes(meeting.id);
+    const showRescheduleButtons = type === "upcoming" && upcomingMeetingIds.includes(meeting.id);
+    const showApproveButtons = type === "line_up" && lineupMeetingIds.includes(meeting.id);
 
     const deleteMeeting = async () => {
         if (loadingAction) return;
@@ -66,7 +92,7 @@ export default function MeetingCard({ id, type }) {
                 headers: { 'Content-Type': 'application/json' },
             });
             if (res.ok) {
-                refreshMeetings();
+                await refreshMeetings();
                 toast.success("Meeting deleted successfully.");
             } else {
                 toast.error("Failed to delete the meeting.");
@@ -92,26 +118,27 @@ export default function MeetingCard({ id, type }) {
                 await refreshMeetings();
                 toast.success("Meeting approved successfully.");
             } else {
-                const errorData = await res.json();
-                console.error("Approval failed:", errorData);
                 toast.error("Failed to approve the meeting.");
             }
         } catch (err) {
-            console.error("Error approving meeting:", err);
+            console.error(err);
             toast.error("An unexpected error occurred.");
         } finally {
             setLoadingAction(null);
         }
     };
 
-    const handleCloseModal = () => setIsModalOpen(false);
-    const handleSaveMeeting = () => handleCloseModal();
-
-    const shouldShowReschedule = type === "upcoming" && upcomingMeetingIds.includes(meeting.id);
-    const shouldShowApprove = type === "line_up" && lineupMeetingIds.includes(meeting.id);
-
     return (
-        <div className={`border rounded-2xl shadow-lg p-6 hover:shadow-xl transition duration-300 ${bgColor}`}>
+        <div
+            className={`border rounded-2xl shadow-lg p-6 transition duration-300 relative
+            ${isCompleted ? "bg-gray-100 opacity-80 cursor-not-allowed" : bgColor}`}
+        >
+            {isCompleted && (
+                <div className="absolute top-3 right-3 text-green-600 flex items-center gap-1">
+                    <CheckCircle size={20} /> <span className="font-semibold">Completed</span>
+                </div>
+            )}
+
             <div className="flex items-center gap-4">
                 <img
                     src={imageSrc}
@@ -133,21 +160,38 @@ export default function MeetingCard({ id, type }) {
                     </span>
                 </p>
                 <p><strong>Slot:</strong> {formattedSlot}</p>
-                <p><strong>Board:</strong> {meeting.board || "N/A"}</p>
             </div>
 
-            <div className="flex gap-4 mt-6">
-                {shouldShowReschedule && (
+            <div className="flex gap-4 mt-6 flex-wrap">
+                {showRescheduleButtons && (
                     <>
+                        {isJoinEnabled ? (
+                            <a
+                                href={meeting.meetingLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-4 py-2 rounded-full font-medium bg-green-600 text-white hover:bg-green-700 transition duration-200"
+                            >
+                                Join
+                            </a>
+                        ) : (
+                            <button
+                                disabled
+                                className="px-4 py-2 rounded-full font-medium bg-gray-400 text-white cursor-not-allowed"
+                                title="Join will be available 5 minutes before the meeting"
+                            >
+                                Join
+                            </button>
+                        )}
                         <button
-                            className={`${buttonBase} bg-blue-600 text-white hover:bg-blue-700`}
-                            onClick={() => !loadingAction && setIsModalOpen(true)}
+                            className="px-4 py-2 rounded-full font-medium bg-blue-600 text-white hover:bg-blue-700 transition duration-200"
+                            onClick={() => setIsModalOpen(true)}
                             disabled={!!loadingAction}
                         >
                             Reschedule
                         </button>
                         <button
-                            className={`${buttonBase} bg-red-600 text-white hover:bg-red-700`}
+                            className="px-4 py-2 rounded-full font-medium bg-red-600 text-white hover:bg-red-700 transition duration-200"
                             onClick={deleteMeeting}
                             disabled={loadingAction === "delete"}
                         >
@@ -156,17 +200,17 @@ export default function MeetingCard({ id, type }) {
                     </>
                 )}
 
-                {shouldShowApprove && (
+                {showApproveButtons && (
                     <>
                         <button
-                            className={`${buttonBase} bg-green-600 text-white hover:bg-green-700`}
+                            className="px-4 py-2 rounded-full font-medium bg-green-600 text-white hover:bg-green-700 transition duration-200"
                             onClick={approveMeeting}
                             disabled={loadingAction === "approve"}
                         >
                             {loadingAction === "approve" ? "Approving..." : "Approve"}
                         </button>
                         <button
-                            className={`${buttonBase} bg-red-600 text-white hover:bg-red-700`}
+                            className="px-4 py-2 rounded-full font-medium bg-red-600 text-white hover:bg-red-700 transition duration-200"
                             onClick={deleteMeeting}
                             disabled={loadingAction === "delete"}
                         >
@@ -179,8 +223,11 @@ export default function MeetingCard({ id, type }) {
             {isModalOpen && (
                 <RescheduleModal
                     meetingId={meeting.id}
-                    onClose={handleCloseModal}
-                    onSave={handleSaveMeeting}
+                    onClose={() => setIsModalOpen(false)}
+                    onSave={() => {
+                        setIsModalOpen(false);
+                        refreshMeetings();
+                    }}
                 />
             )}
         </div>

@@ -34,10 +34,11 @@ export default function CreateMeetingModal({ open, onClose }) {
     const [showLoginWarning, setShowLoginWarning] = useState(false);
     const [alreadyBooked, setAlreadyBooked] = useState(false);
 
+    // Check for meeting cookie presence when modal is open
     useEffect(() => {
         if (open) {
             const meetingCookieExists = document.cookie.includes("meeting=");
-            setAlreadyBooked(meetingCookieExists);
+            setAlreadyBooked(meetingCookieExists); // Set state based on cookie existence
 
             const ctx = gsap.context(() => {
                 gsap.from(modalRef.current, {

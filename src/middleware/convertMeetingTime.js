@@ -12,7 +12,6 @@ export const convertMeetingTime = async (meetingId) => {
 
   const rawDay = String(meeting.selectDay || "").trim();
   const rawTime = String(meeting.selectTime || "").trim();
-  const slot = parseInt(meeting.slot, 10);
 
   const parts = rawDay.split(",");
   if (parts.length < 3) {
@@ -23,14 +22,14 @@ export const convertMeetingTime = async (meetingId) => {
   const fullDateTime = `${datePart} ${rawTime}`;
 
   const m = moment(fullDateTime, "MMMM D, YYYY h:mm A", true);
-  if (!m.isValid() || isNaN(slot) || slot <= 0) {
-    throw new Error("Invalid meeting time or slot");
+  if (!m.isValid()) {
+    throw new Error("Invalid date or time format");
   }
 
   const startDate = m.toDate();
-  const endDate = new Date(startDate.getTime() + slot * 60 * 1000);
+  const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // Force 1 hour duration
 
-  // Save start/end times to DB
+  // Save to DB
   await prisma.meeting.update({
     where: { id: meetingId },
     data: {

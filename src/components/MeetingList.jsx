@@ -1,15 +1,23 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useMeetingContext } from "../constants/MeetingContext";
 import MeetingCard from "./MeetingCard";
 
-export default function MeetingList({ meetingIds = [], type, showSearchBar = true, visibleSlots }) {
-    const { meetingsData } = useMeetingContext();
+export default function MeetingList({
+    meetingIds = [],
+    type,
+    showSearchBar = true,
+    visibleSlots
+}) {
+    const { meetingsData = [] } = useMeetingContext();
     const [searchTerm, setSearchTerm] = useState("");
     const [page, setPage] = useState(0);
 
     const filteredMeetings = useMemo(() => {
-        const meetingsForIds = meetingsData.filter(meeting => meetingIds.includes(meeting.id));
+        const term = searchTerm.toLowerCase();
+        const meetingsForIds = meetingsData.filter((meeting) =>
+            meetingIds.includes(meeting.id)
+        );
 
         const sorted = [...meetingsForIds].sort((a, b) => {
             const dateA = new Date(`${a.selectDay} ${a.selectTime}`);
@@ -19,10 +27,14 @@ export default function MeetingList({ meetingIds = [], type, showSearchBar = tru
 
         return sorted.filter(
             (meeting) =>
-                meeting.user_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                meeting.selectDay.toLowerCase().includes(searchTerm.toLowerCase())
+                meeting.user_name?.toLowerCase().includes(term) ||
+                meeting.selectDay?.toLowerCase().includes(term)
         );
-    }, [meetingsData, meetingIds, searchTerm]);
+    }, [meetingsData, meetingIds, searchTerm.toLowerCase()]);
+
+    useEffect(() => {
+        setPage(0);
+    }, [searchTerm, meetingIds]);
 
     const totalMeetings = filteredMeetings.length;
     const slotsPerPage = visibleSlots || totalMeetings;
@@ -43,10 +55,7 @@ export default function MeetingList({ meetingIds = [], type, showSearchBar = tru
                             placeholder="Search by name or day..."
                             className="w-full pl-10 pr-4 py-3 rounded-full border border-gray-300 bg-white text-gray-900 placeholder-gray-500 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                             value={searchTerm}
-                            onChange={(e) => {
-                                setSearchTerm(e.target.value);
-                                setPage(0);
-                            }}
+                            onChange={(e) => setSearchTerm(e.target.value)}
                         />
                         <img
                             src="/icons/searchbar.svg"
@@ -63,12 +72,15 @@ export default function MeetingList({ meetingIds = [], type, showSearchBar = tru
                         key={meeting.id}
                         id={meeting.id}
                         type={type}
+                    // meeting={meeting} // optionally pass full meeting object
                     />
                 ))}
             </div>
 
             {!filteredMeetings.length && (
-                <p className="text-gray-500 mt-4 text-center italic">No meetings found.</p>
+                <p className="text-gray-500 mt-4 text-center italic">
+                    No meetings found.
+                </p>
             )}
 
             {visibleSlots && totalMeetings > visibleSlots && (
@@ -85,7 +97,9 @@ export default function MeetingList({ meetingIds = [], type, showSearchBar = tru
                     </span>
                     <button
                         onClick={() =>
-                            setPage((prev) => (prev + 1 < totalPages ? prev + 1 : prev))
+                            setPage((prev) =>
+                                prev + 1 < totalPages ? prev + 1 : prev
+                            )
                         }
                         disabled={page + 1 >= totalPages}
                         className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"

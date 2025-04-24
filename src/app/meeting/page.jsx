@@ -1,10 +1,10 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import NavBar from "@/components/Navbar";
 import ProfileTag from "@/components/Profile";
 import { useUser } from "@/constants/UserContext";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 
 function getTimeOfDay(timeStr) {
     const date = new Date(`1970-01-01T${convertTo24Hour(timeStr)}`);
@@ -27,65 +27,103 @@ function Meeting() {
     const [meeting, setMeeting] = useState(null);
     const [meetingExpired, setMeetingExpired] = useState(false);
     const [canJoin, setCanJoin] = useState(false);
+    const [meetingStatus, setMeetingStatus] = useState(null);
     const { user, logout } = useUser();
+    const searchParams = useSearchParams();
+    const router = useRouter();
+
+    const getCookieValue = (name) => {
+        const match = document.cookie.match(
+            new RegExp("(^| )" + name + "=([^;]+)")
+        );
+        return match ? decodeURIComponent(match[2]) : null;
+    };
+
+    const decodeJWT = (token) => {
+        try {
+            const payload = token.split(".")[1];
+            return JSON.parse(atob(payload));
+        } catch {
+            return null;
+        }
+    };
+
+    const fetchMeetingData = async (meetingId) => {
+        try {
+            const res = await fetch(`/api/meeting/meeting_by_id/${meetingId}`);
+            const data = await res.json();
+            const fetchedMeeting = data.data;
+            if (!fetchedMeeting) return;
+
+            const now = new Date();
+            const endTime = new Date(fetchedMeeting.endDateTime);
+            const startTime = new Date(fetchedMeeting.startDateTime);
+            const canJoinWindowStart = new Date(startTime.getTime() - 5 * 60 * 1000);
+
+            const isWithinJoinTime = now >= canJoinWindowStart && now < endTime;
+            setCanJoin(isWithinJoinTime);
+
+            // If the meeting is completed or the meeting link time has passed
+            if (
+                fetchedMeeting.type === "completed" ||
+                (fetchedMeeting.meetingLink && now >= endTime)
+            ) {
+                try {
+                    const res = await fetch(`/api/meeting/markComplete`, {
+                        method: "POST",
+                        body: JSON.stringify({ meetingId: meetingId }),
+                        headers: { "Content-Type": "application/json" },
+                    });
+                    const result = await res.json();
+                    if (res.ok && result.success) {
+                        setMeetingStatus("completed");
+
+                        // Delete the meeting cookie immediately after marking as complete
+                        document.cookie = "meeting=; path=/; max-age=0;";
+
+                        // Optionally reset meeting state if you don't want to keep it in the UI
+                        setMeeting(null);  // Clear meeting state
+                        // Optionally, redirect after completion
+                        router.push("/thank-you");  // Redirect to another page after meeting is completed
+                    } else {
+                        console.warn("Failed to mark meeting as complete");
+                    }
+                } catch (err) {
+                    console.error("Error marking meeting complete:", err);
+                }
+            } else if (fetchedMeeting.type === "line_up") {
+                setMeetingStatus("line_up");
+            } else if (fetchedMeeting.type === "upcoming") {
+                setMeetingStatus("upcoming");
+            }
+
+            // Update the meeting data state with the latest fetched meeting
+            setMeeting(fetchedMeeting);
+        } catch (err) {
+            console.error("Error fetching meeting data:", err);
+        }
+    };
 
     useEffect(() => {
-        const getCookieValue = (name) => {
-            const match = document.cookie.match(
-                new RegExp("(^| )" + name + "=([^;]+)")
-            );
-            return match ? decodeURIComponent(match[2]) : null;
-        };
+        const urlMeetingId = searchParams.get("meetingId");
+        let meetingId = urlMeetingId;
 
-        const decodeJWT = (token) => {
-            try {
-                const payload = token.split(".")[1];
-                return JSON.parse(atob(payload));
-            } catch {
-                return null;
-            }
-        };
-
-        const jwt = getCookieValue("meeting");
-        const decoded = decodeJWT(jwt);
-        const meetingId = decoded?.meetings?.[0];
-
-        if (meetingId) {
-            fetch(`/api/meeting/meeting_by_id/${meetingId}`)
-                .then((res) => res.json())
-                .then((data) => {
-                    const fetchedMeeting = data.data;
-                    if (!fetchedMeeting) {
-                        setMeeting(null);
-                        return;
-                    }
-
-                    const now = new Date();
-                    const endTime = new Date(fetchedMeeting.endDateTime);
-                    const startTime = new Date(fetchedMeeting.startDateTime);
-
-                    const tenMinutesBefore = new Date(startTime.getTime() - 10 * 60 * 1000);
-                    if (now >= tenMinutesBefore && now <= endTime) {
-                        setCanJoin(true);
-                    }
-
-                    if (fetchedMeeting.type === "completed") {
-                        document.cookie = "meeting=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-                        setMeeting(null);
-                    } else {
-                        if (
-                            !fetchedMeeting.meetingLink &&
-                            endTime < now &&
-                            (fetchedMeeting.type === "line_up" || fetchedMeeting.type === "upcoming")
-                        ) {
-                            setMeetingExpired(true);
-                        }
-                        setMeeting(fetchedMeeting);
-                    }
-                })
-                .catch(console.error);
+        if (!meetingId) {
+            const jwt = getCookieValue("meeting");
+            const decoded = decodeJWT(jwt);
+            meetingId = decoded?.meetings?.[0];
         }
-    }, []);
+
+        if (!meetingId) {
+            console.warn("No meeting ID found.");
+            return;
+        }
+
+        fetchMeetingData(meetingId);
+        const interval = setInterval(() => fetchMeetingData(meetingId), 30000);
+
+        return () => clearInterval(interval);
+    }, [searchParams]);
 
     if (!meeting) {
         return (
@@ -103,21 +141,30 @@ function Meeting() {
 
     const timeOfDay = getTimeOfDay(meeting.selectTime);
     const formattedSlot = meeting.slot === "30" || meeting.slot === 30 ? "30 minutes" : "1 hour";
-    const imageSrc =
-        meeting.user_role === "admin"
-            ? "/icons/inmated.svg"
-            : "/icons/client.svg";
+    const imageSrc = meeting.user_role === "admin" ? "/icons/inmated.svg" : "/icons/client.svg";
 
-    const stepLabels = ["Booked", "Line-Up", "Upcoming", "Completed"];
-    const stepStatuses = ["booked", "line_up", "upcoming", "completed"];
-    const currentStepIndex = stepStatuses.indexOf(meeting.type);
+    const stepLabels = meeting.type === "line_up"
+        ? ["Booked", "Line-Up"]
+        : meeting.type === "upcoming"
+            ? ["Upcoming"]
+            : meeting.type === "completed"
+                ? ["Completed"]
+                : ["Unknown"];
+
+    const stepStatuses = meeting.type === "line_up"
+        ? ["booked", "line_up"]
+        : meeting.type === "upcoming"
+            ? ["upcoming"]
+            : meeting.type === "completed"
+                ? ["completed"]
+                : ["unknown"];
+
+    const currentStepIndex = stepStatuses.indexOf(meetingStatus);
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-900 text-white px-4 sm:px-8 md:px-12 relative">
             <div className="absolute top-6 left-0 right-0 flex justify-between items-center px-6 md:px-12 z-30">
-                <div className="text-2xl font-bold tracking-tight text-white">
-                    {projectName}
-                </div>
+                <div className="text-2xl font-bold tracking-tight text-white">{projectName}</div>
                 <div className="flex items-center gap-4">
                     <NavBar />
                     <ProfileTag
@@ -131,11 +178,7 @@ function Meeting() {
 
             <div className="w-full max-w-lg rounded-2xl border border-zinc-700 bg-zinc-950 shadow-[0_4px_30px_rgba(0,0,0,0.2)] p-6 sm:p-8 space-y-6 mt-28">
                 <div className="flex items-center gap-4">
-                    <img
-                        src={imageSrc}
-                        alt="client"
-                        className="w-14 h-14 rounded-full border border-zinc-700 shadow-sm dark:invert"
-                    />
+                    <img src={imageSrc} alt="client" className="w-14 h-14 rounded-full border border-zinc-700 shadow-sm dark:invert" />
                     <div>
                         <h3 className="font-bold text-white text-lg">{meeting.user_name}</h3>
                         <p className="text-sm text-zinc-300">{meeting.title}</p>
@@ -151,7 +194,7 @@ function Meeting() {
                         </span>
                     </p>
                     <p><strong className="text-white">Slot:</strong> {formattedSlot}</p>
-                    <p><strong className="text-white">Status:</strong> {meeting.type}</p>
+                    <p><strong className="text-white">Status:</strong> {meetingStatus}</p>
                 </div>
 
                 {meetingExpired && (
@@ -166,9 +209,7 @@ function Meeting() {
                             const isActive = currentStepIndex >= index;
                             return (
                                 <div key={index} className="flex-1 text-center">
-                                    <div
-                                        className={`h-2 rounded-full mx-1 transition-all duration-300 ${isActive ? "bg-green-400" : "bg-zinc-700"}`}
-                                    />
+                                    <div className={`h-2 rounded-full mx-1 transition-all duration-300 ${isActive ? "bg-green-400" : "bg-zinc-700"}`} />
                                     <span className="block mt-1">{label}</span>
                                 </div>
                             );

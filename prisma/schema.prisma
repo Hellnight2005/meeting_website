@@ -51,6 +51,7 @@ model Meeting {
 enum MeetingType {
   upcoming
   line_up
+  completed
 }
 
 enum UserRole {
