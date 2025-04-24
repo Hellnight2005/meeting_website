@@ -92,7 +92,13 @@ function RescheduleModal({ meetingId, onClose, onSave }) {
             });
 
             if (res.ok) {
-                toast.success("✅ Meeting rescheduled successfully!");
+                toast.success(
+                    " Meeting rescheduled successfully! 📅" // Add emoji here
+                    , {
+                        position: "top-center", // Center the toast
+                        duration: 3000, // Duration in ms
+
+                    });
                 refreshMeetings();
                 onSave?.({
                     ...meeting,
@@ -105,7 +111,17 @@ function RescheduleModal({ meetingId, onClose, onSave }) {
             }
         } catch (error) {
             console.error("Reschedule failed", error);
-            toast.error("⚠️ Something went wrong.");
+            toast.error(
+                "⚠️ Something went wrong. 😔", // Add emoji here
+                {
+                    position: "top-center", // Center the toast
+                    duration: 4000, // Duration in ms
+                    style: {
+                        fontSize: "16px", // Customize the font size if needed
+                        padding: "16px", // Add padding for better readability
+                    }
+                }
+            );
         } finally {
             setIsSubmitting(false);
         }
