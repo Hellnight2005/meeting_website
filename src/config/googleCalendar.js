@@ -106,11 +106,11 @@ const createCalendarEvent = async ({
     throw new Error("Error fetching admin email.");
   }
 
-  // Set admin as the organizer and include them as an attendee
+  // Add the admin as an attendee (without the "organizer" flag)
   attendees.push({
     email: adminEmail,
     displayName: "Admin",
-    organizer: true, // Marking the admin as the event organizer
+    organizer: false, // Admin will be a guest
   });
 
   const userAuth = await getAuthorizedClient({ accessToken, refreshToken });
@@ -144,7 +144,7 @@ const createCalendarEvent = async ({
         { method: "popup", minutes: 10 },
       ],
     },
-    sendUpdates: "all", // This ensures the user gets notifications
+    sendUpdates: "all", // This ensures both the user and admin get notifications
   };
 
   try {
@@ -155,7 +155,7 @@ const createCalendarEvent = async ({
     );
     if (exists) throw new Error("Event already exists during this time.");
 
-    // Create event for the user
+    // Create the event for the user
     const userEvent = await userCalendar.events.insert({
       calendarId: "primary",
       resource: event,
@@ -169,21 +169,6 @@ const createCalendarEvent = async ({
 
     logger.info("✅ Calendar event created for user successfully.");
 
-    // Now create the event on the admin's calendar, using the same event details
-    const adminAuth = await getAuthorizedClient({
-      accessToken: adminAccessToken,
-      refreshToken: adminRefreshToken,
-    });
-    const adminCalendar = google.calendar({ version: "v3", auth: adminAuth });
-
-    const adminEvent = await adminCalendar.events.insert({
-      calendarId: "primary",
-      resource: event,
-      conferenceDataVersion: 1,
-    });
-
-    logger.info("✅ Calendar event created for admin successfully.");
-
     return {
       user: {
         eventId: userEvent.data.id,
@@ -193,11 +178,11 @@ const createCalendarEvent = async ({
         endDateTime: userEvent.data.end.dateTime,
       },
       admin: {
-        eventId: adminEvent.data.id,
-        htmlLink: adminEvent.data.htmlLink,
+        eventId: userEvent.data.id, // Same event ID for admin since it's the same event
+        htmlLink: userEvent.data.htmlLink,
         meetingLink: videoLink,
-        startDateTime: adminEvent.data.start.dateTime,
-        endDateTime: adminEvent.data.end.dateTime,
+        startDateTime: userEvent.data.start.dateTime,
+        endDateTime: userEvent.data.end.dateTime,
       },
     };
   } catch (error) {

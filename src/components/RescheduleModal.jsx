@@ -16,7 +16,7 @@ function RescheduleModal({ meetingId, onClose, onSave }) {
     const meeting = meetingsData.find((m) => m.id === meetingId);
     const { selectDay, selectTime, userId, user_name, title } = meeting || {};
 
-    const [selectedTime, setSelectedTime] = useState(selectTime || "");
+    const [selectedTime, setSelectedTime] = useState(selectTime || "02:00 PM");
     const [selectedDate, setSelectedDate] = useState(selectDay || "");
     const [targetUser, setTargetUser] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -77,8 +77,12 @@ function RescheduleModal({ meetingId, onClose, onSave }) {
         setIsSubmitting(true);
         const payload = {
             selectDay: selectedDate.display || selectedDate,
-            selectTime,
+            selectTime: selectedTime, // Correct time handling
         };
+
+        console.log("Selected Date:", selectedDate);
+        console.log("Selected Time:", selectedTime);
+        console.log("Payload:", payload);
 
         try {
             const res = await fetch(`/api/meeting/reschedule/${meetingId}`, {

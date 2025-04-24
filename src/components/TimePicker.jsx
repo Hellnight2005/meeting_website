@@ -33,23 +33,27 @@ const TimePicker = ({
 
     const timeSlotArray = timeSlots();
 
-    // Extend blocked times to also block the next hour
+    // Helper function to get index of time in the slot array
+    const getTimeIndex = (time) => timeSlotArray.indexOf(time);
+
     const extendedBlockedTimes = new Set(rawBlockedTimes);
     rawBlockedTimes.forEach((time) => {
-        const index = timeSlotArray.indexOf(time);
+        const index = getTimeIndex(time);
         if (index >= 0 && index + 1 < timeSlotArray.length) {
             extendedBlockedTimes.add(timeSlotArray[index + 1]);
         }
     });
 
     useEffect(() => {
-        if (!selectedTime && selectedDate) {
+        if ((!selectedTime || selectedTime === "") && selectedDate) {
             const firstAvailable = timeSlotArray.find(
                 (slot) => !extendedBlockedTimes.has(slot)
             );
-            setSelectedTime(firstAvailable || null);
+            if (firstAvailable) {
+                setSelectedTime(firstAvailable);
+            }
         }
-    }, [selectedTime, selectedDate, extendedBlockedTimes, setSelectedTime, timeSlotArray]);
+    }, [selectedDate]);
 
     const handleTimeSelect = (time) => {
         if (!extendedBlockedTimes.has(time)) {
@@ -58,7 +62,7 @@ const TimePicker = ({
     };
 
     const getEndTime = (start) => {
-        const index = timeSlotArray.indexOf(start);
+        const index = getTimeIndex(start);
         return index >= 0 && index + 1 < timeSlotArray.length
             ? timeSlotArray[index + 1]
             : null;
@@ -80,7 +84,7 @@ const TimePicker = ({
                                 onClick={() => handleTimeSelect(time)}
                                 disabled={isBlocked}
                                 className={`py-2 px-4 rounded-lg text-center transition-all duration-200
-                  ${isBlocked
+                                    ${isBlocked
                                         ? "bg-gray-400 text-white cursor-not-allowed"
                                         : isSelected
                                             ? `${highlightColor} text-white font-semibold shadow-lg`
