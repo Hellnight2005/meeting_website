@@ -4,8 +4,9 @@ import ServiceSection from '../ServiceSection/page'
 import WhyUs from '../Why_us/page'
 import HowItWorks from '../HowItWorks/page'
 import Showcase from '../Showcase/page'
-import PricingCTA from '../CTA/page'
+
 import Footer from '../Footer/page'
+import CTA from '../CTA/page'
 function User_Section() {
     return (
         <>
@@ -31,7 +32,7 @@ function User_Section() {
             </section>
 
             <section id="pricing">
-                <PricingCTA />
+                <CTA />
             </section>
 
             <Footer />

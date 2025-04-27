@@ -1,12 +1,19 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger";
 import { Facebook, Twitter, Instagram, Mail } from "lucide-react";
+import { useUser } from '@/constants/UserContext';  // Importing UserContext to access user data
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default function Footer() {
+    const { user } = useUser();  // Get user data from UserContext
+    const userEmail = user?.email || "";  // Fallback to empty string if no email
+    const [email, setEmail] = useState(userEmail);
+    const [message, setMessage] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [errorMessage, setErrorMessage] = useState(""); // For error feedback
     const footerRef = useRef(null);
 
     useEffect(() => {
@@ -26,6 +33,50 @@ export default function Footer() {
             }
         );
     }, []);
+
+    const validateEmail = (email) => {
+        const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        return regex.test(email);
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        if (!email || !message) {
+            setErrorMessage("Please fill in both fields.");
+            return;
+        }
+
+        if (!validateEmail(email)) {
+            setErrorMessage("Please enter a valid email address.");
+            return;
+        }
+
+        setErrorMessage(""); // Clear previous error messages
+        setIsSubmitting(true);
+
+        try {
+            const response = await fetch("/api/email/SendEmail", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ email, message }),
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to send email");
+            }
+
+            alert("Your message has been sent!");
+            setEmail("");
+            setMessage("");
+        } catch (error) {
+            setErrorMessage(error.message || "Error sending message. Please try again later.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     return (
         <footer ref={footerRef} className="bg-zinc-900 text-zinc-100 py-16">
@@ -54,8 +105,8 @@ export default function Footer() {
                         <a href="https://instagram.com" target="_blank" rel="noreferrer">
                             <Instagram className="hover:text-pink-500 transition" />
                         </a>
-                        <a href="mailto:hello@example.com">
-                            <Mail className="hover:text-green-400 transition" />
+                        <a href={`mailto:${userEmail}`} className="hover:text-green-400 transition">
+                            <Mail className="transition" />
                         </a>
                     </div>
                 </div>
@@ -63,22 +114,31 @@ export default function Footer() {
                 {/* Right: Contact form */}
                 <div>
                     <h4 className="text-xl font-semibold mb-4">Quick Contact</h4>
-                    <form className="space-y-3">
+                    <form className="space-y-3" onSubmit={handleSubmit}>
+                        {errorMessage && (
+                            <div className="text-red-500 text-sm">
+                                {errorMessage}
+                            </div>
+                        )}
                         <input
                             type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
                             placeholder="Your Email"
                             className="w-full bg-zinc-800 border border-zinc-700 rounded-md px-4 py-2 text-sm placeholder-zinc-500 text-white"
                         />
                         <textarea
-                            placeholder="Your Message"
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
                             rows={3}
                             className="w-full bg-zinc-800 border border-zinc-700 rounded-md px-4 py-2 text-sm placeholder-zinc-500 text-white"
                         />
                         <button
                             type="submit"
                             className="bg-blue-600 hover:bg-blue-700 transition px-4 py-2 rounded-md text-sm font-medium"
+                            disabled={isSubmitting}
                         >
-                            Send
+                            {isSubmitting ? "Sending..." : "Send"}
                         </button>
                     </form>
                 </div>
@@ -90,3 +150,4 @@ export default function Footer() {
         </footer>
     );
 }
+

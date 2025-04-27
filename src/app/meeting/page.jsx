@@ -88,10 +88,7 @@ function Meeting() {
                     const result = await res.json();
 
                     if (res.ok && result.success) {
-                        await Promise.all([
-                            fetch(`/api/exportMeetings?id=${meetingId}`),
-                            fetch(`/api/meeting/delete/${meetingId}`, { method: "DELETE" }),
-                        ]);
+                        await Promise.all([fetch(`/api/exportMeetings?id=${meetingId}`), fetch(`/api/meeting/delete/${meetingId}`, { method: "DELETE" })]);
                         document.cookie = "meeting=; path=/; max-age=0;";
                         setMeeting(null);
                         toast.success("✅ Meeting completed. You can book a new one!");
@@ -126,9 +123,16 @@ function Meeting() {
             return;
         }
 
-        fetchMeetingData(meetingId);
-        const interval = setInterval(() => fetchMeetingData(meetingId), 30000);
-        return () => clearInterval(interval);
+        // Check if the user should access this meeting
+        const userHasPermission = /* Your condition to check if the user should access the page */ true;
+
+        if (!userHasPermission) {
+            router.push("/"); // Redirect to homepage if not authorized
+        } else {
+            fetchMeetingData(meetingId);
+            const interval = setInterval(() => fetchMeetingData(meetingId), 30000);
+            return () => clearInterval(interval);
+        }
     }, [searchParams]);
 
     if (isLoading) {
@@ -186,13 +190,11 @@ function Meeting() {
             </div>
 
             <div className="w-full max-w-lg rounded-2xl border border-zinc-700 bg-zinc-950 shadow-[0_4px_30px_rgba(0,0,0,0.2)] p-6 sm:p-8 space-y-6 mt-28">
-
                 {meeting.type === "upcoming" && (
                     <div className="bg-yellow-100 text-yellow-800 text-sm font-medium px-4 py-3 rounded-lg mb-4">
                         📧 Please click <strong>"Yes"</strong> in the email you received to add the event to your calendar for the perfect reminder.
                     </div>
                 )}
-
 
                 <div className="flex items-center gap-4">
                     <img src={imageSrc} alt="client" className="w-14 h-14 rounded-full border border-zinc-700 shadow-sm dark:invert" />

@@ -1,37 +1,42 @@
-import Link from "next/link";
-
-export default function Home() {
+import React from "react";
+import HeroSection from "../app/HeroSection/page";
+import ServiceSection from "../app/ServiceSection/page";
+import WhyUs from "../app/Why_us/page";
+import HowItWorks from "../app/HowItWorks/page";
+import Showcase from "../app/Showcase/page";
+import CTA from "../app/CTA/page";
+import Footer from "../app/Footer/page";
+function User_Section() {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="text-center p-6 bg-white rounded-2xl shadow-md">
-        <h1 className="text-3xl font-bold mb-4">Welcome to My App</h1>
-        <Link
-          href="/login"
-          className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl transition duration-200"
-        >
-          Login
-        </Link>
+    <>
+      <section id="home">
+        <HeroSection />
+      </section>
 
-        <Link
-          href="/Admin"
-          className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl transition duration-200"
-        >
-          Admin
-        </Link>
+      {/* Optional, if you add ServiceSection */}
+      <section id="services">
+        <ServiceSection />
+      </section>
 
-        <Link
-          href="/login"
-          className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl transition duration-200"
-        >
-          Login
-        </Link>
-        <Link
-          href="/user"
-          className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl transition duration-200"
-        >
-          User section
-        </Link>
-      </div>
-    </div>
+      <section id="whyus">
+        <WhyUs />
+      </section>
+
+      <section id="how">
+        <HowItWorks />
+      </section>
+
+      {/* <section id="showcase">
+        <Showcase />
+      </section> */}
+
+      <section id="pricing">
+        <CTA />
+      </section>
+
+      <Footer />
+    </>
   );
 }
+
+export default User_Section;

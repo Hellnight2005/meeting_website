@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { Dot, X } from "lucide-react";
+import { useUser } from "@/constants/UserContext";  // Assuming user context is available
 
 const NavBar = () => {
     const [open, setOpen] = useState(false);
@@ -11,8 +12,16 @@ const NavBar = () => {
     const itemRefs = useRef([]);
     const tl = useRef(null);
 
+    const { user } = useUser();  // Getting user info from context
+
     const menuItems = ["Home", "Services", "Why Us", "How It Works", "Showcase", "Pricing"];
     const routeItems = ["/user", "#services", "#whyus", "#how", "#showcase", "#pricing"];
+
+    // Conditionally add Admin link if the user is an admin
+    if (user?.role === "admin") {
+        menuItems.push("Admin");
+        routeItems.push("/Admin");
+    }
 
     itemRefs.current = [];
 
@@ -161,6 +170,8 @@ const NavBar = () => {
                                                             behavior: "smooth",
                                                             block: "start",
                                                         });
+                                                    } else {
+                                                        window.location.href = route;  // Use direct navigation for Admin link
                                                     }
                                                     setOpen(false);
                                                 },

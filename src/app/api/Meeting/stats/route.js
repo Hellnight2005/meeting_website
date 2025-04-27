@@ -1,19 +1,40 @@
+import { PrismaClient } from "@prisma/client";
+import { startOfMonth, startOfWeek, isWithinInterval } from "date-fns";
+const path = require("path"); // Add this line to fix the path issue
+import fs from "fs/promises"; // Ensure you're using fs.promises for async file operations
 import * as xlsx from "xlsx";
-import fs from "fs/promises"; // Use fs.promises for async file handling
-import path from "path";
 
-const xmlFilePath = path.join(process.cwd(), "public", "meetings.xlsx");
+const prisma = new PrismaClient();
 
 export async function GET(req) {
   try {
-    // Check if the Excel file exists asynchronously
-    try {
-      await fs.stat(xmlFilePath); // This checks if the file exists
-    } catch (error) {
-      return new Response("Excel file does not exist.", { status: 404 });
-    }
+    // Get the current date and the start of the current month and week
+    const currentDate = new Date();
+    const startOfCurrentMonth = startOfMonth(currentDate);
+    const startOfCurrentWeek = startOfWeek(currentDate);
 
-    // Read the file into a workbook
+    // Convert to ISO string for Prisma query
+    const startOfCurrentMonthISO = startOfCurrentMonth.toISOString();
+
+    // Fetch meetings from the database for this month
+    const meetingsFromDB = await prisma.meeting.findMany({
+      where: {
+        startDateTime: {
+          gte: startOfCurrentMonthISO, // Use ISO string for the query
+        },
+      },
+    });
+
+    // Filter meetings that fall within the current week
+    const meetingsThisWeekFromDB = meetingsFromDB.filter((meeting) =>
+      isWithinInterval(new Date(meeting.startDateTime), {
+        start: startOfCurrentWeek,
+        end: currentDate,
+      })
+    );
+
+    // Read the Excel file and extract meetings
+    const xmlFilePath = path.join(process.cwd(), "public", "meetings.xlsx");
     const fileBuffer = await fs.readFile(xmlFilePath);
     const workbook = xlsx.read(fileBuffer, { type: "buffer" });
 
@@ -24,13 +45,19 @@ export async function GET(req) {
     // Convert the sheet data to JSON
     const meetingsFromXLSX = xlsx.utils.sheet_to_json(sheet);
 
-    // Count the total number of meetings in the Excel sheet
+    // Count the total number of meetings from the Excel sheet
     const totalMeetingsInXLSX = meetingsFromXLSX.length;
 
-    // Return the response with the count of total meetings from the Excel file
+    // Count the total meetings from the database (this month and week)
+    const totalMeetingsInDB = meetingsFromDB.length;
+    const totalMeetingsThisWeek = meetingsThisWeekFromDB.length;
+
+    // Return the response with total meetings from Excel and the database
     return new Response(
       JSON.stringify({
         totalMeetingsInXLSX,
+        totalMeetingsInDB,
+        totalMeetingsThisWeek,
       }),
       {
         status: 200,
@@ -40,7 +67,7 @@ export async function GET(req) {
       }
     );
   } catch (error) {
-    console.error("Error reading meetings from Excel file:", error);
+    console.error("Error fetching meetings:", error);
     return new Response("Internal Server Error", { status: 500 });
   }
 }
