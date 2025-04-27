@@ -1,102 +1,47 @@
-import { PrismaClient } from "@prisma/client";
-import { NextResponse } from "next/server";
-import { deleteCalendarEvent } from "@/config/googleCalendar";
-import { sendEmail } from "@/config/nodemailer"; // Import the sendEmail function
+import nodemailer from "nodemailer";
 
-const prisma = new PrismaClient();
+// ✅ Nodemailer Setup
+const transporter = nodemailer.createTransport({
+  service: "gmail", // Or another service like Mailgun, SendGrid, etc.
+  auth: {
+    user: process.env.EMAIL_USER, // Your email address
+    pass: process.env.EMAIL_PASS, // Your email password or app-specific password
+  },
+});
 
-export async function POST(req) {
+const sendEmail = async (userEmail, meetingDetails, meetingId) => {
   try {
-    // Extract request body
-    const body = await req.json();
-    const { id, selectDay, selectTime, slot, type } = body;
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: userEmail,
+      subject: "Meeting Reschedule Confirmation",
+      html: `
+        <div style="text-align: center; padding: 20px;">
+        
+          <h2>Meeting Reschedule Confirmation</h2>
+          <p>Hello,</p>
+          <p>Your meeting titled "<strong>${meetingDetails.title}</strong>" has been successfully rescheduled.</p>
+          <p>Here are the updated details:</p>
+          <ul style="list-style-type: none; padding: 0;">
+            <li><strong>Date & Time:</strong> ${meetingDetails.selectDay} at ${meetingDetails.selectTime}</li>
+            <li><strong>Location:</strong> ${meetingDetails.location}</li>
+          </ul>
+          <p>If you are satisfied with the new schedule, no further action is needed.</p>
+          <p>If you would like to request another reschedule or have any concerns about the time, please contact us.</p>
 
-    // ⛔ Validate required fields
-    if (!id || !selectDay || !selectTime) {
-      return NextResponse.json(
-        { error: "ID, new date, time, and slot are required." },
-        { status: 400 }
-      );
-    }
+          <p>We look forward to your confirmation!</p>
+          <p>Best regards,</p>
+          <p>The Team</p>
+        </div>
+      `,
+    };
 
-    // 🔍 Check if the meeting exists
-    const existingMeeting = await prisma.meeting.findUnique({ where: { id } });
-    if (!existingMeeting) {
-      return NextResponse.json(
-        { error: "Meeting not found." },
-        { status: 404 }
-      );
-    }
-
-    // 🔍 Get the user associated with the meeting
-    const user = await prisma.user.findUnique({
-      where: { id: existingMeeting.userId },
-    });
-    if (!user) {
-      return NextResponse.json({ error: "User not found." }, { status: 404 });
-    }
-
-    // 🗑 Delete existing calendar event if present
-    if (existingMeeting.eventId) {
-      if (!user.refreshToken) {
-        return NextResponse.json(
-          { error: "User's refresh token is missing." },
-          { status: 400 }
-        );
-      }
-      const deleteResult = await deleteCalendarEvent(
-        existingMeeting.eventId,
-        user.refreshToken
-      );
-
-      if (!deleteResult.success) {
-        return NextResponse.json(
-          { error: "Failed to delete the calendar event." },
-          { status: 500 }
-        );
-      }
-    }
-
-    // 🛠 Reschedule the meeting and reset calendar-related fields
-    const updatedMeeting = await prisma.meeting.update({
-      where: { id },
-      data: {
-        selectDay,
-        selectTime,
-        slot,
-        type:
-          existingMeeting.type === "upcoming" ? "line_up" : type || "line_up",
-        startDateTime: null, // Reset start and end time
-        endDateTime: null,
-        meetingLink: null, // Reset meeting link
-        eventId: null, // Reset event ID
-      },
-    });
-
-    // ✅ Send email after rescheduling
-    await sendEmail(
-      user.email,
-      {
-        title: updatedMeeting.title,
-        selectDay: updatedMeeting.selectDay,
-        selectTime: updatedMeeting.selectTime,
-        location: "Google Meet", // Assuming Google Meet is the meeting location
-      },
-      updatedMeeting.id
-    );
-
-    // ✅ Return success message with updated meeting data
-    return NextResponse.json({
-      success: true,
-      message: "Meeting rescheduled successfully.",
-      data: updatedMeeting,
-    });
+    await transporter.sendMail(mailOptions);
+    console.log("✅ Email sent successfully.");
   } catch (error) {
-    // ❌ Handle unexpected errors
-    console.error("❌ Error in rescheduleMeeting:", error);
-    return NextResponse.json(
-      { error: "Failed to reschedule meeting. Please try again later." },
-      { status: 500 }
-    );
+    console.error("❌ Error sending email:", error);
+    throw new Error("Error sending email.");
   }
-}
+};
+
+export { sendEmail };
