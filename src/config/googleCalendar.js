@@ -106,16 +106,14 @@ const createCalendarEvent = async ({
     throw new Error("Error fetching admin email.");
   }
 
-  // Add the admin as an attendee (without the "organizer" flag)
-  attendees.push({
-    email: adminEmail,
-    displayName: "Admin",
-    organizer: false, // Admin will be a guest
+  // Make admin as the organizer by using admin's access token
+  const adminAuth = await getAuthorizedClient({
+    accessToken: adminAccessToken,
+    refreshToken: adminRefreshToken,
   });
+  const adminCalendar = google.calendar({ version: "v3", auth: adminAuth });
 
-  const userAuth = await getAuthorizedClient({ accessToken, refreshToken });
-  const userCalendar = google.calendar({ version: "v3", auth: userAuth });
-
+  // Prepare event data
   const event = {
     summary: title,
     description,
@@ -127,8 +125,8 @@ const createCalendarEvent = async ({
       dateTime: endDateTime,
       timeZone: "Asia/Kolkata",
     },
-    ...(location && { location }),
-    attendees,
+    location: location || undefined,
+    attendees: attendees.length > 0 ? attendees : undefined,
     conferenceData: {
       createRequest: {
         requestId: Math.random().toString(36).substring(2),
@@ -138,57 +136,52 @@ const createCalendarEvent = async ({
     reminders: {
       useDefault: false,
       overrides: [
-        { method: "email", minutes: 1440 }, // 1 day = 1440 minutes
+        { method: "email", minutes: 1440 },
         { method: "popup", minutes: 1440 },
         { method: "email", minutes: 30 },
         { method: "popup", minutes: 10 },
       ],
     },
-    sendUpdates: "all", // This ensures both the user and admin get notifications
   };
 
   try {
     const exists = await checkForExistingEvent(
-      userCalendar,
+      adminCalendar,
       startDateTime,
       endDateTime
     );
-    if (exists) throw new Error("Event already exists during this time.");
+    if (exists) {
+      throw new Error("Event already exists during this time.");
+    }
 
-    // Create the event for the user
-    const userEvent = await userCalendar.events.insert({
+    // Create the event on admin's calendar (admin will be organizer)
+    const adminEvent = await adminCalendar.events.insert({
       calendarId: "primary",
       resource: event,
       conferenceDataVersion: 1,
+      sendUpdates: "all",
     });
 
     const videoLink =
-      userEvent.data.conferenceData?.entryPoints?.find(
+      adminEvent.data.conferenceData?.entryPoints?.find(
         (e) => e.entryPointType === "video"
       )?.uri || null;
 
-    logger.info("✅ Calendar event created for user successfully.");
+    logger.info("✅ Calendar event created by Admin successfully.");
 
     return {
-      user: {
-        eventId: userEvent.data.id,
-        htmlLink: userEvent.data.htmlLink,
-        meetingLink: videoLink,
-        startDateTime: userEvent.data.start.dateTime,
-        endDateTime: userEvent.data.end.dateTime,
-      },
-      admin: {
-        eventId: userEvent.data.id, // Same event ID for admin since it's the same event
-        htmlLink: userEvent.data.htmlLink,
-        meetingLink: videoLink,
-        startDateTime: userEvent.data.start.dateTime,
-        endDateTime: userEvent.data.end.dateTime,
-      },
+      eventId: adminEvent.data.id,
+      htmlLink: adminEvent.data.htmlLink,
+      meetingLink: videoLink,
+      startDateTime: adminEvent.data.start.dateTime,
+      endDateTime: adminEvent.data.end.dateTime,
     };
   } catch (error) {
     logger.error(
       `❌ Error creating calendar event: ${
-        error?.response?.data || error.message
+        error?.response?.data?.error?.message ||
+        error?.message ||
+        JSON.stringify(error)
       }`
     );
     throw new Error("Error creating calendar event.");

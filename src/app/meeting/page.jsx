@@ -31,10 +31,8 @@ function Meeting() {
     const { user, logout } = useUser();
     const searchParams = useSearchParams();
     const router = useRouter();
-    const [hasHandledCompleted, setHasHandledCompleted] = useState(false);
-    const [prevStatus, setPrevStatus] = useState(null);
-    const [hasReloaded, setHasReloaded] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [isMarkingComplete, setIsMarkingComplete] = useState(false);
 
     const getCookieValue = (name) => {
         const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
@@ -50,8 +48,6 @@ function Meeting() {
         }
     };
 
-    let isMarkingComplete = false;
-
     const fetchMeetingData = async (meetingId) => {
         setIsLoading(true);
         try {
@@ -60,58 +56,55 @@ function Meeting() {
             const fetchedMeeting = data.data;
             if (!fetchedMeeting) return;
 
-            const now = new Date();
-            const endTime = new Date(fetchedMeeting.endDateTime);
-            const startTime = new Date(fetchedMeeting.startDateTime);
-            const canJoinWindowStart = new Date(startTime.getTime() - 5 * 60 * 1000);
-            const isWithinJoinTime = now >= canJoinWindowStart && now < endTime;
-
-            setCanJoin(isWithinJoinTime);
             setMeeting(fetchedMeeting);
 
-            const isAlreadyCompleted = fetchedMeeting.type === "completed";
-            const hasEnded = now >= endTime;
+            const now = new Date();
+            const startTime = new Date(fetchedMeeting.startDateTime);
+            const endTime = new Date(fetchedMeeting.endDateTime);
+            const canJoinWindowStart = new Date(startTime.getTime() - 5 * 60 * 1000);
+            const isWithinJoinTime = now >= canJoinWindowStart && now < endTime;
+            setCanJoin(isWithinJoinTime);
+
+            if (fetchedMeeting.type === "line_up") {
+                setMeetingStatus("line_up");
+            } else if (fetchedMeeting.type === "upcoming") {
+                setMeetingStatus("upcoming");
+            } else if (fetchedMeeting.type === "completed") {
+                setMeetingStatus("completed");
+            }
+
+            const hasEnded = now == endTime;
             const hasMeetingLink = Boolean(fetchedMeeting.meetingLink);
 
-            if ((isAlreadyCompleted || hasEnded) && hasMeetingLink && !isMarkingComplete) {
-                isMarkingComplete = true;
+            if ((hasEnded || fetchedMeeting.type === "completed") && hasMeetingLink && !isMarkingComplete) {
+                setIsMarkingComplete(true);
 
                 try {
                     const res = await fetch(`/api/meeting/markComplete`, {
                         method: "POST",
-                        body: JSON.stringify({ meetingId }),
                         headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ meetingId }),
                     });
-
                     const result = await res.json();
 
                     if (res.ok && result.success) {
-                        setMeetingStatus("completed");
-
                         await Promise.all([
                             fetch(`/api/exportMeetings?id=${meetingId}`),
                             fetch(`/api/meeting/delete/${meetingId}`, { method: "DELETE" }),
                         ]);
-
                         document.cookie = "meeting=; path=/; max-age=0;";
                         setMeeting(null);
-                        toast.success("✅ The meeting is complete. You can now book a new one!");
+                        toast.success("✅ Meeting completed. You can book a new one!");
                         setTimeout(() => router.push("/thank-you"), 2500);
-                    } else {
-                        console.warn("Failed to mark meeting as complete");
                     }
-                } catch (err) {
-                    console.error("Error marking meeting complete:", err);
+                } catch (error) {
+                    console.error("Error completing meeting:", error);
                 } finally {
-                    isMarkingComplete = false;
+                    setIsMarkingComplete(false);
                 }
-            } else if (fetchedMeeting.type === "line_up") {
-                setMeetingStatus("line_up");
-            } else if (fetchedMeeting.type === "upcoming") {
-                setMeetingStatus("upcoming");
             }
-        } catch (err) {
-            console.error("Error fetching meeting data:", err);
+        } catch (error) {
+            console.error("Error fetching meeting data:", error);
         } finally {
             setIsLoading(false);
         }
@@ -135,59 +128,8 @@ function Meeting() {
 
         fetchMeetingData(meetingId);
         const interval = setInterval(() => fetchMeetingData(meetingId), 30000);
-
         return () => clearInterval(interval);
     }, [searchParams]);
-
-    useEffect(() => {
-        const handleCompletedMeeting = async () => {
-            if (!meeting || hasHandledCompleted || meeting.type !== "completed") return;
-
-            try {
-                await Promise.all([
-                    fetch(`/api/exportMeetings?id=${meeting.id}`),
-                    fetch(`/api/meeting/delete/${meeting.id}`, { method: "DELETE" }),
-                ]);
-
-                document.cookie = "meeting=; path=/; max-age=0;";
-                setHasHandledCompleted(true);
-
-                toast.success("✅ Completed meeting", {
-                    position: "top-center",
-                });
-
-                setTimeout(() => {
-                    window.location.reload();
-                }, 2500);
-            } catch (error) {
-                console.error("Error handling completed meeting:", error);
-            }
-        };
-
-        handleCompletedMeeting();
-    }, [meeting, hasHandledCompleted]);
-
-    useEffect(() => {
-        if (meetingStatus && meeting) {
-            const toastKey = `toast_shown_${meeting.id}_${meetingStatus}`;
-            const hasShownToast = localStorage.getItem(toastKey);
-
-            if (!hasShownToast && meetingStatus !== prevStatus) {
-                toast.success(`🔔 Meeting status updated to: ${meetingStatus}`, {
-                    position: "top-center",
-                });
-                localStorage.setItem(toastKey, "true");
-                setPrevStatus(meetingStatus);
-            }
-        }
-    }, [meetingStatus, meeting, prevStatus]);
-
-    useEffect(() => {
-        if (canJoin && !hasReloaded) {
-            setHasReloaded(true);
-            window.location.reload();
-        }
-    }, [canJoin, hasReloaded]);
 
     if (isLoading) {
         return (
@@ -244,6 +186,14 @@ function Meeting() {
             </div>
 
             <div className="w-full max-w-lg rounded-2xl border border-zinc-700 bg-zinc-950 shadow-[0_4px_30px_rgba(0,0,0,0.2)] p-6 sm:p-8 space-y-6 mt-28">
+
+                {meeting.type === "upcoming" && (
+                    <div className="bg-yellow-100 text-yellow-800 text-sm font-medium px-4 py-3 rounded-lg mb-4">
+                        📧 Please click <strong>"Yes"</strong> in the email you received to add the event to your calendar for the perfect reminder.
+                    </div>
+                )}
+
+
                 <div className="flex items-center gap-4">
                     <img src={imageSrc} alt="client" className="w-14 h-14 rounded-full border border-zinc-700 shadow-sm dark:invert" />
                     <div>

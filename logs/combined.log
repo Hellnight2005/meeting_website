@@ -306,3 +306,38 @@
 {"level":"info","message":"📅 Validating date inputs for calendar event...","timestamp":"2025-04-24T19:20:36.507Z"}
 {"level":"info","message":"✅ Calendar event created for user successfully.","timestamp":"2025-04-24T19:20:39.042Z"}
 {"level":"info","message":"✅ Event pfd3l9kmjvmhl2mqr4u048p81k deleted successfully.","timestamp":"2025-04-24T19:23:41.196Z"}
+{"level":"info","message":"📅 Validating date inputs for calendar event...","timestamp":"2025-04-27T10:32:51.185Z"}
+{"level":"info","message":"✅ Calendar event created for user successfully.","timestamp":"2025-04-27T10:32:53.432Z"}
+{"level":"info","message":"✅ Event en8mc1fdbltrlkonomieetm1kg deleted successfully.","timestamp":"2025-04-27T10:37:18.660Z"}
+{"level":"info","message":"📅 Validating date inputs for calendar event...","timestamp":"2025-04-27T10:38:10.686Z"}
+{"level":"error","message":"❌ Error creating calendar event: [object Object]","timestamp":"2025-04-27T10:38:12.270Z"}
+{"level":"info","message":"📅 Validating date inputs for calendar event...","timestamp":"2025-04-27T10:38:53.355Z"}
+{"level":"error","message":"❌ Error creating calendar event: [object Object]","timestamp":"2025-04-27T10:38:55.019Z"}
+{"level":"info","message":"📅 Validating date inputs for calendar event...","timestamp":"2025-04-27T10:41:19.292Z"}
+{"level":"info","message":"✅ Calendar event created by Admin successfully.","timestamp":"2025-04-27T10:41:21.323Z"}
+{"level":"info","message":"📅 Validating date inputs for calendar event...","timestamp":"2025-04-27T10:44:30.465Z"}
+{"level":"error","message":"❌ Error creating calendar event: Event already exists during this time.","timestamp":"2025-04-27T10:44:31.828Z"}
+{"level":"info","message":"📅 Validating date inputs for calendar event...","timestamp":"2025-04-27T10:44:57.881Z"}
+{"level":"info","message":"✅ Calendar event created by Admin successfully.","timestamp":"2025-04-27T10:44:59.795Z"}
+{"level":"info","message":"📅 Validating date inputs for calendar event...","timestamp":"2025-04-27T11:07:16.880Z"}
+{"level":"info","message":"✅ Calendar event created by Admin successfully.","timestamp":"2025-04-27T11:07:19.565Z"}
+{"level":"info","message":"✅ Event p7481jgmuip6lbdefvgj6rg50o deleted successfully.","timestamp":"2025-04-27T11:08:37.148Z"}
+{"level":"info","message":"✅ Event sid5h17nkh5k42o5b83dib0sh4 deleted successfully.","timestamp":"2025-04-27T11:37:05.658Z"}
+{"level":"info","message":"📅 Validating date inputs for calendar event...","timestamp":"2025-04-27T11:45:30.643Z"}
+{"level":"info","message":"✅ New access token generated.","timestamp":"2025-04-27T11:45:32.144Z"}
+{"level":"info","message":"✅ Calendar event created by Admin successfully.","timestamp":"2025-04-27T11:45:33.495Z"}
+{"level":"info","message":"✅ Event 8dqe57d19q0gdg19e6rl0u3ga4 deleted successfully.","timestamp":"2025-04-27T11:46:22.232Z"}
+{"level":"info","message":"📅 Validating date inputs for calendar event...","timestamp":"2025-04-27T11:53:21.933Z"}
+{"level":"info","message":"✅ New access token generated.","timestamp":"2025-04-27T11:53:22.896Z"}
+{"level":"info","message":"✅ Calendar event created by Admin successfully.","timestamp":"2025-04-27T11:53:24.292Z"}
+{"level":"info","message":"✅ Event 4v98itaagkifk3ccr8ddf31d7c deleted successfully.","timestamp":"2025-04-27T11:53:51.232Z"}
+{"level":"info","message":"📅 Validating date inputs for calendar event...","timestamp":"2025-04-27T11:54:05.921Z"}
+{"level":"info","message":"✅ New access token generated.","timestamp":"2025-04-27T11:54:07.293Z"}
+{"level":"info","message":"✅ Calendar event created by Admin successfully.","timestamp":"2025-04-27T11:54:08.487Z"}
+{"level":"info","message":"✅ Event cui6iqssvmj5sm674a3m8gb2ck deleted successfully.","timestamp":"2025-04-27T11:54:41.855Z"}
+{"level":"info","message":"📅 Validating date inputs for calendar event...","timestamp":"2025-04-27T15:36:57.278Z"}
+{"level":"info","message":"✅ Calendar event created by Admin successfully.","timestamp":"2025-04-27T15:37:00.335Z"}
+{"level":"info","message":"✅ Event s1ttm6u8lh34c3m8m3bg2hq7v0 deleted successfully.","timestamp":"2025-04-27T15:46:48.007Z"}
+{"level":"info","message":"📅 Validating date inputs for calendar event...","timestamp":"2025-04-27T15:49:02.207Z"}
+{"level":"info","message":"✅ Calendar event created by Admin successfully.","timestamp":"2025-04-27T15:49:05.558Z"}
+{"level":"info","message":"✅ Event 54fq4t6ae4o307oljqg0kq6ae4 deleted successfully.","timestamp":"2025-04-27T16:12:56.907Z"}

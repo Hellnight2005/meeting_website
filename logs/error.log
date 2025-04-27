@@ -34,3 +34,6 @@
 {"level":"error","message":"❌ Error deleting calendar event: Resource has been deleted","timestamp":"2025-04-24T16:41:51.004Z"}
 {"level":"error","message":"❌ Error deleting calendar event: Resource has been deleted","timestamp":"2025-04-24T16:42:53.664Z"}
 {"level":"error","message":"❌ Error creating calendar event: Event already exists during this time.","timestamp":"2025-04-24T16:57:40.014Z"}
+{"level":"error","message":"❌ Error creating calendar event: [object Object]","timestamp":"2025-04-27T10:38:12.270Z"}
+{"level":"error","message":"❌ Error creating calendar event: [object Object]","timestamp":"2025-04-27T10:38:55.019Z"}
+{"level":"error","message":"❌ Error creating calendar event: Event already exists during this time.","timestamp":"2025-04-27T10:44:31.829Z"}

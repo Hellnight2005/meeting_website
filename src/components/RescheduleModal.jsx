@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useEffect, useRef, useState } from "react";
 import Calendar from "./Calendar";
 import TimePicker from "./TimePicker";
@@ -8,6 +6,7 @@ import { useMeetingContext } from "../constants/MeetingContext";
 import { useUser } from "../constants/UserContext";
 import Image from "next/image";
 import toast from "react-hot-toast";
+
 
 function RescheduleModal({ meetingId, onClose, onSave }) {
     const { meetingsData, refreshMeetings } = useMeetingContext();
@@ -76,29 +75,35 @@ function RescheduleModal({ meetingId, onClose, onSave }) {
 
         setIsSubmitting(true);
         const payload = {
-            selectDay: selectedDate.display || selectedDate,
-            selectTime: selectedTime, // Correct time handling
+            id: meetingId,  // Include the meeting ID in the payload
+            selectDay: selectedDate?.display || selectedDate, // Ensure it's a string
+            selectTime: selectedTime,
+            slot: 1,  // Default slot or handle as needed
         };
 
         console.log("Selected Date:", selectedDate);
         console.log("Selected Time:", selectedTime);
+        console.log("meetingId:", meeting.id)
         console.log("Payload:", payload);
 
         try {
-            const res = await fetch(`/api/meeting/reschedule/${meetingId}`, {
+            const res = await fetch(`/api/meeting/reschedule`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
             });
 
+            const responseBody = await res.json();
             if (res.ok) {
-                toast.success(
-                    " Meeting rescheduled successfully! 📅" // Add emoji here
-                    , {
-                        position: "top-center", // Center the toast
-                        duration: 3000, // Duration in ms
+                toast.success(responseBody.message || "Meeting rescheduled successfully! 📅", {
+                    position: "top-center",
+                    duration: 3000,
+                });
 
-                    });
+
+
+
+
                 refreshMeetings();
                 onSave?.({
                     ...meeting,
@@ -107,21 +112,18 @@ function RescheduleModal({ meetingId, onClose, onSave }) {
                 });
                 onClose?.();
             } else {
-                toast.error("❌ Failed to reschedule the meeting.");
+                toast.error(responseBody.error || "❌ Failed to reschedule the meeting.");
             }
         } catch (error) {
             console.error("Reschedule failed", error);
-            toast.error(
-                "⚠️ Something went wrong. 😔", // Add emoji here
-                {
-                    position: "top-center", // Center the toast
-                    duration: 4000, // Duration in ms
-                    style: {
-                        fontSize: "16px", // Customize the font size if needed
-                        padding: "16px", // Add padding for better readability
-                    }
-                }
-            );
+            toast.error("⚠️ Something went wrong. 😔", {
+                position: "top-center",
+                duration: 4000,
+                style: {
+                    fontSize: "16px",
+                    padding: "16px",
+                },
+            });
         } finally {
             setIsSubmitting(false);
         }

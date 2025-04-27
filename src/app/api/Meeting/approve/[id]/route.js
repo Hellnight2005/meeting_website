@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { convertMeetingTime } from "@/middleware/convertMeetingTime";
 import { createCalendarEvent } from "@/config/googleCalendar";
+import { sendEmail } from "@/services/approve_email";
 
 const prisma = new PrismaClient();
 
@@ -16,22 +17,15 @@ export async function PATCH(req, { params }) {
       );
     }
 
-    // ✅ Convert meeting time (assumes this returns ISO strings)
-    const { startDateTime, endDateTime } = await convertMeetingTime(id);
-
-    const now = new Date();
-    const start = new Date(startDateTime);
-
-    // ⛔ Reject if meeting is in the past
-    if (start < now) {
+    // Fetch meeting and related users
+    const meeting = await prisma.meeting.findUnique({ where: { id } });
+    if (!meeting) {
       return NextResponse.json(
-        { error: "Cannot approve meetings scheduled in the past." },
-        { status: 400 }
+        { error: "Meeting not found." },
+        { status: 404 }
       );
     }
 
-    // ✅ Fetch meeting and related users
-    const meeting = await prisma.meeting.findUnique({ where: { id } });
     const user = await prisma.user.findUnique({
       where: { id: meeting.userId },
     });
@@ -39,12 +33,18 @@ export async function PATCH(req, { params }) {
 
     if (!user || !admin) {
       return NextResponse.json(
-        { error: "User or admin not found" },
+        { error: "User or admin not found." },
         { status: 404 }
       );
     }
 
-    // ✅ Create Google Calendar Event
+    const selectDay = meeting.selectDay;
+    const selectTime = meeting.selectTime;
+
+    // Convert meeting time to start and end datetime
+    const { startDateTime, endDateTime } = await convertMeetingTime(id);
+
+    // Create Google Calendar event
     const calendarData = await createCalendarEvent({
       accessToken: user.accessToken,
       refreshToken: user.refreshToken,
@@ -58,18 +58,31 @@ export async function PATCH(req, { params }) {
       attendees: [{ email: user.email }, { email: admin.email }],
     });
 
-    // ✅ Update meeting in DB
+    // Update meeting in the database
     const updatedMeeting = await prisma.meeting.update({
       where: { id },
       data: {
         type: "upcoming",
-        meetingLink: calendarData.user.meetingLink,
-        eventId: calendarData.user.eventId,
+        meetingLink: calendarData.meetingLink,
+        eventId: calendarData.eventId,
       },
     });
 
+    // Send email to user
+    // await sendEmail(
+    //   user.email,
+    //   {
+    //     title: meeting.title,
+    //     selectDay,
+    //     selectTime,
+    //     location: "Virtual",
+    //     meetingLink: calendarData.meetingLink,
+    //   },
+    //   admin.photoUrl
+    // );
+
     return NextResponse.json({
-      message: "Meeting approved and calendar event created.",
+      message: "Meeting approved, calendar event created, and email sent.",
       meeting: updatedMeeting,
       calendarData,
     });
