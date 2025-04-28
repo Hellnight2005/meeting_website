@@ -354,3 +354,8 @@
 {"level":"info","message":"📅 Validating date inputs for calendar event...","timestamp":"2025-04-27T19:20:00.444Z"}
 {"level":"info","message":"✅ New access token generated.","timestamp":"2025-04-27T19:20:01.290Z"}
 {"level":"info","message":"✅ Calendar event created by Admin successfully.","timestamp":"2025-04-27T19:20:02.722Z"}
+{"level":"info","message":"✅ Event ra1cskapn5rdtfa70u7u2n2r50 deleted successfully.","timestamp":"2025-04-28T10:07:06.035Z"}
+{"level":"info","message":"📅 Validating date inputs for calendar event...","timestamp":"2025-04-28T10:18:32.466Z"}
+{"level":"info","message":"✅ New access token generated.","timestamp":"2025-04-28T10:18:33.972Z"}
+{"level":"info","message":"✅ Calendar event created by Admin successfully.","timestamp":"2025-04-28T10:18:35.156Z"}
+{"level":"info","message":"✅ Event 7oqh6umrbn1mb96jsus30ng1eg deleted successfully.","timestamp":"2025-04-28T15:30:56.115Z"}

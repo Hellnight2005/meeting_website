@@ -73,7 +73,7 @@ function Meeting() {
                 setMeetingStatus("completed");
             }
 
-            const hasEnded = now == endTime;
+            const hasEnded = now >= endTime;
             const hasMeetingLink = Boolean(fetchedMeeting.meetingLink);
 
             if ((hasEnded || fetchedMeeting.type === "completed") && hasMeetingLink && !isMarkingComplete) {
@@ -91,7 +91,10 @@ function Meeting() {
                         await Promise.all([fetch(`/api/exportMeetings?id=${meetingId}`), fetch(`/api/meeting/delete/${meetingId}`, { method: "DELETE" })]);
                         document.cookie = "meeting=; path=/; max-age=0;";
                         setMeeting(null);
-                        toast.success("✅ Meeting completed. You can book a new one!");
+                        toast.success('✅ Meeting completed. You can book a new one!', {
+                            position: 'top-center',   // center at the top
+                            duration: 6000,           // 6000 milliseconds = 6 seconds
+                        });
                         setTimeout(() => router.push("/thank-you"), 2500);
                     }
                 } catch (error) {

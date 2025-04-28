@@ -27,8 +27,9 @@ export async function POST(req) {
       data: { type: "completed" }, // lowercase 'completed' to match your frontend label (if needed)
     });
 
+    // Return a success flag in the response
     return NextResponse.json(
-      { message: "Meeting marked as complete." },
+      { success: true, message: "Meeting marked as complete." },
       { status: 200 }
     );
   } catch (error) {

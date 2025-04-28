@@ -2,6 +2,7 @@ import { google } from "googleapis";
 import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
+import { UAParser } from "ua-parser-js";
 
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key"; // Replace in production
@@ -23,6 +24,11 @@ export async function GET(request) {
     const oauth2 = google.oauth2({ auth: oauth2Client, version: "v2" });
     const { data: profile } = await oauth2.userinfo.get();
 
+    // 🖥️ Detect Device
+    const userAgent = request.headers.get("user-agent");
+    const parser = new UAParser(userAgent);
+    const deviceType = parser.getDevice().type || "desktop"; // default to desktop if undefined
+
     let user = await prisma.user.findUnique({
       where: { googleId: profile.id },
     });
@@ -33,6 +39,7 @@ export async function GET(request) {
         data: {
           accessToken: tokens.access_token,
           refreshToken: tokens.refresh_token,
+          device: deviceType, // ✨ update device
         },
       });
     } else {
@@ -44,6 +51,7 @@ export async function GET(request) {
           photo: profile.picture,
           accessToken: tokens.access_token,
           refreshToken: tokens.refresh_token,
+          device: deviceType, // ✨ new device info
         },
       });
     }
@@ -55,6 +63,7 @@ export async function GET(request) {
         email: user.email,
         displayName: user.displayName,
         photo: user.photo,
+        device: user.device, // optional: also put device info inside token
       },
       JWT_SECRET,
       { expiresIn: "7d" }
