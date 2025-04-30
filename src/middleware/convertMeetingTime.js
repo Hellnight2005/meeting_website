@@ -43,5 +43,3 @@ export const convertMeetingTime = async (meetingId) => {
     endDateTime: endDate.toISOString(),
   };
 };
-
-export { convertMeetingTime };
