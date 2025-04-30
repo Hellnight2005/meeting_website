@@ -6,14 +6,6 @@
         "use": "@vercel/node"
       }
     ],
-    "build": {
-      "env": {
-        "DATABASE_URL": "your-database-url"
-      },
-      "commands": [
-        "npx prisma generate"
-      ]
-    },
     "env": {
       "DATABASE_URL": "mongodb+srv://Hellnight:Hellnight2005@backend.c9lq1ir.mongodb.net/myapp?retryWrites=true&w=majority&appName=Backend&tls=true"
     }
