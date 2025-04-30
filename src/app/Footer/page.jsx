@@ -3,17 +3,17 @@ import { useState, useRef, useEffect } from "react";
 import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger";
 import { Facebook, Twitter, Instagram, Mail } from "lucide-react";
-import { useUser } from '@/constants/UserContext';  // Importing UserContext to access user data
+import { useUser } from "@/constants/UserContext";
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default function Footer() {
-    const { user } = useUser();  // Get user data from UserContext
-    const userEmail = user?.email || "";  // Fallback to empty string if no email
+    const { user } = useUser();
+    const userEmail = user?.email || "";
     const [email, setEmail] = useState(userEmail);
     const [message, setMessage] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [errorMessage, setErrorMessage] = useState(""); // For error feedback
+    const [errorMessage, setErrorMessage] = useState("");
     const footerRef = useRef(null);
 
     useEffect(() => {
@@ -52,15 +52,13 @@ export default function Footer() {
             return;
         }
 
-        setErrorMessage(""); // Clear previous error messages
+        setErrorMessage("");
         setIsSubmitting(true);
 
         try {
             const response = await fetch("/api/email/SendEmail", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, message }),
             });
 
@@ -79,34 +77,30 @@ export default function Footer() {
     };
 
     return (
-        <footer ref={footerRef} className="bg-zinc-900 text-zinc-100 py-16">
-            <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-12">
-                {/* Left: Links */}
-                <div>
-                    <h4 className="text-xl font-semibold mb-4">Quick Links</h4>
-                    <ul className="space-y-2 text-zinc-400">
-                        <li><a href="/" className="hover:text-white">Home</a></li>
-                        <li><a href="/ServiceSection" className="hover:text-white">Services</a></li>
-                        <li><a href="/work" className="hover:text-white">Our Work</a></li>
-                        <li><a href="/book" className="hover:text-white">Book a Call</a></li>
-                    </ul>
+        <footer ref={footerRef} className="bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900 text-zinc-100 py-16 px-6">
+            <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-16">
+
+                {/* Left: Links or Logo */}
+                <div className="space-y-4">
+                    <h2 className="text-2xl font-bold text-white">YourAgency</h2>
+                    <p className="text-sm text-zinc-400">Building innovative solutions for tomorrow.</p>
                 </div>
 
                 {/* Center: Socials */}
-                <div>
+                <div className="flex flex-col items-center">
                     <h4 className="text-xl font-semibold mb-4">Follow Us</h4>
-                    <div className="flex gap-4">
-                        <a href="https://facebook.com" target="_blank" rel="noreferrer">
-                            <Facebook className="hover:text-blue-500 transition" />
+                    <div className="flex gap-6">
+                        <a href="https://facebook.com" target="_blank" rel="noreferrer" className="p-3 rounded-full bg-zinc-800 hover:bg-blue-600 transition">
+                            <Facebook className="h-5 w-5" />
                         </a>
-                        <a href="https://twitter.com" target="_blank" rel="noreferrer">
-                            <Twitter className="hover:text-sky-400 transition" />
+                        <a href="https://twitter.com" target="_blank" rel="noreferrer" className="p-3 rounded-full bg-zinc-800 hover:bg-sky-400 transition">
+                            <Twitter className="h-5 w-5" />
                         </a>
-                        <a href="https://instagram.com" target="_blank" rel="noreferrer">
-                            <Instagram className="hover:text-pink-500 transition" />
+                        <a href="https://instagram.com" target="_blank" rel="noreferrer" className="p-3 rounded-full bg-zinc-800 hover:bg-pink-500 transition">
+                            <Instagram className="h-5 w-5" />
                         </a>
-                        <a href={`mailto:${userEmail}`} className="hover:text-green-400 transition">
-                            <Mail className="transition" />
+                        <a href={`mailto:${userEmail}`} className="p-3 rounded-full bg-zinc-800 hover:bg-green-500 transition">
+                            <Mail className="h-5 w-5" />
                         </a>
                     </div>
                 </div>
@@ -114,9 +108,9 @@ export default function Footer() {
                 {/* Right: Contact form */}
                 <div>
                     <h4 className="text-xl font-semibold mb-4">Quick Contact</h4>
-                    <form className="space-y-3" onSubmit={handleSubmit}>
+                    <form className="space-y-4" onSubmit={handleSubmit}>
                         {errorMessage && (
-                            <div className="text-red-500 text-sm">
+                            <div className="text-red-400 text-sm bg-red-900 p-2 rounded">
                                 {errorMessage}
                             </div>
                         )}
@@ -125,29 +119,41 @@ export default function Footer() {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             placeholder="Your Email"
-                            className="w-full bg-zinc-800 border border-zinc-700 rounded-md px-4 py-2 text-sm placeholder-zinc-500 text-white"
+                            className="w-full bg-zinc-700 border border-zinc-600 focus:border-blue-500 rounded-md px-4 py-2 text-sm text-white placeholder:text-zinc-400 transition"
                         />
                         <textarea
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
-                            rows={3}
-                            className="w-full bg-zinc-800 border border-zinc-700 rounded-md px-4 py-2 text-sm placeholder-zinc-500 text-white"
+                            rows={4}
+                            placeholder="Your Message"
+                            className="w-full bg-zinc-700 border border-zinc-600 focus:border-blue-500 rounded-md px-4 py-2 text-sm text-white placeholder:text-zinc-400 transition"
                         />
                         <button
                             type="submit"
-                            className="bg-blue-600 hover:bg-blue-700 transition px-4 py-2 rounded-md text-sm font-medium"
+                            className="w-full bg-blue-600 hover:bg-blue-700 transition px-4 py-2 rounded-md text-sm font-medium shadow-md"
                             disabled={isSubmitting}
                         >
                             {isSubmitting ? "Sending..." : "Send"}
                         </button>
                     </form>
+
+                    {/* Added Privacy Policy and Terms links here */}
+                    <div className="mt-6 text-xs text-center text-zinc-400 space-x-4">
+                        <a href="/privacy-policy" className="hover:underline hover:text-blue-400 transition">
+                            Privacy Policy
+                        </a>
+                        <span>|</span>
+                        <a href="/terms-and-conditions" className="hover:underline hover:text-blue-400 transition">
+                            Terms & Conditions
+                        </a>
+                    </div>
                 </div>
+
             </div>
 
-            <div className="mt-12 text-center text-zinc-500 text-sm">
+            <div className="mt-12 border-t border-zinc-700 pt-6 text-center text-zinc-500 text-sm">
                 © {new Date().getFullYear()} YourAgency. All rights reserved.
             </div>
         </footer>
     );
 }
-

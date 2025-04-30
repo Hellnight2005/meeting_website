@@ -37,3 +37,5 @@
 {"level":"error","message":"❌ Error creating calendar event: [object Object]","timestamp":"2025-04-27T10:38:12.270Z"}
 {"level":"error","message":"❌ Error creating calendar event: [object Object]","timestamp":"2025-04-27T10:38:55.019Z"}
 {"level":"error","message":"❌ Error creating calendar event: Event already exists during this time.","timestamp":"2025-04-27T10:44:31.829Z"}
+{"level":"error","message":"❌ Error creating calendar event: Event already exists during this time.","timestamp":"2025-04-28T19:36:04.549Z"}
+{"level":"error","message":"❌ Error deleting calendar event: Resource has been deleted","timestamp":"2025-04-29T10:47:02.712Z"}

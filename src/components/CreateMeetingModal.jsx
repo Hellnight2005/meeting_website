@@ -34,11 +34,12 @@ export default function CreateMeetingModal({ open, onClose }) {
     const [showLoginWarning, setShowLoginWarning] = useState(false);
     const [alreadyBooked, setAlreadyBooked] = useState(false);
 
-    // Check for meeting cookie presence when modal is open
+    const [creatingMeeting, setCreatingMeeting] = useState(false); // ✅ Added new state to handle button disabling
+
     useEffect(() => {
         if (open) {
             const meetingCookieExists = document.cookie.includes("meeting=");
-            setAlreadyBooked(meetingCookieExists); // Set state based on cookie existence
+            setAlreadyBooked(meetingCookieExists);
 
             const ctx = gsap.context(() => {
                 gsap.from(modalRef.current, {
@@ -85,6 +86,9 @@ export default function CreateMeetingModal({ open, onClose }) {
     };
 
     const handleCreate = async () => {
+        if (creatingMeeting) return; // ✅ prevent double clicks
+        setCreatingMeeting(true); // ✅ set loading true when clicked
+
         let currentUser = user;
 
         if (!currentUser?.id) {
@@ -101,21 +105,25 @@ export default function CreateMeetingModal({ open, onClose }) {
                         currentUser = userData.User;
                     } else {
                         setShowLoginWarning(true);
+                        setCreatingMeeting(false); // ✅ reset loading on error
                         return;
                     }
                 } catch (err) {
                     console.error("Failed to fetch user data:", err);
                     setShowLoginWarning(true);
+                    setCreatingMeeting(false); // ✅ reset loading on error
                     return;
                 }
             } else {
                 setShowLoginWarning(true);
+                setCreatingMeeting(false); // ✅ reset loading on error
                 return;
             }
         }
 
         if (!currentUser?.id) {
             setShowLoginWarning(true);
+            setCreatingMeeting(false); // ✅ reset loading
             return;
         }
 
@@ -146,6 +154,8 @@ export default function CreateMeetingModal({ open, onClose }) {
             onClose?.();
         } catch (err) {
             console.error("Failed to create meeting:", err);
+        } finally {
+            setCreatingMeeting(false); // ✅ always reset after API attempt
         }
     };
 
@@ -267,9 +277,13 @@ export default function CreateMeetingModal({ open, onClose }) {
                         <div className="text-center">
                             <button
                                 onClick={handleCreate}
-                                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded transition"
+                                disabled={creatingMeeting} // ✅ Disable when creating
+                                className={`${creatingMeeting
+                                        ? "bg-gray-400 cursor-not-allowed"
+                                        : "bg-blue-600 hover:bg-blue-700"
+                                    } text-white font-semibold py-2 px-6 rounded transition`}
                             >
-                                Create Meeting
+                                {creatingMeeting ? "Creating..." : "Create Meeting"}
                             </button>
                         </div>
                     </div>

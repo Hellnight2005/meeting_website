@@ -183,7 +183,7 @@ export default function MeetingCard({ id, type }) {
                                 rel="noopener noreferrer"
                                 className="w-full inline-block text-center px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition"
                             >
-                                Join
+                                ploJoin
                             </a>
                         ) : (
                             <button

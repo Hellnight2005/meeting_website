@@ -95,7 +95,7 @@ function Meeting() {
                             position: 'top-center',   // center at the top
                             duration: 6000,           // 6000 milliseconds = 6 seconds
                         });
-                        setTimeout(() => router.push("/thank-you"), 2500);
+                        setTimeout(() => router.push("/"), 2500);
                     }
                 } catch (error) {
                     console.error("Error completing meeting:", error);
