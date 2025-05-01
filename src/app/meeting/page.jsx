@@ -6,6 +6,7 @@ import { useUser } from "@/constants/UserContext";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import axios from "axios";
 
 function getTimeOfDay(timeStr) {
     const date = new Date(`1970-01-01T${convertTo24Hour(timeStr)}`);
@@ -51,20 +52,11 @@ function Meeting() {
     const fetchMeetingData = async (meetingId) => {
         setIsLoading(true);
         try {
-            // Updated URL to lowercase "meeting" to match your folder structure
-            console.log("api hit ");
+            console.log("api hit");
 
-            const res = await fetch(`/api/Meeting/meeting_by_id/${meetingId}`);
-            console.log("api res", res.data);
-
-            if (!res.ok) {
-                const text = await res.text();
-                throw new Error(`API returned HTML or error: ${text}`);
-            }
-
-
-            const data = await res.json();
-            const fetchedMeeting = data.data;
+            // Use Axios to make the request
+            const response = await axios.get(`/api/Meeting/meeting_by_id/${meetingId}`);
+            const fetchedMeeting = response.data.data;
             console.log("fetchedMeeting", fetchedMeeting);
 
             if (!fetchedMeeting) return;
@@ -87,17 +79,13 @@ function Meeting() {
             if ((hasEnded || fetchedMeeting.type === "completed") && hasMeetingLink && !isMarkingComplete) {
                 setIsMarkingComplete(true);
                 try {
-                    const res = await fetch(`/api/Meeting/markComplete`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ meetingId }),
-                    });
-                    const result = await res.json();
+                    const markCompleteRes = await axios.post(`/api/Meeting/markComplete`, { meetingId });
+                    const result = markCompleteRes.data;
 
-                    if (res.ok && result.success) {
+                    if (markCompleteRes.status === 200 && result.success) {
                         await Promise.all([
-                            fetch(`/api/exportMeetings?id=${meetingId}`),
-                            fetch(`/api/Meeting/delete/${meetingId}`, { method: "DELETE" }),
+                            axios.get(`/api/exportMeetings?id=${meetingId}`),
+                            axios.delete(`/api/Meeting/delete/${meetingId}`)
                         ]);
                         document.cookie = "meeting=; path=/; max-age=0;";
                         setMeeting(null);
