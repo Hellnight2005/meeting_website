@@ -1,18 +1,13 @@
 import { PrismaClient } from "@prisma/client";
+
 const prisma = new PrismaClient();
 
 export function checkAuthType(handler) {
-  return async (req, ctx) => {
+  return async (req, res) => {
     try {
-      // ✅ Await ctx.params if it exists
-      const params =
-        ctx?.params && typeof ctx.params.then === "function"
-          ? await ctx.params
-          : ctx.params;
-
       const userId =
-        req.headers.get("x-user-id") ||
-        params?.id ||
+        req.headers["x-user-id"] ||
+        req.query.id ||
         (["POST", "PATCH", "PUT"].includes(req.method)
           ? await req
               .json()
@@ -21,18 +16,13 @@ export function checkAuthType(handler) {
           : null);
 
       if (!userId) {
-        return new Response(
-          JSON.stringify({ message: "User ID is required" }),
-          { status: 400 }
-        );
+        return res.status(400).json({ message: "User ID is required" });
       }
 
       const user = await prisma.user.findUnique({ where: { id: userId } });
 
       if (!user) {
-        return new Response(JSON.stringify({ message: "User not found" }), {
-          status: 404,
-        });
+        return res.status(404).json({ message: "User not found" });
       }
 
       const hasTokens = user.accessToken && user.refreshToken;
@@ -45,18 +35,17 @@ export function checkAuthType(handler) {
         });
       }
 
-      ctx.user = { ...user, type: userType };
+      // Attach user to the request object
+      req.user = { ...user, type: userType };
 
-      return handler(req, ctx);
+      // Proceed with the original handler
+      return handler(req, res);
     } catch (error) {
       console.error("checkAuthType error:", error);
-      return new Response(
-        JSON.stringify({
-          message: "Server error while checking auth type",
-          error: error.message,
-        }),
-        { status: 500 }
-      );
+      return res.status(500).json({
+        message: "Server error while checking auth type",
+        error: error.message,
+      });
     }
   };
 }

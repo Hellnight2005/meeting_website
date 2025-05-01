@@ -4,15 +4,13 @@ import jwt from "jsonwebtoken";
 
 const prisma = new PrismaClient();
 
-async function handler(req, { params, user }) {
-  const { id } = params;
+async function handler(req, res) {
+  const { id } = req.query; // Get the ID from query params
 
   const User = await prisma.user.findUnique({ where: { id } });
 
   if (!User) {
-    return new Response(JSON.stringify({ message: "User not found" }), {
-      status: 404,
-    });
+    return res.status(404).json({ message: "User not found" });
   }
 
   // ✅ Token with only selected fields
@@ -27,10 +25,8 @@ async function handler(req, { params, user }) {
     { expiresIn: "1h" }
   );
 
-  return new Response(JSON.stringify({ User, token }), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-  });
+  return res.status(200).json({ User, token });
 }
 
-export const PATCH = checkAuthType(handler);
+// Wrap your handler with the checkAuthType middleware
+export default checkAuthType(handler);
