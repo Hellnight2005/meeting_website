@@ -51,7 +51,8 @@ function Meeting() {
     const fetchMeetingData = async (meetingId) => {
         setIsLoading(true);
         try {
-            const res = await fetch(`/api/Meeting/meeting_by_id/${meetingId}`);
+            // Updated URL to lowercase "meeting" to match your folder structure
+            const res = await fetch(`/api/meeting/meeting_by_id/${meetingId}`);
             const data = await res.json();
             const fetchedMeeting = data.data;
             console.log("fetchedMeeting", fetchedMeeting);
@@ -67,6 +68,7 @@ function Meeting() {
             const isWithinJoinTime = now >= canJoinWindowStart && now < endTime;
             setCanJoin(isWithinJoinTime);
 
+            // Set meetingStatus to the type value (e.g., "line_up", "upcoming", "completed")
             setMeetingStatus(fetchedMeeting.type);
 
             const hasEnded = now >= endTime;
@@ -126,7 +128,6 @@ function Meeting() {
             const decoded = jwt ? decodeJWT(jwt) : null;
             meetingId = decoded?.meetingIds?.[0];
             console.log("meetingId", meetingId);
-
         }
 
         if (!meetingId) {
@@ -169,13 +170,23 @@ function Meeting() {
     const formattedSlot = meeting.slot === "30" || meeting.slot === 30 ? "30 minutes" : "1 hour";
     const imageSrc = meeting.user_role === "admin" ? "/icons/inmated.svg" : "/icons/client.svg";
 
-    const stepLabels = meeting.type === "line_up" ? ["Booked", "Line-Up"] :
-        meeting.type === "upcoming" ? ["Upcoming"] :
-            meeting.type === "completed" ? ["Completed"] : ["Unknown"];
+    const stepLabels =
+        meeting.type === "line_up"
+            ? ["Booked", "Line-Up"]
+            : meeting.type === "upcoming"
+                ? ["Upcoming"]
+                : meeting.type === "completed"
+                    ? ["Completed"]
+                    : ["Unknown"];
 
-    const stepStatuses = meeting.type === "line_up" ? ["booked", "line_up"] :
-        meeting.type === "upcoming" ? ["upcoming"] :
-            meeting.type === "completed" ? ["completed"] : ["unknown"];
+    const stepStatuses =
+        meeting.type === "line_up"
+            ? ["booked", "line_up"]
+            : meeting.type === "upcoming"
+                ? ["upcoming"]
+                : meeting.type === "completed"
+                    ? ["completed"]
+                    : ["unknown"];
 
     const currentStepIndex = stepStatuses.indexOf(meetingStatus);
 
@@ -210,15 +221,21 @@ function Meeting() {
                 </div>
 
                 <div className="text-sm space-y-2 text-zinc-300">
-                    <p><strong className="text-white">Day:</strong> {meeting.selectDay}</p>
+                    <p>
+                        <strong className="text-white">Day:</strong> {meeting.selectDay}
+                    </p>
                     <p>
                         <strong className="text-white">Time:</strong> {meeting.selectTime}
                         <span className="ml-2 inline-block bg-zinc-800 border border-zinc-700 px-3 py-1 text-xs rounded-full shadow-sm">
                             ⏰ {timeOfDay.charAt(0).toUpperCase() + timeOfDay.slice(1)}
                         </span>
                     </p>
-                    <p><strong className="text-white">Slot:</strong> {formattedSlot}</p>
-                    <p><strong className="text-white">Status:</strong> {meetingStatus}</p>
+                    <p>
+                        <strong className="text-white">Slot:</strong> {formattedSlot}
+                    </p>
+                    <p>
+                        <strong className="text-white">Status:</strong> {meetingStatus}
+                    </p>
                 </div>
 
                 {meeting.type === "upcoming" && (
