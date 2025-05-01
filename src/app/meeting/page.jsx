@@ -51,7 +51,9 @@ function Meeting() {
     const fetchMeetingData = async (meetingId) => {
         setIsLoading(true);
         try {
-            const res = await fetch(`/api/meeting/meeting_by_id/${meetingId}`);
+            console.log(" fetch meeting Id", meetingId);
+
+            const res = await fetch(`/api/Meeting/meeting_by_id/${meetingId}`);
             const data = await res.json();
             const fetchedMeeting = data.data;
             if (!fetchedMeeting) return;
@@ -80,7 +82,7 @@ function Meeting() {
                 setIsMarkingComplete(true);
 
                 try {
-                    const res = await fetch(`/api/meeting/markComplete`, {
+                    const res = await fetch(`/api/Meeting/markComplete`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ meetingId }),
@@ -90,7 +92,7 @@ function Meeting() {
                     if (res.ok && result.success) {
                         await Promise.all([
                             fetch(`/api/exportMeetings?id=${meetingId}`),
-                            fetch(`/api/meeting/delete/${meetingId}`, { method: "DELETE" }),
+                            fetch(`/api/Meeting/delete/${meetingId}`, { method: "DELETE" }),
                         ]);
                         document.cookie = "meeting=; path=/; max-age=0;";
                         setMeeting(null);
