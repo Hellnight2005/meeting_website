@@ -87,7 +87,7 @@ export default function MeetingCard({ id, type }) {
         if (loadingAction) return;
         setLoadingAction("delete");
         try {
-            const res = await fetch(`/api/meeting/delete/${meeting.id}`, {
+            const res = await fetch(`/api/Meeting/delete/${meeting.id}`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
             });
@@ -109,7 +109,7 @@ export default function MeetingCard({ id, type }) {
         if (loadingAction) return;
         setLoadingAction("approve");
         try {
-            const res = await fetch(`/api/meeting/approve/${meeting.id}`, {
+            const res = await fetch(`/api/Meeting/approve/${meeting.id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
             });

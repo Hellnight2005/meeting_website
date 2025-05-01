@@ -130,8 +130,14 @@ function Meeting() {
 
         if (!meetingId) {
             const jwt = getCookieValue("meeting");
+            console.log("jwt", jwt);
+
             const decoded = jwt ? decodeJWT(jwt) : null;
+            console.log("decode", decoded);
+
             meetingId = decoded?.meetings?.[0];
+            console.log("meeting Id", meetingId);
+
         }
 
         if (!meetingId) {
