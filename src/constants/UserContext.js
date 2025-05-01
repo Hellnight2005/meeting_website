@@ -67,13 +67,19 @@ export const UserProvider = ({ children }) => {
   };
 
   const getUserFromToken = () => {
+    console.log("fetch user");
+
     if (typeof window === "undefined") return null;
     try {
       const match = document.cookie.match(/(?:^|;\s*)token=([^;]*)/);
       const token = match?.[1];
+      console.log("token ", token);
+
       if (!token) return null;
       const payload = token.split(".")[1];
       const decoded = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
+      console.log("decode of cookies ", decoded);
+
       const parsed = JSON.parse(decoded);
       return parsed?.userId || null;
     } catch (err) {
