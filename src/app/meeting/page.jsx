@@ -4,7 +4,7 @@ import NavBar from "@/components/Navbar";
 import ProfileTag from "@/components/Profile";
 import { useUser } from "@/constants/UserContext";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
 function getTimeOfDay(timeStr) {
@@ -29,10 +29,10 @@ function Meeting() {
     const [canJoin, setCanJoin] = useState(false);
     const [meetingStatus, setMeetingStatus] = useState(null);
     const { user, logout } = useUser();
-    const searchParams = useSearchParams();
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
     const [isMarkingComplete, setIsMarkingComplete] = useState(false);
+    const [meetingIdFromUrl, setMeetingIdFromUrl] = useState(null);
 
     const getCookieValue = (name) => {
         const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
@@ -88,12 +88,15 @@ function Meeting() {
                     const result = await res.json();
 
                     if (res.ok && result.success) {
-                        await Promise.all([fetch(`/api/exportMeetings?id=${meetingId}`), fetch(`/api/meeting/delete/${meetingId}`, { method: "DELETE" })]);
+                        await Promise.all([
+                            fetch(`/api/exportMeetings?id=${meetingId}`),
+                            fetch(`/api/meeting/delete/${meetingId}`, { method: "DELETE" }),
+                        ]);
                         document.cookie = "meeting=; path=/; max-age=0;";
                         setMeeting(null);
                         toast.success('✅ Meeting completed. You can book a new one!', {
-                            position: 'top-center',   // center at the top
-                            duration: 6000,           // 6000 milliseconds = 6 seconds
+                            position: 'top-center',
+                            duration: 6000,
                         });
                         setTimeout(() => router.push("/"), 2500);
                     }
@@ -111,12 +114,21 @@ function Meeting() {
     };
 
     useEffect(() => {
-        const urlMeetingId = searchParams.get("meetingId");
-        let meetingId = urlMeetingId;
+        if (typeof window !== "undefined") {
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlMeetingId = urlParams.get("meetingId");
+            setMeetingIdFromUrl(urlMeetingId);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (meetingIdFromUrl === undefined) return;
+
+        let meetingId = meetingIdFromUrl;
 
         if (!meetingId) {
             const jwt = getCookieValue("meeting");
-            const decoded = decodeJWT(jwt);
+            const decoded = jwt ? decodeJWT(jwt) : null;
             meetingId = decoded?.meetings?.[0];
         }
 
@@ -126,17 +138,16 @@ function Meeting() {
             return;
         }
 
-        // Check if the user should access this meeting
-        const userHasPermission = /* Your condition to check if the user should access the page */ true;
+        const userHasPermission = true;
 
         if (!userHasPermission) {
-            router.push("/"); // Redirect to homepage if not authorized
+            router.push("/");
         } else {
             fetchMeetingData(meetingId);
             const interval = setInterval(() => fetchMeetingData(meetingId), 30000);
             return () => clearInterval(interval);
         }
-    }, [searchParams]);
+    }, [meetingIdFromUrl]);
 
     if (isLoading) {
         return (
