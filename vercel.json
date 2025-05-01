@@ -1,11 +1,5 @@
 {
-    "version": 2,
-    
-    "builds": [
-        { "src": "next.config.js", "use": "@vercel/next" }
-      ],
-    "env": {
-      "DATABASE_URL": "mongodb+srv://Hellnight:Hellnight2005@backend.c9lq1ir.mongodb.net/myapp?retryWrites=true&w=majority&appName=Backend&tls=true"
-    }
-  }
-  
+  "rewrites":[
+    {"source":"/(.*)", "destination" : "/"}
+  ]
+}
