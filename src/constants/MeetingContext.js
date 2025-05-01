@@ -82,8 +82,8 @@ export const MeetingProvider = ({ children }) => {
 
     try {
       const [meetingRes, approvedRes] = await Promise.all([
-        axios.get("/api/meeting/meeting_get"),
-        axios.get("/api/meeting/approve_meeting"),
+        axios.get("/api/Meeting/meeting_get"),
+        axios.get("/api/Meeting/approve_meeting"),
       ]);
 
       const allMeetings = Array.isArray(meetingRes.data) ? meetingRes.data : [];
@@ -103,7 +103,7 @@ export const MeetingProvider = ({ children }) => {
 
   const fetchApprovedMeetings = async () => {
     try {
-      const res = await axios.get("/api/meeting/approve_meeting");
+      const res = await axios.get("/api/Meeting/approve_meeting");
       const approvedMeetings = Array.isArray(res.data.approvedMeetings)
         ? res.data.approvedMeetings
         : [];
