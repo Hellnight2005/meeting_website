@@ -42,6 +42,7 @@ export const UserProvider = ({ children }) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId }),
       });
+      console.log("POST /api/meeting/get_by_user called hit from froentend");
 
       if (res.ok) {
         const { token } = await res.json();

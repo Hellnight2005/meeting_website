@@ -7,7 +7,9 @@ const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key"; // Replace with env var in prod
 
 export async function POST(req) {
+  console.log("POST /api/meeting/get_by_user called");
   try {
+    console.log("POST /api/meeting/get_by_user called");
     const body = await req.json();
     const { userId } = body;
 
