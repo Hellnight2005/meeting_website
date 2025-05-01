@@ -1,47 +1,41 @@
-import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 
 const prisma = new PrismaClient();
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key"; // Replace with env var in prod
 
 export async function POST(req) {
   try {
-    // Extract the body and userId
-    const { userId } = await req.json();
+    const body = await req.json();
+    const { userId } = body;
 
     if (!userId) {
       return NextResponse.json(
-        { success: false, message: "Missing userId" },
+        { error: "Missing userId in request body" },
         { status: 400 }
       );
     }
 
-    // Fetch meetings associated with the userId
     const meetings = await prisma.meeting.findMany({
       where: { userId },
-      select: { id: true }, // Only return the ids of meetings
+      select: { id: true },
       orderBy: { startDateTime: "asc" },
     });
 
-    // If no meetings found, return null token
-    if (!meetings.length) {
-      return NextResponse.json({ success: true, token: null });
-    }
-
-    // Create a JWT token with the meeting ids
     const meetingIds = meetings.map((m) => m.id);
-    const meetingToken = jwt.sign(
-      { meetings: meetingIds },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
+
+    const token = jwt.sign(
+      { userId, meetingIds },
+      JWT_SECRET,
+      { expiresIn: "1d" } // 1 day expiry
     );
 
-    // Return the token in the response
-    return NextResponse.json({ success: true, token: meetingToken });
+    return NextResponse.json({ token }, { status: 200 });
   } catch (error) {
     console.error("[GET_MEETINGS_BY_USER]", error);
     return NextResponse.json(
-      { success: false, message: "Server error", error: error.message },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
