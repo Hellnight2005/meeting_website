@@ -6,7 +6,6 @@ import { useUser } from "@/constants/UserContext";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import axios from "axios";
 
 function getTimeOfDay(timeStr) {
     const date = new Date(`1970-01-01T${convertTo24Hour(timeStr)}`);
@@ -54,12 +53,25 @@ function Meeting() {
         try {
             console.log("api hit");
 
-            // Use Axios to make the POST request with meetingId in the body
-            const response = await axios.post(`/api/Meeting/meeting_by_id/${meetingId}`, {
-                meetingId,
+            // Use fetch to make the POST request with meetingId in the body
+            const response = await fetch(`/api/Meeting/meeting_by_id/${meetingId}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    meetingId,
+                }),
             });
-            console.log("API Response:", response);
-            const fetchedMeeting = response.data.data;
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || "Failed to fetch meeting data");
+            }
+
+            console.log("API Response:", data);
+            const fetchedMeeting = data.data;
             console.log("fetchedMeeting", fetchedMeeting);
 
             if (!fetchedMeeting) return;
@@ -82,13 +94,19 @@ function Meeting() {
             if ((hasEnded || fetchedMeeting.type === "completed") && hasMeetingLink && !isMarkingComplete) {
                 setIsMarkingComplete(true);
                 try {
-                    const markCompleteRes = await axios.post(`/api/meeting/markComplete`, { meetingId });
-                    const result = markCompleteRes.data;
+                    const markCompleteRes = await fetch(`/api/meeting/markComplete`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ meetingId }),
+                    });
+                    const result = await markCompleteRes.json();
 
-                    if (markCompleteRes.status === 200 && result.success) {
+                    if (markCompleteRes.ok && result.success) {
                         await Promise.all([
-                            axios.get(`/api/exportMeetings?id=${meetingId}`),
-                            axios.delete(`/api/meeting/delete/${meetingId}`)
+                            fetch(`/api/exportMeetings?id=${meetingId}`),
+                            fetch(`/api/meeting/delete/${meetingId}`, { method: "DELETE" }),
                         ]);
                         document.cookie = "meeting=; path=/; max-age=0;";
                         setMeeting(null);
