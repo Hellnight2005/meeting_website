@@ -5,43 +5,37 @@ const prisma = new PrismaClient();
 
 export async function POST(req, { params }) {
   try {
-    // Check if the body exists and parse it
-    let body = null;
-    if (req.method === "POST") {
-      body = await req.json().catch(() => null); // Safely catch JSON parse errors
-    }
-
-    // Fallback to params if body is empty or malformed
-    const { id } = body || params;
+    const body = await req.json().catch(() => null);
+    const id = body?.id || params?.id;
 
     if (!id) {
       return new Response(JSON.stringify({ message: "User ID is required" }), {
         status: 400,
+        headers: { "Content-Type": "application/json" },
       });
     }
 
-    // Fetch user from the database
-    const User = await prisma.user.findUnique({ where: { id } });
+    const user = await prisma.user.findUnique({ where: { id } });
 
-    if (!User) {
+    if (!user) {
       return new Response(JSON.stringify({ message: "User not found" }), {
         status: 404,
+        headers: { "Content-Type": "application/json" },
       });
     }
 
-    // Generate JWT token
     const token = jwt.sign(
       {
-        userId: User.id,
-        email: User.email,
-        displayName: User.displayName,
-        photo: User.photo,
+        userId: user.id,
+        email: user.email,
+        displayName: user.displayName,
+        photo: user.photo,
       },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
 
-    return new Response(JSON.stringify({ User, token }), {
+    return new Response(JSON.stringify({ User: user, token }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
@@ -52,7 +46,7 @@ export async function POST(req, { params }) {
         message: "Server error while processing the request",
         error: error.message,
       }),
-      { status: 500 }
+      { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 }
