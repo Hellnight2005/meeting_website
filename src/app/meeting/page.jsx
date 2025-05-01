@@ -55,7 +55,7 @@ function Meeting() {
             console.log("api hit");
 
             // Use Axios to make the POST request with meetingId in the body
-            const response = await axios.post(`/api/meeting/meeting_by_id/${meetingId}`, {
+            const response = await axios.post(`/api/Meeting/meeting_by_id/${meetingId}`, {
                 meetingId,
             });
             console.log("API Response:", response);
