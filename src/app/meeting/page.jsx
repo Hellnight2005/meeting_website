@@ -54,8 +54,10 @@ function Meeting() {
         try {
             console.log("api hit");
 
-            // Use Axios to make the request
-            const response = await axios.get(`/api/Meeting/meeting_by_id/${meetingId}`);
+            // Use Axios to make the POST request with meetingId in the body
+            const response = await axios.post(`/api/meeting/meeting_by_id/${meetingId}`, {
+                meetingId,
+            });
             console.log("API Response:", response);
             const fetchedMeeting = response.data.data;
             console.log("fetchedMeeting", fetchedMeeting);
@@ -80,13 +82,13 @@ function Meeting() {
             if ((hasEnded || fetchedMeeting.type === "completed") && hasMeetingLink && !isMarkingComplete) {
                 setIsMarkingComplete(true);
                 try {
-                    const markCompleteRes = await axios.post(`/api/Meeting/markComplete`, { meetingId });
+                    const markCompleteRes = await axios.post(`/api/meeting/markComplete`, { meetingId });
                     const result = markCompleteRes.data;
 
                     if (markCompleteRes.status === 200 && result.success) {
                         await Promise.all([
                             axios.get(`/api/exportMeetings?id=${meetingId}`),
-                            axios.delete(`/api/Meeting/delete/${meetingId}`)
+                            axios.delete(`/api/meeting/delete/${meetingId}`)
                         ]);
                         document.cookie = "meeting=; path=/; max-age=0;";
                         setMeeting(null);

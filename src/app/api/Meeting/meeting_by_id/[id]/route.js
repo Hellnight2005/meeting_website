@@ -5,22 +5,22 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// GET /api/meeting/meeting_by_id/[id]
-export async function GET(request, { params }) {
-  const { id } = params;
-
-  if (!id) {
-    return NextResponse.json(
-      { error: "Meeting ID is required" },
-      { status: 400 }
-    );
-  }
-
+// Handle POST request
+export async function POST(request) {
   try {
+    const { meetingId } = await request.json(); // Extract meetingId from the request body
+
+    if (!meetingId) {
+      return NextResponse.json(
+        { error: "Meeting ID is required" },
+        { status: 400 }
+      );
+    }
+
+    // Fetch the meeting using Prisma
     const meeting = await prisma.meeting.findUnique({
-      where: { id },
+      where: { id: meetingId },
     });
-    console.log("meeting Data", meeting);
 
     if (!meeting) {
       return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
