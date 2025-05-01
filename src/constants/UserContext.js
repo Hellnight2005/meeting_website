@@ -37,7 +37,7 @@ export const UserProvider = ({ children }) => {
 
   const fetchMeetingsAndSetCookie = async (userId) => {
     try {
-      const res = await fetch(`/api/meeting/get_by_user`, {
+      const res = await fetch(`/api/Meeting/get_by_user`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId }),

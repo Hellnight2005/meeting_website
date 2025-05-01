@@ -9,7 +9,6 @@ const prisma = new PrismaClient();
 export async function PATCH(req, { params }) {
   try {
     const id = params.id;
-
     if (!id) {
       return NextResponse.json(
         { error: "Meeting ID is required." },
