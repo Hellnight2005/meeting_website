@@ -52,7 +52,11 @@ function Meeting() {
         setIsLoading(true);
         try {
             // Updated URL to lowercase "meeting" to match your folder structure
+            console.log("api hit ");
+
             const res = await fetch(`/api/Meeting/meeting_by_id/${meetingId}`);
+            console.log("api res", res.data);
+
             if (!res.ok) {
                 const text = await res.text();
                 throw new Error(`API returned HTML or error: ${text}`);
