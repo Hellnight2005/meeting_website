@@ -1,16 +1,17 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
+import { Fira_Code } from "next/font/google"; // or use JetBrains_Mono
 import "./globals.css";
 import { MeetingProvider } from "@/constants/MeetingContext";
 import { UserProvider } from "@/constants/UserContext";
-import { Toaster } from "react-hot-toast"; // ✅ Import this
+import { Toaster } from "react-hot-toast";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-sans",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const firaCode = Fira_Code({
+  variable: "--font-mono",
   subsets: ["latin"],
 });
 
@@ -21,13 +22,12 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${inter.variable} ${firaCode.variable}`}>
       <body>
         <UserProvider>
           <MeetingProvider>
             {children}
-            <Toaster position="top-right" reverseOrder={false} />{" "}
-            {/* ✅ Add this */}
+            <Toaster position="top-right" reverseOrder={false} />
           </MeetingProvider>
         </UserProvider>
       </body>

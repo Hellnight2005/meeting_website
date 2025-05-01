@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  font-family: "MyCustomFont", sans-serif;
+  --font-sans: "Inter", sans-serif;
 
   /* Color system */
   --background: rgb(240, 246, 248);

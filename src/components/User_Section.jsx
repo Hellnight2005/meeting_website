@@ -3,7 +3,7 @@ import HeroSection from "@/components/HeroSection";
 import ServiceSection from "@/components/ServiceSection";
 import WhyUs from "@/components/WhyUs";
 import HowItWorks from "@/components/HowItWorks";
-import Showcase from "../app/Showcase/page";
+
 import CTA from "@/components/CTA";
 import Footer from "@/components/Footer";
 function User_Section() {
