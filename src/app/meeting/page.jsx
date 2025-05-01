@@ -51,8 +51,6 @@ function Meeting() {
     const fetchMeetingData = async (meetingId) => {
         setIsLoading(true);
         try {
-            console.log(" fetch meeting Id", meetingId);
-
             const res = await fetch(`/api/Meeting/meeting_by_id/${meetingId}`);
             const data = await res.json();
             const fetchedMeeting = data.data;
@@ -67,20 +65,13 @@ function Meeting() {
             const isWithinJoinTime = now >= canJoinWindowStart && now < endTime;
             setCanJoin(isWithinJoinTime);
 
-            if (fetchedMeeting.type === "line_up") {
-                setMeetingStatus("line_up");
-            } else if (fetchedMeeting.type === "upcoming") {
-                setMeetingStatus("upcoming");
-            } else if (fetchedMeeting.type === "completed") {
-                setMeetingStatus("completed");
-            }
+            setMeetingStatus(fetchedMeeting.type);
 
             const hasEnded = now >= endTime;
             const hasMeetingLink = Boolean(fetchedMeeting.meetingLink);
 
             if ((hasEnded || fetchedMeeting.type === "completed") && hasMeetingLink && !isMarkingComplete) {
                 setIsMarkingComplete(true);
-
                 try {
                     const res = await fetch(`/api/Meeting/markComplete`, {
                         method: "POST",
@@ -96,8 +87,8 @@ function Meeting() {
                         ]);
                         document.cookie = "meeting=; path=/; max-age=0;";
                         setMeeting(null);
-                        toast.success('✅ Meeting completed. You can book a new one!', {
-                            position: 'top-center',
+                        toast.success("✅ Meeting completed. You can book a new one!", {
+                            position: "top-center",
                             duration: 6000,
                         });
                         setTimeout(() => router.push("/"), 2500);
@@ -130,13 +121,9 @@ function Meeting() {
 
         if (!meetingId) {
             const jwt = getCookieValue("meeting");
-            console.log("jwt", jwt);
-
             const decoded = jwt ? decodeJWT(jwt) : null;
-            console.log("decode", decoded);
-
-            meetingId = decoded?.meetings?.[0];
-            console.log("meeting Id", meetingId);
+            meetingId = decoded?.meetingIds?.[0];
+            console.log("meetingId", meetingId);
 
         }
 
@@ -146,15 +133,9 @@ function Meeting() {
             return;
         }
 
-        const userHasPermission = true;
-
-        if (!userHasPermission) {
-            router.push("/");
-        } else {
-            fetchMeetingData(meetingId);
-            const interval = setInterval(() => fetchMeetingData(meetingId), 30000);
-            return () => clearInterval(interval);
-        }
+        fetchMeetingData(meetingId);
+        const interval = setInterval(() => fetchMeetingData(meetingId), 30000);
+        return () => clearInterval(interval);
     }, [meetingIdFromUrl]);
 
     if (isLoading) {
