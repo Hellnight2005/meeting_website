@@ -54,6 +54,8 @@ function Meeting() {
             const res = await fetch(`/api/Meeting/meeting_by_id/${meetingId}`);
             const data = await res.json();
             const fetchedMeeting = data.data;
+            console.log("fetchedMeeting", fetchedMeeting);
+
             if (!fetchedMeeting) return;
 
             setMeeting(fetchedMeeting);
