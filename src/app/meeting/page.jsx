@@ -56,6 +56,7 @@ function Meeting() {
 
             // Use Axios to make the request
             const response = await axios.get(`/api/Meeting/meeting_by_id/${meetingId}`);
+            console.log("API Response:", response);
             const fetchedMeeting = response.data.data;
             console.log("fetchedMeeting", fetchedMeeting);
 
