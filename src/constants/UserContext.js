@@ -9,7 +9,7 @@ export const UserProvider = ({ children }) => {
   const setUser = async (data) => {
     if (data?.id && !data.displayName) {
       try {
-        const res = await fetch(`/api/user/fetch/${data.id}`, {
+        const res = await fetch(`/api/user/fetch`, {
           method: "POST", // Use POST to send `id` in the body
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id: data.id }),
@@ -86,7 +86,7 @@ export const UserProvider = ({ children }) => {
     }
 
     try {
-      const res = await fetch(`/api/user/fetch/${targetUserId}`, {
+      const res = await fetch(`/api/user/fetch`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: targetUserId }),
