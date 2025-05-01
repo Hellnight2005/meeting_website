@@ -20,6 +20,7 @@ export async function GET(request, { params }) {
     const meeting = await prisma.meeting.findUnique({
       where: { id },
     });
+    console.log("meeting Data", meeting);
 
     if (!meeting) {
       return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
