@@ -10,13 +10,14 @@ export const UserProvider = ({ children }) => {
     if (data?.id && !data.displayName) {
       try {
         const res = await fetch(`/api/user/${data.id}`, {
-          method: "PATCH",
+          method: "POST", // Use POST to send `id` in the body
           headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: data.id }),
         });
 
         if (res.ok) {
           const result = await res.json();
-          setUserState({ ...result.User });
+          setUserState(result.User);
 
           // Fetch meetings and set cookie
           await fetchMeetingsAndSetCookie(result.User.id);
@@ -43,18 +44,11 @@ export const UserProvider = ({ children }) => {
       });
 
       if (res.ok) {
-        // console.log("usercontext api respone", res.token);
-
         const { token } = await res.json();
 
-        // Validate that the token looks like a JWT (3 parts separated by dots)
-        const isJwt =
-          token && typeof token === "string" && token.split(".").length === 3;
-
-        if (isJwt) {
+        if (token && token.split(".").length === 3) {
           document.cookie = `meeting=${token}; path=/; max-age=86400`;
         } else {
-          // Clear the cookie if invalid or empty
           document.cookie =
             "meeting=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;";
         }
@@ -67,20 +61,17 @@ export const UserProvider = ({ children }) => {
   };
 
   const getUserFromToken = () => {
-    console.log("fetch user");
-
     if (typeof window === "undefined") return null;
+
     try {
       const match = document.cookie.match(/(?:^|;\s*)token=([^;]*)/);
       const token = match?.[1];
-      console.log("token ", token);
 
       if (!token) return null;
       const payload = token.split(".")[1];
       const decoded = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
-      console.log("decode of cookies ", decoded);
-
       const parsed = JSON.parse(decoded);
+
       return parsed?.userId || null;
     } catch (err) {
       console.error("Failed to decode token:", err);
@@ -96,9 +87,11 @@ export const UserProvider = ({ children }) => {
 
     try {
       const res = await fetch(`/api/user/${targetUserId}`, {
-        method: "PATCH",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: targetUserId }),
       });
+
       if (res.ok) {
         const result = await res.json();
         return result.User;
@@ -114,7 +107,6 @@ export const UserProvider = ({ children }) => {
 
   const logout = () => {
     if (typeof document !== "undefined") {
-      // Remove both token and meeting cookies
       document.cookie =
         "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;";
       document.cookie =
@@ -124,7 +116,7 @@ export const UserProvider = ({ children }) => {
     if (typeof window !== "undefined") {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      window.location.href = "/sign_up";
+      window.location.href = "/login"; // Change to login or homepage
     }
 
     setUserState(null);
@@ -137,7 +129,7 @@ export const UserProvider = ({ children }) => {
         setUser({ id: userId });
       }
     }
-  }, []);
+  }, [user]);
 
   return (
     <UserContext.Provider value={{ user, setUser, fetchUserByAdmin, logout }}>
