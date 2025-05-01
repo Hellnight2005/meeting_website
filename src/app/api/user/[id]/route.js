@@ -1,12 +1,12 @@
 import { PrismaClient } from "@prisma/client";
-import { checkAuthType } from "@/middleware/vaildateUser";
 import jwt from "jsonwebtoken";
+import { checkAuthType } from "@/middleware/vaildateUser";
 
 const prisma = new PrismaClient();
 
-// Named export for PATCH
 export async function PATCH(req, { params }) {
-  const { id } = params;
+  // Ensure params are awaited before accessing
+  const { id } = await params;
 
   const User = await prisma.user.findUnique({ where: { id } });
 
@@ -33,5 +33,3 @@ export async function PATCH(req, { params }) {
     headers: { "Content-Type": "application/json" },
   });
 }
-
-// You can add other HTTP methods as needed (e.g., GET, POST)
