@@ -64,7 +64,7 @@ function Meeting() {
 
         setIsLoading(true);
         try {
-            const response = await fetch(`/ api / Meeting / meeting_by_id`, {
+            const response = await fetch("/api/Meeting/meeting_by_id", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ meetingId }),
@@ -100,7 +100,7 @@ function Meeting() {
             if ((hasEnded || fetchedMeeting.type === "completed") && hasMeetingLink && !isMarkingComplete) {
                 setIsMarkingComplete(true);
                 try {
-                    const markCompleteRes = await fetch(`/ api / Meeting / markComplete`, {
+                    const markCompleteRes = await fetch("/api/Meeting/markComplete", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ meetingId }),
@@ -109,7 +109,7 @@ function Meeting() {
 
                     if (markCompleteRes.ok && result.success) {
                         await Promise.all([
-                            fetch(`/ api / exportMeetings ? id = ${meetingId} `),
+                            fetch(`/api/exportMeetings?id = ${meetingId} `),
                             fetch("/api/meeting/delete", {
                                 method: "DELETE",
                                 headers: { "Content-Type": "application/json" },
