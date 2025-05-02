@@ -70,7 +70,12 @@ function Meeting() {
             if (!response.ok) throw new Error(data.error || "Failed to fetch meeting data");
 
             const fetchedMeeting = data.data;
-            if (!fetchedMeeting) return;
+            if (!fetchedMeeting) {
+                // If no meeting data found, delete the meeting cookie
+                document.cookie = "meeting=; path=/; max-age=0;";
+                toast.error("❌ No meeting found.");
+                return; // Exit early if no meeting data is found
+            }
 
             setMeeting(fetchedMeeting);
 
@@ -125,6 +130,7 @@ function Meeting() {
             setIsLoading(false);
         }
     };
+
 
     useEffect(() => {
         if (typeof window !== "undefined") {

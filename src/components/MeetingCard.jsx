@@ -97,7 +97,7 @@ export default function MeetingCard({ id, type }) {
             });
 
             if (res.ok) {
-                await refreshMeetings();
+                refreshMeetings();
                 toast.success("Meeting deleted successfully.", { position: "top-center" });
             } else {
                 toast.error("Failed to delete the meeting.", { position: "top-center" });
@@ -128,7 +128,7 @@ export default function MeetingCard({ id, type }) {
             console.log("response from api", data);
 
             if (res.ok) {
-                await refreshMeetings();
+                refreshMeetings();
                 toast.success("Meeting approved successfully.", { position: "top-center" });
             } else {
                 toast.error(data?.error || "Failed to approve the meeting.", { position: "top-center" });
