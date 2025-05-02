@@ -23,6 +23,27 @@ function convertTo24Hour(timeStr) {
     return `${hours}:${minutes}`;
 }
 
+function getMeetingIdFromCookie() {
+    const getCookieValue = (name) => {
+        const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
+        return match ? decodeURIComponent(match[2]) : null;
+    };
+
+    const decodeJWT = (token) => {
+        try {
+            const payload = token.split(".")[1];
+            return JSON.parse(atob(payload));
+        } catch (error) {
+            console.error("Failed to decode JWT:", error);
+            return null;
+        }
+    };
+
+    const jwt = getCookieValue("meeting");
+    const decoded = jwt ? decodeJWT(jwt) : null;
+    return decoded?.meetingIds?.[0] || null;
+}
+
 function Meeting() {
     const [projectName] = useState("webapp");
     const [meeting, setMeeting] = useState(null);
@@ -34,46 +55,21 @@ function Meeting() {
     const [isMarkingComplete, setIsMarkingComplete] = useState(false);
     const [meetingIdFromUrl, setMeetingIdFromUrl] = useState(null);
 
-    const getCookieValue = (name) => {
-        const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
-        return match ? decodeURIComponent(match[2]) : null;
-    };
-
-    const decodeJWT = (token) => {
-        try {
-            const payload = token.split(".")[1];
-            return JSON.parse(atob(payload));
-        } catch {
-            return null;
-        }
-    };
-
     const fetchMeetingData = async (meetingId) => {
+        console.log("meetingId", meetingId);
+
         setIsLoading(true);
         try {
-
-
-            // Use fetch to make the POST request with meetingId in the body
             const response = await fetch(`/api/Meeting/meeting_by_id`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    meetingId,
-                }),
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ meetingId }),
             });
 
             const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || "Failed to fetch meeting data");
-            }
-
+            if (!response.ok) throw new Error(data.error || "Failed to fetch meeting data");
 
             const fetchedMeeting = data.data;
-
-
             if (!fetchedMeeting) return;
 
             setMeeting(fetchedMeeting);
@@ -85,7 +81,6 @@ function Meeting() {
             const isWithinJoinTime = now >= canJoinWindowStart && now < endTime;
             setCanJoin(isWithinJoinTime);
 
-            // Set meetingStatus to the type value (e.g., "line_up", "upcoming", "completed")
             setMeetingStatus(fetchedMeeting.type);
 
             const hasEnded = now >= endTime;
@@ -96,9 +91,7 @@ function Meeting() {
                 try {
                     const markCompleteRes = await fetch(`/api/Meeting/markComplete`, {
                         method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
+                        headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ meetingId }),
                     });
                     const result = await markCompleteRes.json();
@@ -108,12 +101,9 @@ function Meeting() {
                             fetch(`/api/exportMeetings?id=${meetingId}`),
                             fetch("/api/meeting/delete", {
                                 method: "DELETE",
-                                headers: {
-                                    "Content-Type": "application/json",
-                                },
-                                body: JSON.stringify({ id: meetingId }), // Send meetingId in the body
-                            })
-
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ id: meetingId }),
+                            }),
                         ]);
                         document.cookie = "meeting=; path=/; max-age=0;";
                         setMeeting(null);
@@ -145,25 +135,16 @@ function Meeting() {
     }, []);
 
     useEffect(() => {
-        if (meetingIdFromUrl === undefined) return;
+        const id = meetingIdFromUrl || getMeetingIdFromCookie();
 
-        let meetingId = meetingIdFromUrl;
-
-        if (!meetingId) {
-            const jwt = getCookieValue("meeting");
-            const decoded = jwt ? decodeJWT(jwt) : null;
-            meetingId = decoded?.meetingIds?.[0];
-            console.log("meetingId", meetingId);
-        }
-
-        if (!meetingId) {
+        if (!id) {
             console.warn("No meeting ID found.");
             setIsLoading(false);
             return;
         }
 
-        fetchMeetingData(meetingId);
-        const interval = setInterval(() => fetchMeetingData(meetingId), 30000);
+        fetchMeetingData(id);
+        const interval = setInterval(() => fetchMeetingData(id), 30000);
         return () => clearInterval(interval);
     }, [meetingIdFromUrl]);
 
@@ -247,21 +228,15 @@ function Meeting() {
                 </div>
 
                 <div className="text-sm space-y-2 text-zinc-300">
-                    <p>
-                        <strong className="text-white">Day:</strong> {meeting.selectDay}
-                    </p>
+                    <p><strong className="text-white">Day:</strong> {meeting.selectDay}</p>
                     <p>
                         <strong className="text-white">Time:</strong> {meeting.selectTime}
                         <span className="ml-2 inline-block bg-zinc-800 border border-zinc-700 px-3 py-1 text-xs rounded-full shadow-sm">
                             ⏰ {timeOfDay.charAt(0).toUpperCase() + timeOfDay.slice(1)}
                         </span>
                     </p>
-                    <p>
-                        <strong className="text-white">Slot:</strong> {formattedSlot}
-                    </p>
-                    <p>
-                        <strong className="text-white">Status:</strong> {meetingStatus}
-                    </p>
+                    <p><strong className="text-white">Slot:</strong> {formattedSlot}</p>
+                    <p><strong className="text-white">Status:</strong> {meetingStatus}</p>
                 </div>
 
                 {meeting.type === "upcoming" && (
