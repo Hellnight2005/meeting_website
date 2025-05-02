@@ -106,7 +106,14 @@ function Meeting() {
                     if (markCompleteRes.ok && result.success) {
                         await Promise.all([
                             fetch(`/api/exportMeetings?id=${meetingId}`),
-                            fetch(`/api/meeting/delete/${meetingId}`, { method: "DELETE" }),
+                            fetch("/api/meeting/delete", {
+                                method: "DELETE",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                },
+                                body: JSON.stringify({ id: meetingId }), // Send meetingId in the body
+                            })
+
                         ]);
                         document.cookie = "meeting=; path=/; max-age=0;";
                         setMeeting(null);

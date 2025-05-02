@@ -86,11 +86,16 @@ export default function MeetingCard({ id, type }) {
     const deleteMeeting = async () => {
         if (loadingAction) return;
         setLoadingAction("delete");
+
         try {
-            const res = await fetch(`/api/Meeting/delete/${meeting.id}`, {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
+            const res = await fetch("/api/Meeting/delete", {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ id: meeting.id }), // Pass ID in body
             });
+
             if (res.ok) {
                 await refreshMeetings();
                 toast.success("Meeting deleted successfully.", { position: "top-center" });
@@ -105,13 +110,15 @@ export default function MeetingCard({ id, type }) {
         }
     };
 
+    // approve meeting block req
     const approveMeeting = async () => {
         if (loadingAction) return;
         setLoadingAction("approve");
         try {
-            const res = await fetch(`/api/Meeting/approve/${meeting.id}`, {
-                method: 'PATCH',
+            const res = await fetch('/api/Meeting/approve', {
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: meeting.id }),
             });
 
             if (res.ok) {
@@ -126,8 +133,8 @@ export default function MeetingCard({ id, type }) {
         } finally {
             setLoadingAction(null);
         }
-    };
 
+    }
     const handleJoinClick = () => {
         if (isJoinEnabled) {
             toast.success("The meeting is ready to join! You will be redirected shortly.", { position: "top-center" });

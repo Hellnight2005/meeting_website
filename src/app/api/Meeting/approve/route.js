@@ -6,9 +6,11 @@ import { sendEmail } from "@/services/approve_email";
 
 const prisma = new PrismaClient();
 
-export async function PATCH(req, { params }) {
+export async function POST(req) {
   try {
-    const id = params.id;
+    const body = await req.json();
+    const id = body.id;
+
     if (!id) {
       return NextResponse.json(
         { error: "Meeting ID is required." },
@@ -67,7 +69,7 @@ export async function PATCH(req, { params }) {
       },
     });
 
-    // Send email to user
+    // Optionally send email
     // await sendEmail(
     //   user.email,
     //   {
