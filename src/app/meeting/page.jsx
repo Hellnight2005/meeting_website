@@ -51,7 +51,7 @@ function Meeting() {
     const fetchMeetingData = async (meetingId) => {
         setIsLoading(true);
         try {
-            console.log("api hit");
+
 
             // Use fetch to make the POST request with meetingId in the body
             const response = await fetch(`/api/Meeting/meeting_by_id`, {
@@ -70,9 +70,9 @@ function Meeting() {
                 throw new Error(data.error || "Failed to fetch meeting data");
             }
 
-            console.log("API Response:", data);
+
             const fetchedMeeting = data.data;
-            console.log("fetchedMeeting", fetchedMeeting);
+
 
             if (!fetchedMeeting) return;
 

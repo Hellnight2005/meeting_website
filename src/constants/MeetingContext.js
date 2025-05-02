@@ -115,23 +115,6 @@ export const MeetingProvider = ({ children }) => {
     }
   };
 
-  useEffect(() => {
-    let didRun = false;
-
-    if (!user || didRun) return;
-    didRun = true;
-
-    if (user.role === "admin") {
-      fetchMeetings();
-    } else {
-      fetchApprovedMeetings();
-    }
-
-    return () => {
-      didRun = false;
-    };
-  }, [user]);
-
   return (
     <MeetingContext.Provider
       value={{
