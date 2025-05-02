@@ -5,12 +5,9 @@ import { createCalendarEvent } from "@/config/googleCalendar";
 
 const prisma = new PrismaClient();
 
-// ✅ Dynamic POST handler
-export async function POST(req, { params }) {
+export async function POST(req) {
   try {
-    const { id: paramId } = params;
-    const body = await req.json();
-    const id = body.id || paramId;
+    const { id } = await req.json();
 
     if (!id) {
       return NextResponse.json(
