@@ -43,7 +43,7 @@ const Charts = () => {
             try {
                 const [userResponse, meetingResponse] = await Promise.all([
                     fetch("/api/user/stats"),
-                    fetch("/api/meeting/stats"),
+                    fetch("/api/Meeting/stats"),
                 ]);
                 const userData = await userResponse.json();
                 const meetingData = await meetingResponse.json();
