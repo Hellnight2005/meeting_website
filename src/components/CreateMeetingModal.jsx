@@ -95,9 +95,10 @@ export default function CreateMeetingModal({ open, onClose }) {
             const tokenUserId = getUserFromToken();
             if (tokenUserId) {
                 try {
-                    const res = await fetch(`/api/user/${tokenUserId}`, {
-                        method: "PATCH",
+                    const res = await fetch(`/api/user/fetch`, {
+                        method: "POST",
                         headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ id: tokenUserId }),
                     });
                     const userData = await res.json();
                     if (userData?.User?.id) {
@@ -139,7 +140,7 @@ export default function CreateMeetingModal({ open, onClose }) {
         };
 
         try {
-            const response = await fetch("/api/meeting/creating_meeting", {
+            const response = await fetch("/api/Meeting/creating_meeting", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
@@ -279,8 +280,8 @@ export default function CreateMeetingModal({ open, onClose }) {
                                 onClick={handleCreate}
                                 disabled={creatingMeeting} // ✅ Disable when creating
                                 className={`${creatingMeeting
-                                        ? "bg-gray-400 cursor-not-allowed"
-                                        : "bg-blue-600 hover:bg-blue-700"
+                                    ? "bg-gray-400 cursor-not-allowed"
+                                    : "bg-blue-600 hover:bg-blue-700"
                                     } text-white font-semibold py-2 px-6 rounded transition`}
                             >
                                 {creatingMeeting ? "Creating..." : "Create Meeting"}

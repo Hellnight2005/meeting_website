@@ -94,7 +94,7 @@ function Meeting() {
             if ((hasEnded || fetchedMeeting.type === "completed") && hasMeetingLink && !isMarkingComplete) {
                 setIsMarkingComplete(true);
                 try {
-                    const markCompleteRes = await fetch(`/api/meeting/markComplete`, {
+                    const markCompleteRes = await fetch(`/api/Meeting/markComplete`, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
