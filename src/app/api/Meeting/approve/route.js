@@ -1,5 +1,6 @@
+// app/api/meeting/approve/route.js (or .ts)
+
 import { PrismaClient } from "@prisma/client";
-import { NextResponse } from "next/server";
 import { convertMeetingTime } from "@/middleware/convertMeetingTime";
 import { createCalendarEvent } from "@/config/googleCalendar";
 import { sendEmail } from "@/services/approve_email";
@@ -9,11 +10,11 @@ const prisma = new PrismaClient();
 export async function POST(req) {
   try {
     const body = await req.json();
-    const id = body.id;
+    const { id } = body; // id comes from the request body
 
     if (!id) {
-      return NextResponse.json(
-        { error: "Meeting ID is required." },
+      return new Response(
+        JSON.stringify({ error: "Meeting ID is required." }),
         { status: 400 }
       );
     }
@@ -21,10 +22,9 @@ export async function POST(req) {
     // Fetch meeting and related users
     const meeting = await prisma.meeting.findUnique({ where: { id } });
     if (!meeting) {
-      return NextResponse.json(
-        { error: "Meeting not found." },
-        { status: 404 }
-      );
+      return new Response(JSON.stringify({ error: "Meeting not found." }), {
+        status: 404,
+      });
     }
 
     const user = await prisma.user.findUnique({
@@ -33,8 +33,8 @@ export async function POST(req) {
     const admin = await prisma.user.findFirst({ where: { role: "admin" } });
 
     if (!user || !admin) {
-      return NextResponse.json(
-        { error: "User or admin not found." },
+      return new Response(
+        JSON.stringify({ error: "User or admin not found." }),
         { status: 404 }
       );
     }
@@ -82,13 +82,18 @@ export async function POST(req) {
     //   admin.photoUrl
     // );
 
-    return NextResponse.json({
-      message: "Meeting approved, calendar event created, and email sent.",
-      meeting: updatedMeeting,
-      calendarData,
-    });
+    return new Response(
+      JSON.stringify({
+        message: "Meeting approved, calendar event created.",
+        meeting: updatedMeeting,
+        calendarData,
+      }),
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Error approving meeting:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+    });
   }
 }

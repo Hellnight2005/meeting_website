@@ -115,6 +115,8 @@ export default function MeetingCard({ id, type }) {
         if (loadingAction) return;
         setLoadingAction("approve");
         try {
+            console.log("meetingId", meeting.id);
+
             const res = await fetch('/api/Meeting/approve', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
