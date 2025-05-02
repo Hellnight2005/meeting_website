@@ -25,26 +25,15 @@ function convertTo24Hour(timeStr) {
 
 function getMeetingIdFromCookie() {
     const getCookieValue = (name) => {
-        const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
+        const match = document.cookie.match(new RegExp("(^| )" + name + "=(\[^;]+)"));
         return match ? decodeURIComponent(match[2]) : null;
     };
 
-    const base64UrlDecode = (input) => {
-        try {
-            const base64 = input.replace(/-/g, '+').replace(/_/g, '/');
-            const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, '=');
-            return atob(padded);
-        } catch (err) {
-            console.error("Base64 decode error:", err);
-            return null;
-        }
-    };
 
     const decodeJWT = (token) => {
         try {
             const payload = token.split(".")[1];
-            const jsonPayload = base64UrlDecode(payload);
-            return JSON.parse(jsonPayload);
+            return JSON.parse(atob(payload));
         } catch (error) {
             console.error("Failed to decode JWT:", error);
             return null;
@@ -53,17 +42,10 @@ function getMeetingIdFromCookie() {
 
     const jwt = getCookieValue("meeting");
     const decoded = jwt ? decodeJWT(jwt) : null;
+    return decoded?.meetingIds?.[0] || null;
 
-    if (!decoded?.meetingIds || decoded.meetingIds.length === 0) {
-        console.warn("No valid meetingIds found in JWT or token is malformed.");
-        document.cookie = "meeting=; path=/; max-age=0;";
-        toast.error("❌ No previous meeting found. You can book a new one.");
-        return null;
-    }
 
-    return decoded.meetingIds[0];
 }
-
 
 function Meeting() {
     const [projectName] = useState("webapp");
@@ -76,12 +58,13 @@ function Meeting() {
     const [isMarkingComplete, setIsMarkingComplete] = useState(false);
     const [meetingIdFromUrl, setMeetingIdFromUrl] = useState(null);
 
+
     const fetchMeetingData = async (meetingId) => {
         console.log("meetingId", meetingId);
 
         setIsLoading(true);
         try {
-            const response = await fetch(`/api/Meeting/meeting_by_id`, {
+            const response = await fetch(`/ api / Meeting / meeting_by_id`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ meetingId }),
@@ -96,10 +79,7 @@ function Meeting() {
             if (!fetchedMeeting || (fetchedMeeting.meetingIds && fetchedMeeting.meetingIds.length === 0)) {
                 // Delete the meeting cookie if no meeting is found
                 document.cookie = "meeting=; path=/; max-age=0;";
-                toast.error("❌ No meeting found.", {
-                    position: "top-center",
-                    duration: 6000,
-                });
+                toast.error("❌ No meeting found.");
                 return; // Exit early if no meeting data is found
             }
 
@@ -120,7 +100,7 @@ function Meeting() {
             if ((hasEnded || fetchedMeeting.type === "completed") && hasMeetingLink && !isMarkingComplete) {
                 setIsMarkingComplete(true);
                 try {
-                    const markCompleteRes = await fetch(`/api/Meeting/markComplete`, {
+                    const markCompleteRes = await fetch(`/ api / Meeting / markComplete`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ meetingId }),
@@ -129,7 +109,7 @@ function Meeting() {
 
                     if (markCompleteRes.ok && result.success) {
                         await Promise.all([
-                            fetch(`/api/exportMeetings?id=${meetingId}`),
+                            fetch(`/ api / exportMeetings ? id = ${meetingId} `),
                             fetch("/api/meeting/delete", {
                                 method: "DELETE",
                                 headers: { "Content-Type": "application/json" },
@@ -156,6 +136,8 @@ function Meeting() {
             setIsLoading(false);
         }
     };
+
+
 
     useEffect(() => {
         if (typeof window !== "undefined") {
@@ -293,16 +275,24 @@ function Meeting() {
                 )}
 
                 <div className="pt-4">
-                    <div className="flex justify-between items-center text-xs font-medium text-zinc-500">
-                        <span className="capitalize">{stepLabels[currentStepIndex]}</span>
-                        <div className="w-full h-0.5 bg-zinc-700 relative">
-                            <div className={`h-full w-[${(currentStepIndex + 1) * 50}%] bg-green-500`} />
-                        </div>
+                    <div className="flex justify-between items-center text-xs font-medium text-zinc-400">
+                        {stepLabels.map((label, index) => {
+                            const isActive = currentStepIndex >= index;
+                            return (
+                                <div key={index} className="flex-1 text-center">
+                                    <div className={`h - 2 rounded - full mx - 1 transition - all duration - 300 ${isActive ? "bg-green-400" : "bg-zinc-700"} `} />
+                                    <span className="block mt-1">{label}</span>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             </div>
         </div>
     );
+
+
 }
 
 export default Meeting;
+
