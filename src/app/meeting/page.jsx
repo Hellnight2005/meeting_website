@@ -70,8 +70,10 @@ function Meeting() {
             if (!response.ok) throw new Error(data.error || "Failed to fetch meeting data");
 
             const fetchedMeeting = data.data;
-            if (!fetchedMeeting) {
-                // If no meeting data found, delete the meeting cookie
+
+            // Check if the meeting data is empty or not found
+            if (!fetchedMeeting || (fetchedMeeting.meetingIds && fetchedMeeting.meetingIds.length === 0)) {
+                // Delete the meeting cookie if no meeting is found
                 document.cookie = "meeting=; path=/; max-age=0;";
                 toast.error("❌ No meeting found.");
                 return; // Exit early if no meeting data is found
@@ -130,6 +132,7 @@ function Meeting() {
             setIsLoading(false);
         }
     };
+
 
 
     useEffect(() => {
