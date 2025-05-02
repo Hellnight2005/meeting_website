@@ -30,7 +30,7 @@ export const AdminProvider = ({ children }) => {
 
   const fetchMeetings = async () => {
     try {
-      const meetingRes = await axios.get("/api/meeting/meeting_get");
+      const meetingRes = await axios.get("/api/Meeting/meeting_get");
       const allMeetings = meetingRes.data;
 
       setMeetingsData(allMeetings);

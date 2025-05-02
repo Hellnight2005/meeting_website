@@ -367,3 +367,5 @@
 {"level":"info","message":"✅ Calendar event created by Admin successfully.","timestamp":"2025-04-29T08:00:11.848Z"}
 {"level":"info","message":"✅ Event mdjgmsni4avov6d8fe2ii1rung deleted successfully.","timestamp":"2025-04-29T10:47:02.611Z"}
 {"level":"error","message":"❌ Error deleting calendar event: Resource has been deleted","timestamp":"2025-04-29T10:47:02.711Z"}
+{"level":"info","message":"📅 Validating date inputs for calendar event...","timestamp":"2025-05-02T06:32:44.172Z"}
+{"level":"info","message":"✅ Calendar event created by Admin successfully.","timestamp":"2025-05-02T06:32:46.545Z"}

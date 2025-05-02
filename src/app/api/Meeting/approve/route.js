@@ -1,17 +1,19 @@
-// app/api/meeting/approve/route.js
-
 import { PrismaClient } from "@prisma/client";
 import { convertMeetingTime } from "@/middleware/convertMeetingTime";
 import { createCalendarEvent } from "@/config/googleCalendar";
-
 import { NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
 
+// ✅ Add this GET handler for testing
+export async function GET() {
+  return NextResponse.json({ message: "GET route is working!" });
+}
+
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { id } = body; // id comes from the request body
+    const { id } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -20,14 +22,11 @@ export async function POST(req) {
       );
     }
 
-    // Fetch meeting and related users
     const meeting = await prisma.meeting.findUnique({ where: { id } });
     if (!meeting) {
       return NextResponse.json(
         { error: "Meeting not found." },
-        {
-          status: 404,
-        }
+        { status: 404 }
       );
     }
 
@@ -43,13 +42,8 @@ export async function POST(req) {
       );
     }
 
-    const selectDay = meeting.selectDay;
-    const selectTime = meeting.selectTime;
-
-    // Convert meeting time to start and end datetime
     const { startDateTime, endDateTime } = await convertMeetingTime(id);
 
-    // Create Google Calendar event
     const calendarData = await createCalendarEvent({
       accessToken: user.accessToken,
       refreshToken: user.refreshToken,
@@ -63,7 +57,6 @@ export async function POST(req) {
       attendees: [{ email: user.email }, { email: admin.email }],
     });
 
-    // Update meeting in the database
     const updatedMeeting = await prisma.meeting.update({
       where: { id },
       data: {
@@ -72,19 +65,6 @@ export async function POST(req) {
         eventId: calendarData.eventId,
       },
     });
-
-    // Optionally send email
-    // await sendEmail(
-    //   user.email,
-    //   {
-    //     title: meeting.title,
-    //     selectDay,
-    //     selectTime,
-    //     location: "Virtual",
-    //     meetingLink: calendarData.meetingLink,
-    //   },
-    //   admin.photoUrl
-    // );
 
     return NextResponse.json(
       {
