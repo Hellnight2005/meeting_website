@@ -1,4 +1,4 @@
-import moment from "moment";
+import moment from "moment-timezone";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -21,15 +21,16 @@ export const convertMeetingTime = async (meetingId) => {
   const datePart = `${parts[1].trim()}, ${parts[2].trim()}`;
   const fullDateTime = `${datePart} ${rawTime}`;
 
-  const m = moment(fullDateTime, "MMMM D, YYYY h:mm A", true);
+  // Parse in IST, then convert to UTC
+  const m = moment.tz(fullDateTime, "MMMM D, YYYY h:mm A", "Asia/Kolkata");
+
   if (!m.isValid()) {
     throw new Error("Invalid date or time format");
   }
 
-  const startDate = m.toDate();
-  const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // Force 1 hour duration
+  const startDate = m.utc().toDate(); // UTC start time
+  const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // 1 hour later
 
-  // Save to DB
   await prisma.meeting.update({
     where: { id: meetingId },
     data: {

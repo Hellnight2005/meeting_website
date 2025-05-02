@@ -18,6 +18,7 @@ const refreshAccessToken = async (refreshToken) => {
     const { credentials } = await oauth2Client.refreshAccessToken();
     return credentials.access_token;
   } catch (error) {
+    console.error("Failed to refresh access token:", error.message);
     throw new Error("Failed to refresh access token.");
   }
 };
@@ -51,10 +52,21 @@ const checkForExistingEvent = async (calendar, startDateTime, endDateTime) => {
       timeMax,
       singleEvents: true,
       orderBy: "startTime",
+      maxResults: 5,
     });
 
-    return events.data.items.length > 0;
+    const isConflict = events.data.items.some((event) => {
+      const existingStart = new Date(event.start.dateTime).getTime();
+      const existingEnd = new Date(event.end.dateTime).getTime();
+      const newStart = new Date(startDateTime).getTime();
+      const newEnd = new Date(endDateTime).getTime();
+
+      return newStart < existingEnd && newEnd > existingStart;
+    });
+
+    return isConflict;
   } catch (error) {
+    console.error("Error checking for existing events:", error.message);
     throw new Error("Error checking for existing events.");
   }
 };
@@ -85,33 +97,30 @@ const createCalendarEvent = async ({
   let adminEmail;
   try {
     const adminUser = await prisma.user.findFirst({ where: { role: "admin" } });
-    if (adminUser) {
-      adminEmail = adminUser.email;
-    } else {
-      throw new Error("Admin user not found.");
-    }
+    if (!adminUser) throw new Error("Admin user not found.");
+    adminEmail = adminUser.email;
   } catch (error) {
+    console.error("Error fetching admin email:", error.message);
     throw new Error("Error fetching admin email.");
   }
 
-  // Make admin as the organizer by using admin's access token
+  // Authorize admin
   const adminAuth = await getAuthorizedClient({
     accessToken: adminAccessToken,
     refreshToken: adminRefreshToken,
   });
   const adminCalendar = google.calendar({ version: "v3", auth: adminAuth });
 
-  // Prepare event data
   const event = {
     summary: title,
     description,
     start: {
       dateTime: startDateTime,
-      timeZone: "Asia/Kolkata",
+      timeZone: "UTC", // Matches the ISO time format
     },
     end: {
       dateTime: endDateTime,
-      timeZone: "Asia/Kolkata",
+      timeZone: "UTC",
     },
     location: location || undefined,
     attendees: attendees.length > 0 ? attendees : undefined,
@@ -142,7 +151,6 @@ const createCalendarEvent = async ({
       throw new Error("Event already exists during this time.");
     }
 
-    // Create the event on admin's calendar (admin will be organizer)
     const adminEvent = await adminCalendar.events.insert({
       calendarId: "primary",
       resource: event,
@@ -163,6 +171,10 @@ const createCalendarEvent = async ({
       endDateTime: adminEvent.data.end.dateTime,
     };
   } catch (error) {
+    console.error(
+      "Error creating calendar event:",
+      error.response?.data || error.message
+    );
     throw new Error("Error creating calendar event.");
   }
 };
@@ -177,6 +189,7 @@ const deleteCalendarEvent = async (eventId, refreshToken) => {
 
     return { success: true };
   } catch (error) {
+    console.error("Failed to delete event:", error.message);
     return { success: false, message: error.message };
   }
 };
