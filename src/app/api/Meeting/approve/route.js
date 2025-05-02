@@ -6,11 +6,8 @@ import { NextResponse } from "next/server";
 const prisma = new PrismaClient();
 
 // ✅ Add this GET handler for testing
-export async function GET() {
-  return NextResponse.json({ message: "GET route is working!" });
-}
-
-export async function POST(req) {
+// Change POST to PUT
+export async function PUT(req) {
   try {
     const body = await req.json();
     const { id } = body;
