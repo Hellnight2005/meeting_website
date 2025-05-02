@@ -41,6 +41,16 @@ function getMeetingIdFromCookie() {
 
     const jwt = getCookieValue("meeting");
     const decoded = jwt ? decodeJWT(jwt) : null;
+
+    // If no meeting IDs exist or they are empty, remove the cookie and return null
+    if (decoded?.meetingIds?.length === 0 || !decoded?.meetingIds) {
+        // Remove the cookie if meetingIds is empty or not found
+        document.cookie = "meeting=; path=/; max-age=0;";
+        toast.error("❌ No previous meeting found. You can book a new one.");
+        return null; // No meeting available
+    }
+
+    // Return the first meeting ID from the array if available
     return decoded?.meetingIds?.[0] || null;
 }
 
@@ -132,8 +142,6 @@ function Meeting() {
             setIsLoading(false);
         }
     };
-
-
 
     useEffect(() => {
         if (typeof window !== "undefined") {
@@ -271,16 +279,11 @@ function Meeting() {
                 )}
 
                 <div className="pt-4">
-                    <div className="flex justify-between items-center text-xs font-medium text-zinc-400">
-                        {stepLabels.map((label, index) => {
-                            const isActive = currentStepIndex >= index;
-                            return (
-                                <div key={index} className="flex-1 text-center">
-                                    <div className={`h-2 rounded-full mx-1 transition-all duration-300 ${isActive ? "bg-green-400" : "bg-zinc-700"}`} />
-                                    <span className="block mt-1">{label}</span>
-                                </div>
-                            );
-                        })}
+                    <div className="flex justify-between items-center text-xs font-medium text-zinc-500">
+                        <span className="capitalize">{stepLabels[currentStepIndex]}</span>
+                        <div className="w-full h-0.5 bg-zinc-700 relative">
+                            <div className={`h-full w-[${(currentStepIndex + 1) * 50}%] bg-green-500`} />
+                        </div>
                     </div>
                 </div>
             </div>
