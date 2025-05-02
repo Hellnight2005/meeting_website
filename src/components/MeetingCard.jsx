@@ -117,19 +117,21 @@ export default function MeetingCard({ id, type }) {
         try {
             console.log("meetingId", meeting.id);
 
-            const res = await fetch('/api/Meeting/approve', {
+            const res = await fetch(`/api/Meeting/approve/${meeting.id}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id: meeting.id }),
             });
-            console.log("respone from api ", res.data);
 
+            const data = await res.json(); // 👈 Parse JSON response
+
+            console.log("response from api", data);
 
             if (res.ok) {
                 await refreshMeetings();
                 toast.success("Meeting approved successfully.", { position: "top-center" });
             } else {
-                toast.error("Failed to approve the meeting.", { position: "top-center" });
+                toast.error(data?.error || "Failed to approve the meeting.", { position: "top-center" });
             }
         } catch (err) {
             console.error(err);
@@ -137,8 +139,8 @@ export default function MeetingCard({ id, type }) {
         } finally {
             setLoadingAction(null);
         }
-
     }
+
     const handleJoinClick = () => {
         if (isJoinEnabled) {
             toast.success("The meeting is ready to join! You will be redirected shortly.", { position: "top-center" });
