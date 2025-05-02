@@ -1,27 +1,30 @@
+import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { convertMeetingTime } from "@/middleware/convertMeetingTime";
 import { createCalendarEvent } from "@/config/googleCalendar";
 
 const prisma = new PrismaClient();
 
-// This handles the POST request
-export async function POST(req) {
+// ✅ Dynamic POST handler
+export async function POST(req, { params }) {
   try {
+    const { id: paramId } = params;
     const body = await req.json();
-    const { id } = body;
+    const id = body.id || paramId;
 
     if (!id) {
-      return new Response(
-        JSON.stringify({ error: "Meeting ID is required." }),
+      return NextResponse.json(
+        { error: "Meeting ID is required." },
         { status: 400 }
       );
     }
 
     const meeting = await prisma.meeting.findUnique({ where: { id } });
     if (!meeting) {
-      return new Response(JSON.stringify({ error: "Meeting not found." }), {
-        status: 404,
-      });
+      return NextResponse.json(
+        { error: "Meeting not found." },
+        { status: 404 }
+      );
     }
 
     const user = await prisma.user.findUnique({
@@ -30,8 +33,8 @@ export async function POST(req) {
     const admin = await prisma.user.findFirst({ where: { role: "admin" } });
 
     if (!user || !admin) {
-      return new Response(
-        JSON.stringify({ error: "User or admin not found." }),
+      return NextResponse.json(
+        { error: "User or admin not found." },
         { status: 404 }
       );
     }
@@ -60,18 +63,12 @@ export async function POST(req) {
       },
     });
 
-    return new Response(
-      JSON.stringify({
-        message: "Meeting approved, calendar event created.",
-        meeting: updatedMeeting,
-        calendarData,
-      }),
+    return NextResponse.json(
+      { message: "Meeting approved", meeting: updatedMeeting },
       { status: 200 }
     );
   } catch (error) {
     console.error("Error approving meeting:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-    });
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
