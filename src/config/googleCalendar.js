@@ -77,21 +77,23 @@ const createCalendarEvent = async ({
   adminAccessToken,
   adminRefreshToken,
   startDateTime,
-  endDateTime,
   title,
   description = "Approved meeting",
-  location,
   attendees = [],
 }) => {
-  if (!startDateTime || !endDateTime) {
-    throw new Error("Missing start or end time for the meeting.");
+  if (!startDateTime) {
+    throw new Error("Missing start time for the meeting.");
   }
 
+  let startISO, endISO;
   try {
-    startDateTime = new Date(startDateTime).toISOString();
-    endDateTime = new Date(endDateTime).toISOString();
+    const start = new Date(startDateTime);
+    const end = new Date(start.getTime() + 60 * 60 * 1000); // Add 1 hour
+
+    startISO = start.toISOString();
+    endISO = end.toISOString();
   } catch (err) {
-    throw new Error("Invalid date format for start or end time.");
+    throw new Error("Invalid date format for start time.");
   }
 
   let adminEmail;
@@ -104,7 +106,6 @@ const createCalendarEvent = async ({
     throw new Error("Error fetching admin email.");
   }
 
-  // Authorize admin
   const adminAuth = await getAuthorizedClient({
     accessToken: adminAccessToken,
     refreshToken: adminRefreshToken,
@@ -115,14 +116,14 @@ const createCalendarEvent = async ({
     summary: title,
     description,
     start: {
-      dateTime: startDateTime,
-      timeZone: "UTC", // Matches the ISO time format
-    },
-    end: {
-      dateTime: endDateTime,
+      dateTime: startISO,
       timeZone: "UTC",
     },
-    location: location || undefined,
+    end: {
+      dateTime: endISO,
+      timeZone: "UTC",
+    },
+    location: "Virtual", // Fixed location
     attendees: attendees.length > 0 ? attendees : undefined,
     conferenceData: {
       createRequest: {
@@ -142,11 +143,7 @@ const createCalendarEvent = async ({
   };
 
   try {
-    const exists = await checkForExistingEvent(
-      adminCalendar,
-      startDateTime,
-      endDateTime
-    );
+    const exists = await checkForExistingEvent(adminCalendar, startISO, endISO);
     if (exists) {
       throw new Error("Event already exists during this time.");
     }
@@ -189,7 +186,6 @@ const deleteCalendarEvent = async (eventId, refreshToken) => {
 
     return { success: true };
   } catch (error) {
-    // console.error("Failed to delete event:", error.message);
     return { success: false, message: error.message };
   }
 };

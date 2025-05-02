@@ -87,7 +87,7 @@ function RescheduleModal({ meetingId, onClose, onSave }) {
         console.log("Payload:", payload);
 
         try {
-            const res = await fetch("/api/meeting/reschedule", {
+            const res = await fetch("/api/Meeting/reschedule", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
