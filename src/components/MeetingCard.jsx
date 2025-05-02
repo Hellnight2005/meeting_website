@@ -118,10 +118,12 @@ export default function MeetingCard({ id, type }) {
             console.log("meetingId", meeting.id);
 
             const res = await fetch('/api/Meeting/approve', {
-                method: 'PUT',
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id: meeting.id }),
             });
+            console.log("respone from api ", res.data);
+
 
             if (res.ok) {
                 await refreshMeetings();
