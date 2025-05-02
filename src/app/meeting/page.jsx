@@ -29,10 +29,22 @@ function getMeetingIdFromCookie() {
         return match ? decodeURIComponent(match[2]) : null;
     };
 
+    const base64UrlDecode = (input) => {
+        try {
+            const base64 = input.replace(/-/g, '+').replace(/_/g, '/');
+            const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, '=');
+            return atob(padded);
+        } catch (err) {
+            console.error("Base64 decode error:", err);
+            return null;
+        }
+    };
+
     const decodeJWT = (token) => {
         try {
             const payload = token.split(".")[1];
-            return JSON.parse(atob(payload));
+            const jsonPayload = base64UrlDecode(payload);
+            return JSON.parse(jsonPayload);
         } catch (error) {
             console.error("Failed to decode JWT:", error);
             return null;
@@ -42,17 +54,16 @@ function getMeetingIdFromCookie() {
     const jwt = getCookieValue("meeting");
     const decoded = jwt ? decodeJWT(jwt) : null;
 
-    // If no meeting IDs exist or they are empty, remove the cookie and return null
-    if (decoded?.meetingIds?.length === 0 || !decoded?.meetingIds) {
-        // Remove the cookie if meetingIds is empty or not found
+    if (!decoded?.meetingIds || decoded.meetingIds.length === 0) {
+        console.warn("No valid meetingIds found in JWT or token is malformed.");
         document.cookie = "meeting=; path=/; max-age=0;";
         toast.error("❌ No previous meeting found. You can book a new one.");
-        return null; // No meeting available
+        return null;
     }
 
-    // Return the first meeting ID from the array if available
-    return decoded?.meetingIds?.[0] || null;
+    return decoded.meetingIds[0];
 }
+
 
 function Meeting() {
     const [projectName] = useState("webapp");
