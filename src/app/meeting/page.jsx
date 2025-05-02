@@ -85,7 +85,10 @@ function Meeting() {
             if (!fetchedMeeting || (fetchedMeeting.meetingIds && fetchedMeeting.meetingIds.length === 0)) {
                 // Delete the meeting cookie if no meeting is found
                 document.cookie = "meeting=; path=/; max-age=0;";
-                toast.error("❌ No meeting found.");
+                toast.error("❌ No meeting found.", {
+                    position: "top-center",
+                    duration: 6000,
+                });
                 return; // Exit early if no meeting data is found
             }
 
