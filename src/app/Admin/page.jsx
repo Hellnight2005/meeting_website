@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { useMeetingContext } from "../../constants/MeetingContext";
+import { useMeetingContext } from "@/constants/MeetingContext";
 import MeetingList from "@/components/MeetingList";
 import Charts from "@/components/Charts";
 
