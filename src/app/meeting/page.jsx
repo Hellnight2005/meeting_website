@@ -54,7 +54,7 @@ function Meeting() {
             console.log("api hit");
 
             // Use fetch to make the POST request with meetingId in the body
-            const response = await fetch(`/api/Meeting/meeting_by_id/${meetingId}`, {
+            const response = await fetch(`/api/Meeting/meeting_by_id`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
