@@ -1,9 +1,10 @@
-// app/api/meeting/approve/route.js (or .ts)
+// app/api/meeting/approve/route.js
 
 import { PrismaClient } from "@prisma/client";
 import { convertMeetingTime } from "@/middleware/convertMeetingTime";
 import { createCalendarEvent } from "@/config/googleCalendar";
-import { sendEmail } from "@/services/approve_email";
+
+import { NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
 
@@ -13,8 +14,8 @@ export async function POST(req) {
     const { id } = body; // id comes from the request body
 
     if (!id) {
-      return new Response(
-        JSON.stringify({ error: "Meeting ID is required." }),
+      return NextResponse.json(
+        { error: "Meeting ID is required." },
         { status: 400 }
       );
     }
@@ -22,9 +23,12 @@ export async function POST(req) {
     // Fetch meeting and related users
     const meeting = await prisma.meeting.findUnique({ where: { id } });
     if (!meeting) {
-      return new Response(JSON.stringify({ error: "Meeting not found." }), {
-        status: 404,
-      });
+      return NextResponse.json(
+        { error: "Meeting not found." },
+        {
+          status: 404,
+        }
+      );
     }
 
     const user = await prisma.user.findUnique({
@@ -33,8 +37,8 @@ export async function POST(req) {
     const admin = await prisma.user.findFirst({ where: { role: "admin" } });
 
     if (!user || !admin) {
-      return new Response(
-        JSON.stringify({ error: "User or admin not found." }),
+      return NextResponse.json(
+        { error: "User or admin not found." },
         { status: 404 }
       );
     }
@@ -82,18 +86,16 @@ export async function POST(req) {
     //   admin.photoUrl
     // );
 
-    return new Response(
-      JSON.stringify({
+    return NextResponse.json(
+      {
         message: "Meeting approved, calendar event created.",
         meeting: updatedMeeting,
         calendarData,
-      }),
+      },
       { status: 200 }
     );
   } catch (error) {
     console.error("Error approving meeting:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-    });
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
