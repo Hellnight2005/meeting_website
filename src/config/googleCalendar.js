@@ -189,7 +189,7 @@ const deleteCalendarEvent = async (eventId, refreshToken) => {
 
     return { success: true };
   } catch (error) {
-    console.error("Failed to delete event:", error.message);
+    // console.error("Failed to delete event:", error.message);
     return { success: false, message: error.message };
   }
 };

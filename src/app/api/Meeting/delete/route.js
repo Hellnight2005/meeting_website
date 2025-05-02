@@ -1,13 +1,15 @@
+// app/api/meeting/delete/route.js
 import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { deleteCalendarEvent } from "@/config/googleCalendar";
-import { logger } from "@/lib/logger.server";
+
+export const dynamic = "force-dynamic"; // Ensure Vercel doesn't cache the route
 
 const prisma = new PrismaClient();
 
 export async function DELETE(req) {
   try {
-    const { id } = await req.json(); // Get ID from the request body
+    const { id } = await req.json(); // Expect JSON body with meeting ID
 
     if (!id) {
       return NextResponse.json(
@@ -48,7 +50,7 @@ export async function DELETE(req) {
       }
     }
 
-    // 4. Delete the meeting
+    // 4. Delete the meeting from the DB
     const deletedMeeting = await prisma.meeting.delete({ where: { id } });
 
     return NextResponse.json({
@@ -57,9 +59,8 @@ export async function DELETE(req) {
       data: deletedMeeting,
     });
   } catch (error) {
-    logger?.error?.(`Error in deleteMeeting: ${error.message}`);
     return NextResponse.json(
-      { message: "Failed to delete meeting" },
+      { message: "Failed to delete meeting", error: error.message },
       { status: 500 }
     );
   }
