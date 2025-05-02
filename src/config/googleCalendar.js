@@ -1,6 +1,5 @@
 const { google } = require("googleapis");
 const prisma = require("@/lib/prisma");
-const logger = require("@/lib/logger.server");
 require("dotenv").config();
 
 const createOAuthClient = () => {
@@ -17,14 +16,8 @@ const refreshAccessToken = async (refreshToken) => {
     oauth2Client.setCredentials({ refresh_token: refreshToken });
 
     const { credentials } = await oauth2Client.refreshAccessToken();
-    logger.info("✅ New access token generated.");
     return credentials.access_token;
   } catch (error) {
-    logger.error(
-      `❌ Failed to refresh access token: ${
-        error?.response?.data || error.message
-      }`
-    );
     throw new Error("Failed to refresh access token.");
   }
 };
@@ -62,7 +55,6 @@ const checkForExistingEvent = async (calendar, startDateTime, endDateTime) => {
 
     return events.data.items.length > 0;
   } catch (error) {
-    logger.error("❌ Error during event check:", error);
     throw new Error("Error checking for existing events.");
   }
 };
@@ -83,13 +75,10 @@ const createCalendarEvent = async ({
     throw new Error("Missing start or end time for the meeting.");
   }
 
-  logger.info("📅 Validating date inputs for calendar event...");
-
   try {
     startDateTime = new Date(startDateTime).toISOString();
     endDateTime = new Date(endDateTime).toISOString();
   } catch (err) {
-    logger.error(`❌ Invalid date format: ${err.message}`);
     throw new Error("Invalid date format for start or end time.");
   }
 
@@ -102,7 +91,6 @@ const createCalendarEvent = async ({
       throw new Error("Admin user not found.");
     }
   } catch (error) {
-    logger.error(`❌ Error fetching admin email: ${error.message}`);
     throw new Error("Error fetching admin email.");
   }
 
@@ -167,8 +155,6 @@ const createCalendarEvent = async ({
         (e) => e.entryPointType === "video"
       )?.uri || null;
 
-    logger.info("✅ Calendar event created by Admin successfully.");
-
     return {
       eventId: adminEvent.data.id,
       htmlLink: adminEvent.data.htmlLink,
@@ -177,13 +163,6 @@ const createCalendarEvent = async ({
       endDateTime: adminEvent.data.end.dateTime,
     };
   } catch (error) {
-    logger.error(
-      `❌ Error creating calendar event: ${
-        error?.response?.data?.error?.message ||
-        error?.message ||
-        JSON.stringify(error)
-      }`
-    );
     throw new Error("Error creating calendar event.");
   }
 };
@@ -196,10 +175,8 @@ const deleteCalendarEvent = async (eventId, refreshToken) => {
     const calendar = google.calendar({ version: "v3", auth: oauth2Client });
     await calendar.events.delete({ calendarId: "primary", eventId });
 
-    logger.info(`✅ Event ${eventId} deleted successfully.`);
     return { success: true };
   } catch (error) {
-    logger.error(`❌ Error deleting calendar event: ${error.message}`);
     return { success: false, message: error.message };
   }
 };
