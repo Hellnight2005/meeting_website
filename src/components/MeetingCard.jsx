@@ -117,7 +117,7 @@ export default function MeetingCard({ id, type }) {
         try {
             console.log("meetingId", meeting.id);
 
-            const res = await fetch(`/api/Meeting/approve`, {
+            const res = await fetch("/api/Meeting/approve", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id: meeting.id }),
