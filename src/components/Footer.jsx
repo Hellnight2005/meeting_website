@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger";
-import { Facebook, Twitter, Instagram, Mail } from "lucide-react";
+import { Facebook, Instagram, Mail } from "lucide-react";
 import { useUser } from "@/constants/UserContext";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -80,10 +80,9 @@ export default function Footer() {
         <footer ref={footerRef} className="bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900 text-zinc-100 py-16 px-6">
             <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-16">
 
-                {/* Left: Links or Logo */}
+                {/* Left: Logo */}
                 <div className="space-y-4">
                     <h2 className="text-2xl font-bold text-white">YourAgency</h2>
-                    <p className="text-sm text-zinc-400">Building innovative solutions for tomorrow.</p>
                 </div>
 
                 {/* Center: Socials */}
@@ -92,9 +91,6 @@ export default function Footer() {
                     <div className="flex gap-6">
                         <a href="https://facebook.com" target="_blank" rel="noreferrer" className="p-3 rounded-full bg-zinc-800 hover:bg-blue-600 transition">
                             <Facebook className="h-5 w-5" />
-                        </a>
-                        <a href="https://twitter.com" target="_blank" rel="noreferrer" className="p-3 rounded-full bg-zinc-800 hover:bg-sky-400 transition">
-                            <Twitter className="h-5 w-5" />
                         </a>
                         <a href="https://instagram.com" target="_blank" rel="noreferrer" className="p-3 rounded-full bg-zinc-800 hover:bg-pink-500 transition">
                             <Instagram className="h-5 w-5" />
@@ -105,7 +101,7 @@ export default function Footer() {
                     </div>
                 </div>
 
-                {/* Right: Contact form */}
+                {/* Right: Contact Form */}
                 <div>
                     <h4 className="text-xl font-semibold mb-4">Quick Contact</h4>
                     <form className="space-y-4" onSubmit={handleSubmit}>
@@ -137,7 +133,6 @@ export default function Footer() {
                         </button>
                     </form>
 
-                    {/* Added Privacy Policy and Terms links here */}
                     <div className="mt-6 text-xs text-center text-zinc-400 space-x-4">
                         <a href="/privacy-policy" className="hover:underline hover:text-blue-400 transition">
                             Privacy Policy
@@ -148,10 +143,14 @@ export default function Footer() {
                         </a>
                     </div>
                 </div>
-
             </div>
 
-            <div className="mt-12 border-t border-zinc-700 pt-6 text-center text-zinc-500 text-sm">
+            {/* Message About the Agency */}
+            <div className="mt-12 text-center text-zinc-400 text-sm">
+                Building innovative solutions for tomorrow.
+            </div>
+
+            <div className="mt-4 border-t border-zinc-700 pt-6 text-center text-zinc-500 text-sm">
                 © {new Date().getFullYear()} YourAgency. All rights reserved.
             </div>
         </footer>
