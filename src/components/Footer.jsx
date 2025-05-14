@@ -14,18 +14,75 @@ export default function Footer() {
     const [message, setMessage] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
+
     const footerRef = useRef(null);
+    const columnRefs = useRef([]);
+    const iconRefs = useRef([]);
+    const inputRefs = useRef([]);
 
     useEffect(() => {
         if (!footerRef.current) return;
 
+        // Animate footer container
         gsap.fromTo(
             footerRef.current,
-            { autoAlpha: 0, y: 40 },
+            { autoAlpha: 0, y: 60 },
             {
                 autoAlpha: 1,
                 y: 0,
+                duration: 1,
+                ease: "power2.out",
+                scrollTrigger: {
+                    trigger: footerRef.current,
+                    start: "top 85%",
+                },
+            }
+        );
+
+        // Animate columns staggered
+        gsap.fromTo(
+            columnRefs.current,
+            { autoAlpha: 0, y: 50 },
+            {
+                autoAlpha: 1,
+                y: 0,
+                duration: 1,
+                stagger: 0.2,
+                ease: "power3.out",
+                scrollTrigger: {
+                    trigger: footerRef.current,
+                    start: "top 90%",
+                },
+            }
+        );
+
+        // Animate social icons
+        gsap.fromTo(
+            iconRefs.current,
+            { scale: 0.6, autoAlpha: 0 },
+            {
+                scale: 1,
+                autoAlpha: 1,
+                duration: 0.5,
+                stagger: 0.1,
+                ease: "back.out(1.7)",
+                scrollTrigger: {
+                    trigger: footerRef.current,
+                    start: "top 90%",
+                },
+            }
+        );
+
+        // Animate form fields
+        gsap.fromTo(
+            inputRefs.current,
+            { x: -30, autoAlpha: 0 },
+            {
+                x: 0,
+                autoAlpha: 1,
                 duration: 0.8,
+                stagger: 0.15,
+                ease: "power2.out",
                 scrollTrigger: {
                     trigger: footerRef.current,
                     start: "top 90%",
@@ -81,28 +138,35 @@ export default function Footer() {
             <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-16">
 
                 {/* Left: Logo */}
-                <div className="space-y-4">
+                <div ref={el => (columnRefs.current[0] = el)} className="space-y-4">
                     <h2 className="text-2xl font-bold text-white">YourAgency</h2>
                 </div>
 
                 {/* Center: Socials */}
-                <div className="flex flex-col items-center">
+                <div ref={el => (columnRefs.current[1] = el)} className="flex flex-col items-center">
                     <h4 className="text-xl font-semibold mb-4">Follow Us</h4>
                     <div className="flex gap-6">
-                        <a href="https://facebook.com" target="_blank" rel="noreferrer" className="p-3 rounded-full bg-zinc-800 hover:bg-blue-600 transition">
-                            <Facebook className="h-5 w-5" />
-                        </a>
-                        <a href="https://instagram.com" target="_blank" rel="noreferrer" className="p-3 rounded-full bg-zinc-800 hover:bg-pink-500 transition">
-                            <Instagram className="h-5 w-5" />
-                        </a>
-                        <a href={`mailto:${userEmail}`} className="p-3 rounded-full bg-zinc-800 hover:bg-green-500 transition">
-                            <Mail className="h-5 w-5" />
-                        </a>
+                        {[
+                            { icon: <Facebook className="h-5 w-5" />, link: "https://facebook.com", color: "hover:bg-blue-600" },
+                            { icon: <Instagram className="h-5 w-5" />, link: "https://instagram.com", color: "hover:bg-pink-500" },
+                            { icon: <Mail className="h-5 w-5" />, link: `mailto:${userEmail}`, color: "hover:bg-green-500" },
+                        ].map((item, index) => (
+                            <a
+                                key={index}
+                                href={item.link}
+                                target="_blank"
+                                rel="noreferrer"
+                                className={`p-3 rounded-full bg-zinc-800 ${item.color} transition`}
+                                ref={el => (iconRefs.current[index] = el)}
+                            >
+                                {item.icon}
+                            </a>
+                        ))}
                     </div>
                 </div>
 
                 {/* Right: Contact Form */}
-                <div>
+                <div ref={el => (columnRefs.current[2] = el)}>
                     <h4 className="text-xl font-semibold mb-4">Quick Contact</h4>
                     <form className="space-y-4" onSubmit={handleSubmit}>
                         {errorMessage && (
@@ -115,6 +179,7 @@ export default function Footer() {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             placeholder="Your Email"
+                            ref={el => (inputRefs.current[0] = el)}
                             className="w-full bg-zinc-700 border border-zinc-600 focus:border-blue-500 rounded-md px-4 py-2 text-sm text-white placeholder:text-zinc-400 transition"
                         />
                         <textarea
@@ -122,10 +187,12 @@ export default function Footer() {
                             onChange={(e) => setMessage(e.target.value)}
                             rows={4}
                             placeholder="Your Message"
+                            ref={el => (inputRefs.current[1] = el)}
                             className="w-full bg-zinc-700 border border-zinc-600 focus:border-blue-500 rounded-md px-4 py-2 text-sm text-white placeholder:text-zinc-400 transition"
                         />
                         <button
                             type="submit"
+                            ref={el => (inputRefs.current[2] = el)}
                             className="w-full bg-blue-600 hover:bg-blue-700 transition px-4 py-2 rounded-md text-sm font-medium shadow-md"
                             disabled={isSubmitting}
                         >
@@ -145,11 +212,12 @@ export default function Footer() {
                 </div>
             </div>
 
-            {/* Message About the Agency */}
+            {/* Footer Message */}
             <div className="mt-12 text-center text-zinc-400 text-sm">
                 Building innovative solutions for tomorrow.
             </div>
 
+            {/* Copyright */}
             <div className="mt-4 border-t border-zinc-700 pt-6 text-center text-zinc-500 text-sm">
                 © {new Date().getFullYear()} YourAgency. All rights reserved.
             </div>
