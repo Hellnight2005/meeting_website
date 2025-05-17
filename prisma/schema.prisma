@@ -43,6 +43,9 @@ model Meeting {
   user_role     UserRole
   startDateTime String?
   endDateTime   String?
+  brandName     String? // optional brand name
+  phoneNumber   String? // optional phone number
+  websiteUrl    String? // optional website url
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 

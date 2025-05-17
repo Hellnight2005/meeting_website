@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import gsap from "gsap";
 import Calendar from "./Calendar";
 import TimePicker from "./TimePicker";
@@ -13,52 +13,87 @@ export default function CreateMeetingModal({ open, onClose }) {
     const { user, setUser } = useUser();
     const router = useRouter();
 
-    const today = new Date();
-    const defaultDay = today.toLocaleDateString(undefined, {
-        weekday: "long",
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-    });
-    const defaultTime = today.toLocaleTimeString(undefined, {
-        hour: "2-digit",
-        minute: "2-digit",
-    });
+    // Memoized default date/time strings
+    const today = useMemo(() => new Date(), []);
+    const defaultDay = useMemo(() => {
+        return today.toLocaleDateString(undefined, {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+        });
+    }, [today]);
+    const defaultTime = useMemo(() => {
+        return today.toLocaleTimeString(undefined, {
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+    }, [today]);
 
-    const [title, setTitle] = useState("");
-    const [description, setDescription] = useState("");
+    // Form state
+    const [brandName, setBrandName] = useState("");
     const [sector, setSector] = useState("");
+    const [websiteUrl, setWebsiteUrl] = useState("");
+    const [phoneNumber, setPhoneNumber] = useState("");
+    const [phoneError, setPhoneError] = useState("");
+    const [description, setDescription] = useState("");
     const [showForm, setShowForm] = useState(false);
     const [selectedDate, setSelectedDate] = useState(defaultDay);
     const [selectedTime, setSelectedTime] = useState(defaultTime);
     const [showLoginWarning, setShowLoginWarning] = useState(false);
     const [alreadyBooked, setAlreadyBooked] = useState(false);
+    const [creatingMeeting, setCreatingMeeting] = useState(false);
 
-    const [creatingMeeting, setCreatingMeeting] = useState(false); // ✅ Added new state to handle button disabling
-
-    useEffect(() => {
-        if (open) {
-            const meetingCookieExists = document.cookie.includes("meeting=");
-            setAlreadyBooked(meetingCookieExists);
-
-            const ctx = gsap.context(() => {
-                gsap.from(modalRef.current, {
-                    opacity: 0,
-                    y: 40,
-                    duration: 0.4,
-                    ease: "power2.out",
-                });
-                gsap.from(".modal-item", {
-                    opacity: 0,
-                    y: 20,
-                    stagger: 0.1,
-                    delay: 0.1,
-                });
-            }, containerRef);
-            return () => ctx.revert();
+    // Validate phone number with useCallback to avoid recreation
+    const validatePhoneNumber = useCallback((value) => {
+        const phoneRegex = /^[+\d\s\-()]{7,15}$/;
+        if (!value) {
+            setPhoneError("Phone number is required.");
+            return false;
         }
+        if (!phoneRegex.test(value)) {
+            setPhoneError("Invalid phone number format.");
+            return false;
+        }
+        setPhoneError("");
+        return true;
+    }, []);
+
+    // Handle phone input change
+    const handlePhoneChange = useCallback(
+        (e) => {
+            const val = e.target.value;
+            setPhoneNumber(val);
+            validatePhoneNumber(val);
+        },
+        [validatePhoneNumber]
+    );
+
+    // Animate modal on open
+    useEffect(() => {
+        if (!open) return;
+
+        setAlreadyBooked(document.cookie.includes("meeting="));
+
+        const ctx = gsap.context(() => {
+            gsap.from(modalRef.current, {
+                opacity: 0,
+                y: 40,
+                duration: 0.4,
+                ease: "power2.out",
+            });
+            gsap.from(".modal-item", {
+                opacity: 0,
+                y: 20,
+                stagger: 0.1,
+                delay: 0.1,
+            });
+        }, containerRef);
+
+        return () => ctx.revert();
     }, [open]);
 
+    // Close modal on outside click
     useEffect(() => {
         const handleOutsideClick = (e) => {
             if (modalRef.current && !modalRef.current.contains(e.target)) {
@@ -69,12 +104,13 @@ export default function CreateMeetingModal({ open, onClose }) {
         return () => document.removeEventListener("mousedown", handleOutsideClick);
     }, [onClose]);
 
-    const getUserFromToken = () => {
+    // Extract userId from token cookie
+    const getUserFromToken = useCallback(() => {
         if (typeof window === "undefined") return null;
         try {
             const match = document.cookie.match(/(?:^|;\s*)token=([^;]*)/);
-            const token = match?.[1];
-            if (!token) return null;
+            if (!match) return null;
+            const token = match[1];
             const payload = token.split(".")[1];
             const decoded = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
             const parsed = JSON.parse(decoded);
@@ -83,60 +119,63 @@ export default function CreateMeetingModal({ open, onClose }) {
             console.error("Failed to decode token:", err);
             return null;
         }
-    };
+    }, []);
 
-    const handleCreate = async () => {
-        if (creatingMeeting) return; // ✅ prevent double clicks
-        setCreatingMeeting(true); // ✅ set loading true when clicked
+    // Create meeting handler
+    const handleCreate = useCallback(async () => {
+        if (creatingMeeting) return;
 
+        setCreatingMeeting(true);
         let currentUser = user;
 
+        // Fetch user if not available
         if (!currentUser?.id) {
             const tokenUserId = getUserFromToken();
-            if (tokenUserId) {
-                try {
-                    const res = await fetch(`/api/user/fetch`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ id: tokenUserId }),
-                    });
-                    const userData = await res.json();
-                    if (userData?.User?.id) {
-                        setUser(userData.User);
-                        currentUser = userData.User;
-                    } else {
-                        setShowLoginWarning(true);
-                        setCreatingMeeting(false); // ✅ reset loading on error
-                        return;
-                    }
-                } catch (err) {
-                    console.error("Failed to fetch user data:", err);
+            if (!tokenUserId) {
+                setShowLoginWarning(true);
+                setCreatingMeeting(false);
+                return;
+            }
+            try {
+                const res = await fetch(`/api/user/fetch`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id: tokenUserId }),
+                });
+                const userData = await res.json();
+                if (userData?.User?.id) {
+                    setUser(userData.User);
+                    currentUser = userData.User;
+                } else {
                     setShowLoginWarning(true);
-                    setCreatingMeeting(false); // ✅ reset loading on error
+                    setCreatingMeeting(false);
                     return;
                 }
-            } else {
+            } catch (err) {
+                console.error("Failed to fetch user data:", err);
                 setShowLoginWarning(true);
-                setCreatingMeeting(false); // ✅ reset loading on error
+                setCreatingMeeting(false);
                 return;
             }
         }
 
         if (!currentUser?.id) {
             setShowLoginWarning(true);
-            setCreatingMeeting(false); // ✅ reset loading
+            setCreatingMeeting(false);
             return;
         }
 
-        const fullTitle = `${title.trim()} - ${description.trim()} (Sector: ${sector.trim()})`;
-
+        // Construct payload
         const payload = {
             userId: currentUser.id,
             user_name: currentUser.displayName,
-            title: fullTitle,
-            selectDay: selectedDate.display || selectedDate,
+            selectDay: selectedDate?.display || selectedDate,
             selectTime: selectedTime,
             slot: 1,
+            brandName: brandName.trim(),
+            phoneNumber: phoneNumber.trim(),
+            websiteUrl: websiteUrl.trim(),
+            description: description.trim(),
         };
 
         try {
@@ -156,9 +195,30 @@ export default function CreateMeetingModal({ open, onClose }) {
         } catch (err) {
             console.error("Failed to create meeting:", err);
         } finally {
-            setCreatingMeeting(false); // ✅ always reset after API attempt
+            setCreatingMeeting(false);
         }
-    };
+    }, [
+        creatingMeeting,
+        user,
+        getUserFromToken,
+        setUser,
+        selectedDate,
+        selectedTime,
+        brandName,
+        phoneNumber,
+        websiteUrl,
+        description,
+        onClose,
+    ]);
+
+    // Check if form can proceed
+    const canProceed = useMemo(() => {
+        return (
+            brandName.trim() !== "" &&
+            sector.trim() !== "" &&
+            validatePhoneNumber(phoneNumber)
+        );
+    }, [brandName, sector, phoneNumber, validatePhoneNumber]);
 
     if (!open) return null;
 
@@ -211,38 +271,50 @@ export default function CreateMeetingModal({ open, onClose }) {
                     </div>
                 ) : !showForm ? (
                     <div className="modal-item space-y-4">
-                        <label className="block font-medium">
-                            What's the meeting about?
-                        </label>
                         <input
                             type="text"
-                            placeholder="Enter meeting title"
+                            placeholder="Brand/Business Name"
                             className="w-full bg-zinc-800 border border-zinc-600 rounded-md px-4 py-2 text-white"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
+                            value={brandName}
+                            onChange={(e) => setBrandName(e.target.value)}
                         />
                         <input
                             type="text"
-                            placeholder="Brief description"
-                            className="w-full bg-zinc-800 border border-zinc-600 rounded-md px-4 py-2 text-white"
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                        />
-                        <input
-                            type="text"
-                            placeholder="Main sector (e.g., FinTech, Education)"
+                            placeholder="Sector (e.g., FinTech, Education)"
                             className="w-full bg-zinc-800 border border-zinc-600 rounded-md px-4 py-2 text-white"
                             value={sector}
                             onChange={(e) => setSector(e.target.value)}
                         />
+                        <input
+                            type="url"
+                            placeholder="Website URL (optional)"
+                            className="w-full bg-zinc-800 border border-zinc-600 rounded-md px-4 py-2 text-white"
+                            value={websiteUrl}
+                            onChange={(e) => setWebsiteUrl(e.target.value)}
+                        />
+                        <input
+                            type="tel"
+                            placeholder="Phone Number"
+                            className={`w-full bg-zinc-800 rounded-md px-4 py-2 text-white ${phoneError ? "border-red-500 border" : "border border-zinc-600"
+                                }`}
+                            value={phoneNumber}
+                            onChange={handlePhoneChange}
+                        />
+                        {phoneError && (
+                            <p className="text-red-500 text-sm mt-1">{phoneError}</p>
+                        )}
+                        <textarea
+                            placeholder="Brief Description"
+                            className="w-full bg-zinc-800 border border-zinc-600 rounded-md px-4 py-2 text-white resize-none"
+                            rows={3}
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                        />
                         <button
-                            onClick={() =>
-                                title.trim() &&
-                                description.trim() &&
-                                sector.trim() &&
-                                setShowForm(true)
-                            }
-                            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded mt-4 transition"
+                            onClick={() => canProceed && setShowForm(true)}
+                            disabled={!canProceed}
+                            className={`bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded mt-4 transition ${!canProceed ? "opacity-50 cursor-not-allowed" : ""
+                                }`}
                         >
                             Next
                         </button>
@@ -250,9 +322,23 @@ export default function CreateMeetingModal({ open, onClose }) {
                 ) : (
                     <div className="space-y-8">
                         <div className="modal-item text-white space-y-2">
-                            <p className="text-lg font-medium">{title}</p>
-                            <p>{description}</p>
-                            <p className="italic text-sm text-blue-300">Sector: {sector}</p>
+                            <p>
+                                <strong>Brand/Business:</strong> {brandName}
+                            </p>
+                            <p>
+                                <strong>Sector:</strong> {sector}
+                            </p>
+                            {websiteUrl && (
+                                <p>
+                                    <strong>Website:</strong> {websiteUrl}
+                                </p>
+                            )}
+                            <p>
+                                <strong>Phone:</strong> {phoneNumber}
+                            </p>
+                            <p>
+                                <strong>Description:</strong> {description}
+                            </p>
                             <p>📅 {selectedDate?.display || selectedDate}</p>
                             <p>⏰ {selectedTime}</p>
                         </div>
@@ -278,11 +364,11 @@ export default function CreateMeetingModal({ open, onClose }) {
                         <div className="text-center">
                             <button
                                 onClick={handleCreate}
-                                disabled={creatingMeeting} // ✅ Disable when creating
+                                disabled={creatingMeeting}
                                 className={`${creatingMeeting
-                                    ? "bg-gray-400 cursor-not-allowed"
-                                    : "bg-blue-600 hover:bg-blue-700"
-                                    } text-white font-semibold py-2 px-6 rounded transition`}
+                                        ? "bg-gray-500 cursor-not-allowed"
+                                        : "bg-green-600 hover:bg-green-700"
+                                    } text-white font-semibold py-3 px-8 rounded-md transition`}
                             >
                                 {creatingMeeting ? "Creating..." : "Create Meeting"}
                             </button>

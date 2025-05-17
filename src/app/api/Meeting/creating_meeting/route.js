@@ -1,21 +1,17 @@
-import { PrismaClient } from "@prisma/client";
-import { NextResponse } from "next/server";
-
-const prisma = new PrismaClient();
-
-const validTypes = ["upcoming", "line_up"];
-const validRoles = ["user", "admin"];
-
 function validateMeetingData({
   user_name,
-  title,
   selectDay,
   selectTime,
   slot,
+  brandName,
+  phoneNumber,
+  websiteUrl,
 }) {
-  if (!user_name || !title || !selectDay || !selectTime || !slot) {
-    return "All required fields (user_name, title, selectDay, selectTime, slot, ) must be filled.";
+  if (!user_name || !selectDay || !selectTime || !slot) {
+    return "All required fields (user_name, title, selectDay, selectTime, slot) must be filled.";
   }
+
+  // You can optionally validate brandName, phoneNumber, websiteUrl here if required
 
   if (typeof slot !== "number" || slot <= 0) {
     return "Slot must be a positive number.";
@@ -48,7 +44,6 @@ export async function POST(req) {
       return NextResponse.json({ error: "User not found." }, { status: 404 });
     }
 
-    // 🕒 Parse booking date & time
     const bookingDate = new Date(`${data.selectDay} ${data.selectTime}`);
     const now = new Date();
 
@@ -59,7 +54,6 @@ export async function POST(req) {
       );
     }
 
-    // ❌ Reject past bookings
     if (bookingDate < now) {
       return NextResponse.json(
         { error: "Cannot book a meeting in the past." },
@@ -72,11 +66,15 @@ export async function POST(req) {
         userId: user.id,
         user_name: user.displayName,
         user_role: "user",
-        title: data.title,
+
         selectDay: data.selectDay,
         selectTime: data.selectTime,
         slot: data.slot,
         type: "line_up",
+
+        brandName: data.brandName || null,
+        phoneNumber: data.phoneNumber || null,
+        websiteUrl: data.websiteUrl || null,
       },
     });
 
