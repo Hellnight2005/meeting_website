@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import jwt from "jsonwebtoken";
 
 const prisma = new PrismaClient();
 
@@ -15,8 +16,6 @@ function validateMeetingData({
   if (!user_name || !selectDay || !selectTime || !slot) {
     return "All required fields (user_name, title, selectDay, selectTime, slot) must be filled.";
   }
-
-  // You can optionally validate brandName, phoneNumber, websiteUrl here if required
 
   if (typeof slot !== "number" || slot <= 0) {
     return "Slot must be a positive number.";
@@ -83,11 +82,18 @@ export async function POST(req) {
       },
     });
 
+    // 🔐 Generate JWT token with meeting ID
+    const token = jwt.sign({ meetingId: meeting.id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
+
+    // ✅ Return token in JSON response
     return NextResponse.json(
       {
         success: true,
         message: "Meeting created successfully.",
         data: meeting,
+        token, // 🔑 returned here
       },
       { status: 201 }
     );
