@@ -134,7 +134,7 @@ export default function Footer() {
     };
 
     return (
-        <footer ref={footerRef} className="bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900 text-zinc-100 py-16 px-6">
+        <footer ref={footerRef} className="bg-white dark:bg-zinc-900 py-20 px-6 md:px-12 lg:px-24 text-white">
             <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-16">
 
                 {/* Left: Logo */}

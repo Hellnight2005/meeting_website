@@ -28,22 +28,27 @@ export default function HowItWorks() {
     const stepRefs = useRef([]);
 
     useEffect(() => {
+        // Sequential reveal logic
         stepRefs.current.forEach((el, i) => {
             if (!el) return;
-            gsap.fromTo(
-                el,
-                { autoAlpha: 0, y: 40 },
-                {
-                    autoAlpha: 1,
-                    y: 0,
-                    duration: 0.8,
-                    delay: i * 0.2,
-                    scrollTrigger: {
-                        trigger: el,
-                        start: "top 85%",
-                    },
-                }
-            );
+
+            ScrollTrigger.create({
+                trigger: el,
+                start: "top 85%",
+                once: true,
+                onEnter: () => {
+                    gsap.to(el, {
+                        autoAlpha: 1,
+                        y: 0,
+                        duration: 0.6,
+                        ease: "power3.out",
+                        delay: i * 0.3, // stagger based on index
+                    });
+                },
+            });
+
+            // Start all hidden & offset
+            gsap.set(el, { autoAlpha: 0, y: 30 });
         });
     }, []);
 
@@ -56,7 +61,7 @@ export default function HowItWorks() {
                         <div
                             key={index}
                             ref={(el) => (stepRefs.current[index] = el)}
-                            className="opacity-0 transform bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-2xl p-6 shadow-sm transition-all"
+                            className="opacity-0 transform bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-2xl p-6 shadow-md transition-all"
                         >
                             <div className="flex items-center justify-center w-12 h-12 mx-auto bg-black dark:bg-white text-white dark:text-black rounded-full mb-4">
                                 <CheckCircle size={24} />

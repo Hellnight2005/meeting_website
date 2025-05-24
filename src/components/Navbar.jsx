@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { Dot, X } from "lucide-react";
-import { useUser } from "@/constants/UserContext";  // Assuming user context is available
+import { useUser } from "@/constants/UserContext"; // Assuming user context is available
 
 const NavBar = () => {
     const [open, setOpen] = useState(false);
@@ -12,10 +12,10 @@ const NavBar = () => {
     const itemRefs = useRef([]);
     const tl = useRef(null);
 
-    const { user } = useUser();  // Getting user info from context
+    const { user } = useUser(); // Getting user info from context
 
-    const menuItems = ["Home", "Services", "Why Us", "How It Works", "Showcase", "Pricing"];
-    const routeItems = ["/user", "#services", "#whyus", "#how", "#showcase", "#pricing"];
+    const menuItems = ["Home", "Services", "About", "Workflow", "Contact Us"];
+    const routeItems = ["/user", "#services", "#whyus", "#how", "#pricing"];
 
     // Conditionally add Admin link if the user is an admin
     if (user?.role === "admin") {
@@ -96,14 +96,17 @@ const NavBar = () => {
             {/* Button and Menu Container */}
             <div
                 ref={menuRef}
-                className="relative z-50 w-full flex justify-end px-4"
+                className="relative z-50 w-full flex justify-end
+                   px-6 md:px-12 lg:px-24
+                   py-4" // added vertical padding for spacing
             >
                 {/* Toggle Button */}
                 <button
                     onClick={() => setOpen(!open)}
-                    className="flex items-center gap-2 px-4 py-2 mt-4 rounded-full 
-                               bg-white dark:bg-[#0D0D0D] 
-                               text-black dark:text-white font-semibold"
+                    className="flex items-center gap-2 px-5 py-2 rounded-full 
+                     bg-white dark:bg-[#0D0D0D] 
+                     text-black dark:text-white font-semibold
+                     shadow-md hover:shadow-lg transition-shadow"
                 >
                     {open ? "CLOSE" : "MENU"}
                     <div className="w-8 h-8 bg-[#E6EBED] dark:bg-[#1A1A1A] flex items-center justify-center rounded-full">
@@ -118,11 +121,12 @@ const NavBar = () => {
                 {open && (
                     <div
                         ref={menuBox}
-                        className="absolute top-14 left-1/2 -translate-x-1/2 sm:left-auto sm:translate-x-0 sm:right-4 
-                                   w-[90vw] sm:w-[320px] 
-                                   bg-white dark:bg-[#1A1A1A] 
-                                   text-black dark:text-white 
-                                   p-6 rounded-2xl shadow-2xl overflow-hidden"
+                        className="absolute top-full mt-4 right-0
+                       w-[90vw] max-w-[320px]
+                       bg-white dark:bg-[#1A1A1A] 
+                       text-black dark:text-white 
+                       p-6 rounded-2xl shadow-2xl overflow-hidden"
+                        style={{ transformOrigin: "top right" }}
                     >
                         {/* Close button */}
                         <div className="flex justify-end">
@@ -141,8 +145,8 @@ const NavBar = () => {
                                         key={item}
                                         ref={addToItemRefs}
                                         className={`group flex items-center gap-2 cursor-pointer px-4 py-2 rounded-lg 
-                                                    transition-transform duration-300
-                                                    text-gray-700 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-black hover:text-black dark:hover:text-white`}
+                              transition-transform duration-300
+                              text-gray-700 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-black hover:text-black dark:hover:text-white`}
                                         style={{ transformOrigin: "center" }}
                                         onMouseEnter={(e) =>
                                             gsap.to(e.currentTarget, {
@@ -171,7 +175,7 @@ const NavBar = () => {
                                                             block: "start",
                                                         });
                                                     } else {
-                                                        window.location.href = route;  // Use direct navigation for Admin link
+                                                        window.location.href = route; // Use direct navigation for Admin link
                                                     }
                                                     setOpen(false);
                                                 },

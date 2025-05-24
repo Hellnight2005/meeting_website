@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import NavBar from "@/components/Navbar";
 import CreateMeetingModal from "@/components/CreateMeetingModal";
 import ProfileTag from "@/components/Profile";
@@ -19,6 +20,8 @@ export default function HeroSection() {
     const { user, logout } = useUser();
 
     useEffect(() => {
+        gsap.registerPlugin(ScrollTrigger);
+
         const tl = gsap.timeline({ delay: 0.3 });
 
         tl.from(titleRef.current, {
@@ -57,9 +60,48 @@ export default function HeroSection() {
                 },
                 "-=0.8"
             );
+
+        // Parallax scroll effects for text
+        gsap.to(titleRef.current, {
+            yPercent: -20,
+            ease: "none",
+            scrollTrigger: {
+                trigger: titleRef.current,
+                start: "top bottom",
+                end: "bottom top",
+                scrub: true,
+            },
+        });
+
+        gsap.to(descRef.current, {
+            yPercent: -10,
+            ease: "none",
+            scrollTrigger: {
+                trigger: descRef.current,
+                start: "top bottom",
+                end: "bottom top",
+                scrub: true,
+            },
+        });
+
+        // Enhanced video parallax + subtle zoom
+        gsap.to(videoRef.current, {
+            yPercent: 30,       // Moves up 30% vertically on scroll
+            scale: 1.05,        // Slight zoom for depth
+            ease: "none",
+            scrollTrigger: {
+                trigger: videoRef.current,
+                start: "top 80%",   // Animation starts when video top hits 80% viewport height
+                end: "bottom top",  // Ends when video bottom hits top of viewport
+                scrub: 0.8,         // Smooth scrubbing with easing
+            },
+        });
+
+        return () => {
+            ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
+        };
     }, []);
 
-    // Replace with the actual image URL if available, or fallback to the name
     const projectImage = "/icons/client.svg";
     const projectDisplay = projectImage ? (
         <img src={projectImage} alt="Project Logo" className="h-12 w-auto" />
