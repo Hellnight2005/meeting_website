@@ -1,8 +1,12 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto&display=swap");
 @import "tailwindcss";
-
 :root {
-  --font-sans: "Inter", sans-serif;
-
+  --font-roboto: "Roboto", sans-serif;
+}
+/* ============== */
+/* Root Variables */
+/* ============== */
+:root {
   /* Color system */
   --background: #030303;
   --foreground: #171717;
@@ -11,12 +15,13 @@
   /* Typography */
   --tracking-7: 0.07em;
 
-  /* Theme-friendly tokens */
+  /* Theme tokens (alias for easier dark mode switch) */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
+  --font-sans: var(--font-sans);
 }
 
+/* Dark Mode */
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
@@ -32,15 +37,15 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Hide scrollbar (cross-browser) */
+/* Hide scrollbar cross-browser */
 body {
   overflow-y: scroll;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE & Edge */
 }
 body::-webkit-scrollbar {
-  width: 0px;
-  height: 0px;
+  width: 0;
+  height: 0;
   background: transparent;
 }
 .hide-scrollbar {
@@ -52,7 +57,7 @@ body::-webkit-scrollbar {
 }
 
 /* ===================== */
-/* Typography Utilities  */
+/* Typography Utilities   */
 /* ===================== */
 .text-sohubBlack {
   color: var(--color-sohub-black);
@@ -62,7 +67,7 @@ body::-webkit-scrollbar {
 }
 
 /* ======================== */
-/* Responsive Hero Heading */
+/* Responsive Hero Heading   */
 /* ======================== */
 .hero-heading {
   font-family: var(--font-sans);
@@ -94,6 +99,9 @@ body::-webkit-scrollbar {
   }
 }
 
+/* ============== */
+/* Animations     */
+/* ============== */
 @keyframes pulse-slow {
   0%,
   100% {
