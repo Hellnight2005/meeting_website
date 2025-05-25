@@ -1,16 +1,17 @@
 import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
+
 export const dynamic = "force-dynamic";
 
 const prisma = new PrismaClient();
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key"; // Replace with env var in prod
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key"; // Use a secure env var in production
 
 export async function POST(req) {
   console.log("POST /api/meeting/get_by_user called");
+
   try {
-    const body = await req.json();
-    const { userId } = body;
+    const { userId } = await req.json();
 
     if (!userId) {
       return NextResponse.json(
@@ -25,11 +26,11 @@ export async function POST(req) {
       orderBy: { startDateTime: "asc" },
     });
 
-    if (!meetings || meetings.length === 0) {
+    const meetingIds = meetings.map((m) => m.id);
+
+    if (meetingIds.length === 0) {
       return NextResponse.json({ token: null }, { status: 200 });
     }
-
-    const meetingIds = meetings.map((m) => m.id);
 
     const token = jwt.sign({ userId, meetingIds }, JWT_SECRET, {
       expiresIn: "1d",

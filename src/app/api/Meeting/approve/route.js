@@ -45,7 +45,7 @@ export async function POST(req) {
       adminRefreshToken: admin.refreshToken,
       startDateTime,
       endDateTime,
-      title: meeting.title,
+      brandName: meeting.brandName,
       description: "Meeting approved",
       location: "Virtual",
       attendees: [{ email: user.email }, { email: admin.email }],

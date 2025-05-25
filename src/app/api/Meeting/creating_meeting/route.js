@@ -83,9 +83,6 @@ export async function POST(req) {
     });
 
     // 🔐 Generate JWT token with meeting ID
-    const token = jwt.sign({ meetingId: meeting.id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
 
     // ✅ Return token in JSON response
     return NextResponse.json(
@@ -93,7 +90,6 @@ export async function POST(req) {
         success: true,
         message: "Meeting created successfully.",
         data: meeting,
-        token, // 🔑 returned here
       },
       { status: 201 }
     );

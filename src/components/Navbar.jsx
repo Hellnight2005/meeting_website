@@ -15,7 +15,7 @@ const NavBar = () => {
     const { user } = useUser(); // Getting user info from context
 
     const menuItems = ["Home", "Services", "About", "Workflow", "Contact Us"];
-    const routeItems = ["/user", "#services", "#whyus", "#how", "#pricing"];
+    const routeItems = ["#HeroSection", "#services", "#whyus", "#how", "#pricing"];
 
     // Conditionally add Admin link if the user is an admin
     if (user?.role === "admin") {

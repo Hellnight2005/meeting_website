@@ -93,7 +93,7 @@ export default function MeetingCard({ id, type }) {
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ id: meeting.id }), // Pass ID in body
+                body: JSON.stringify({ id: meeting.id }),
             });
 
             if (res.ok) {
@@ -110,22 +110,17 @@ export default function MeetingCard({ id, type }) {
         }
     };
 
-    // approve meeting block req
     const approveMeeting = async () => {
         if (loadingAction) return;
         setLoadingAction("approve");
         try {
-            console.log("meetingId", meeting.id);
-
             const res = await fetch("/api/Meeting/approve", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id: meeting.id }),
             });
 
-            const data = await res.json(); // 👈 Parse JSON response
-
-            console.log("response from api", data);
+            const data = await res.json();
 
             if (res.ok) {
                 refreshMeetings();
@@ -141,21 +136,10 @@ export default function MeetingCard({ id, type }) {
         }
     }
 
-    const handleJoinClick = () => {
-        if (isJoinEnabled) {
-            toast.success("The meeting is ready to join! You will be redirected shortly.", { position: "top-center" });
-            setTimeout(() => {
-                window.location.reload(); // This reloads the page after clicking "Join"
-            }, 2000);
-        } else {
-            toast.error("The meeting isn't ready to join yet. Please wait until it's time.", { position: "top-center" });
-        }
-    };
-
     return (
         <div
             className={`border rounded-2xl shadow-lg p-6 transition duration-300 relative
-            ${isCompleted ? "bg-gray-100 opacity-80 cursor-not-allowed" : bgColor}`}
+      ${isCompleted ? "bg-gray-100 opacity-80 cursor-not-allowed" : bgColor}`}
         >
             {isCompleted && (
                 <div className="absolute top-3 right-3 text-green-600 flex items-center gap-1">
@@ -171,11 +155,14 @@ export default function MeetingCard({ id, type }) {
                 />
                 <div>
                     <h3 className="font-bold text-lg text-gray-900">{meeting.user_name}</h3>
-                    <p className="text-sm text-gray-700">{meeting.title}</p>
+                    <p className="text-sm text-gray-700">{meeting.brandName}</p>
                 </div>
             </div>
 
             <div className="mt-4 text-sm space-y-1 text-gray-800">
+                {meeting.websiteUrl && (
+                    <p><strong>Website:</strong> {meeting.websiteUrl}</p>
+                )}
                 <p><strong>Day:</strong> {meeting.selectDay}</p>
                 <p>
                     <strong>Time:</strong> {meeting.selectTime}
@@ -196,7 +183,7 @@ export default function MeetingCard({ id, type }) {
                                 rel="noopener noreferrer"
                                 className="w-full inline-block text-center px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition"
                             >
-                                ploJoin
+                                Join
                             </a>
                         ) : (
                             <button

@@ -9,10 +9,6 @@ import {
     PieChart,
     Pie,
     Cell,
-    LineChart,
-    Line,
-    CartesianGrid,
-    Legend,
 } from "recharts";
 
 const Charts = () => {
@@ -23,8 +19,6 @@ const Charts = () => {
         subtext: "text-gray-300",
         stroke: "#e5e7eb",
         chartLine: "#38bdf8",
-        radarStroke: "#0ea5e9",
-        radarFill: "#0ea5e9",
     };
 
     const [userStats, setUserStats] = useState(null);
@@ -64,48 +58,45 @@ const Charts = () => {
         return <div className="text-center text-white">Loading...</div>;
     }
 
-    const totalMeetings = (meetingStats.totalMeetingsInXLSX || 0) + (meetingStats.totalMeetingsInDB || 0);
-    const pendingMeetings = meetingStats.totalMeetingsInDB || 0;
+    const totalMeetings =
+        (meetingStats?.totalMeetingsInXLSX || 0) + (meetingStats?.totalMeetingsInDB || 0);
+    const pendingMeetings = meetingStats?.totalMeetingsInDB || 0;
 
     const barData = [
-        { name: "Jan", users: userStats.usersByMonth["1"] || 0 },
-        { name: "Feb", users: userStats.usersByMonth["2"] || 0 },
-        { name: "Mar", users: userStats.usersByMonth["3"] || 0 },
-        { name: "Apr", users: userStats.usersByMonth["4"] || 0 },
-        { name: "May", users: userStats.usersByMonth["5"] || 0 },
-        { name: "Jun", users: userStats.usersByMonth["6"] || 0 },
-        { name: "Jul", users: userStats.usersByMonth["7"] || 0 },
-        { name: "Aug", users: userStats.usersByMonth["8"] || 0 },
-        { name: "Sep", users: userStats.usersByMonth["9"] || 0 },
-        { name: "Oct", users: userStats.usersByMonth["10"] || 0 },
-        { name: "Nov", users: userStats.usersByMonth["11"] || 0 },
-        { name: "Dec", users: userStats.usersByMonth["12"] || 0 },
+        { name: "Jan", users: userStats?.usersByMonth?.["1"] || 0 },
+        { name: "Feb", users: userStats?.usersByMonth?.["2"] || 0 },
+        { name: "Mar", users: userStats?.usersByMonth?.["3"] || 0 },
+        { name: "Apr", users: userStats?.usersByMonth?.["4"] || 0 },
+        { name: "May", users: userStats?.usersByMonth?.["5"] || 0 },
+        { name: "Jun", users: userStats?.usersByMonth?.["6"] || 0 },
+        { name: "Jul", users: userStats?.usersByMonth?.["7"] || 0 },
+        { name: "Aug", users: userStats?.usersByMonth?.["8"] || 0 },
+        { name: "Sep", users: userStats?.usersByMonth?.["9"] || 0 },
+        { name: "Oct", users: userStats?.usersByMonth?.["10"] || 0 },
+        { name: "Nov", users: userStats?.usersByMonth?.["11"] || 0 },
+        { name: "Dec", users: userStats?.usersByMonth?.["12"] || 0 },
     ];
 
     const pieData = [
-        { name: "Desktop", value: 60 },
-        { name: "Mobile", value: 40 },
+        { name: "Desktop", value: meetingStats?.desktopUsersCount || 0 },
+        { name: "Mobile", value: meetingStats?.mobileUsersCount || 0 },
     ];
-
-    const lineData = Object.keys(userStats.weeklyActivity).map((date) => ({
-        name: date,
-        users: userStats.weeklyActivity[date],
-    }));
 
     const pieColors = ["#38bdf8", "#0ea5e9"];
 
     return (
         <div className={`min-h-screen p-8 ${theme.background}`}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div className="bg-gradient-to-br from-cyan-500 to-blue-500 p-6 rounded-xl shadow-2xl text-white">
+            {/* Cards container with slightly larger gap */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+                <div className="bg-gradient-to-br from-cyan-500 to-blue-500 p-8 rounded-xl shadow-2xl text-white">
                     <h2 className="text-lg font-semibold">Total Users</h2>
-                    <p className="text-3xl font-bold mt-2">{userStats.totalUsers}</p>
+                    <p className="text-3xl font-bold mt-2">{userStats?.totalUsers || 0}</p>
                 </div>
-                <div className={`${theme.card} p-6`}>
+                <div className={`${theme.card} p-8`}>
                     <h2 className="text-lg font-semibold">Pending Meetings</h2>
                     <p className="text-3xl font-bold mt-2">{pendingMeetings}</p>
                 </div>
-                <div className={`${theme.card} p-6`}>
+                <div className={`${theme.card} p-8 bg-gradient-to-br `}>
                     <h2 className="text-lg font-semibold">Total Meetings</h2>
                     <p className="text-3xl font-bold mt-2">{totalMeetings}</p>
                     <p className={`text-sm mt-1 ${getTrendClass(`+${pendingMeetings} today`)}`}>
@@ -114,8 +105,9 @@ const Charts = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                <div className={`${theme.card} p-6`}>
+            {/* Charts container */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className={`${theme.card} p-8`}>
                     <h3 className="text-md font-semibold text-center mb-4">User Growth</h3>
                     <ResponsiveContainer width="100%" height={300}>
                         <BarChart data={barData}>
@@ -127,7 +119,7 @@ const Charts = () => {
                     </ResponsiveContainer>
                 </div>
 
-                <div className={`${theme.card} p-6`}>
+                <div className={`${theme.card} p-8`}>
                     <h3 className="text-md font-semibold text-center mb-4">Device Usage</h3>
                     <ResponsiveContainer width="100%" height={300}>
                         <PieChart>
@@ -142,32 +134,22 @@ const Charts = () => {
                                 label
                             >
                                 {pieData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={pieColors[index % pieColors.length]} />
+                                    <Cell
+                                        key={`cell-${index}`}
+                                        fill={pieColors[index % pieColors.length]}
+                                    />
                                 ))}
                             </Pie>
                             <Tooltip />
                         </PieChart>
                     </ResponsiveContainer>
-                    <p className={`text-sm text-center mt-2 ${theme.subtext}`}>Desktop vs Mobile</p>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className={`${theme.card} p-6`}>
-                    <h3 className="text-md font-semibold text-center mb-4">Weekly Activity</h3>
-                    <ResponsiveContainer width="100%" height={300}>
-                        <LineChart data={lineData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke={theme.stroke} />
-                            <XAxis dataKey="name" stroke={theme.stroke} />
-                            <YAxis stroke={theme.stroke} />
-                            <Tooltip />
-                            <Legend />
-                            <Line type="monotone" dataKey="users" stroke={theme.chartLine} strokeWidth={2} />
-                        </LineChart>
-                    </ResponsiveContainer>
+                    <p className={`text-sm text-center mt-2 ${theme.subtext}`}>
+                        Desktop vs Mobile
+                    </p>
                 </div>
             </div>
         </div>
+
     );
 };
 

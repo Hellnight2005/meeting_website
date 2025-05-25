@@ -25,10 +25,9 @@ function convertTo24Hour(timeStr) {
 
 function getMeetingIdFromCookie() {
     const getCookieValue = (name) => {
-        const match = document.cookie.match(new RegExp("(^| )" + name + "=(\[^;]+)"));
-        return match ? decodeURIComponent(match[2]) : null;
+        const match = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]+)"));
+        return match ? decodeURIComponent(match[1]) : null;
     };
-
 
     const decodeJWT = (token) => {
         try {
@@ -43,8 +42,6 @@ function getMeetingIdFromCookie() {
     const jwt = getCookieValue("meeting");
     const decoded = jwt ? decodeJWT(jwt) : null;
     return decoded?.meetingIds?.[0] || null;
-
-
 }
 
 function Meeting() {
@@ -58,86 +55,34 @@ function Meeting() {
     const [isMarkingComplete, setIsMarkingComplete] = useState(false);
     const [meetingIdFromUrl, setMeetingIdFromUrl] = useState(null);
 
-
     const fetchMeetingData = async (meetingId) => {
-        console.log("meetingId", meetingId);
-
-        setIsLoading(true);
         try {
-            const response = await fetch("/api/Meeting/meeting_by_id", {
+            const res = await fetch("/api/Meeting/meeting_by_id", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ meetingId }),
             });
 
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error || "Failed to fetch meeting data");
+            const result = await res.json();
 
-            const fetchedMeeting = data.data;
-
-            // Check if the meeting data is empty or not found
-            if (!fetchedMeeting || (fetchedMeeting.meetingIds && fetchedMeeting.meetingIds.length === 0)) {
-                // Delete the meeting cookie if no meeting is found
-                document.cookie = "meeting=; path=/; max-age=0;";
-                toast.error("❌ No meeting found.");
-                return; // Exit early if no meeting data is found
+            if (!res.ok || !result.data) {
+                toast.error("Meeting not found or already deleted.");
+                setIsLoading(false);
+                router.push("/");
+                return;
             }
 
+            const fetchedMeeting = result.data;
             setMeeting(fetchedMeeting);
+            // You may want to update meetingStatus & canJoin here as needed
 
-            const now = new Date();
-            const startTime = new Date(fetchedMeeting.startDateTime);
-            const endTime = new Date(fetchedMeeting.endDateTime);
-            const canJoinWindowStart = new Date(startTime.getTime() - 5 * 60 * 1000);
-            const isWithinJoinTime = now >= canJoinWindowStart && now < endTime;
-            setCanJoin(isWithinJoinTime);
-
-            setMeetingStatus(fetchedMeeting.type);
-
-            const hasEnded = now >= endTime;
-            const hasMeetingLink = Boolean(fetchedMeeting.meetingLink);
-
-            if ((hasEnded || fetchedMeeting.type === "completed") && hasMeetingLink && !isMarkingComplete) {
-                setIsMarkingComplete(true);
-                try {
-                    const markCompleteRes = await fetch("/api/Meeting/markComplete", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ meetingId }),
-                    });
-                    const result = await markCompleteRes.json();
-
-                    if (markCompleteRes.ok && result.success) {
-                        await Promise.all([
-                            fetch(`/api/exportMeetings?id = ${meetingId} `),
-                            fetch("/api/meeting/delete", {
-                                method: "DELETE",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ id: meetingId }),
-                            }),
-                        ]);
-                        document.cookie = "meeting=; path=/; max-age=0;";
-                        setMeeting(null);
-                        toast.success("✅ Meeting completed. You can book a new one!", {
-                            position: "top-center",
-                            duration: 6000,
-                        });
-                        setTimeout(() => router.push("/"), 2500);
-                    }
-                } catch (error) {
-                    console.error("Error completing meeting:", error);
-                } finally {
-                    setIsMarkingComplete(false);
-                }
-            }
+            setIsLoading(false);
         } catch (error) {
-            console.error("Error fetching meeting data:", error);
-        } finally {
+            console.error("Failed to fetch meeting:", error);
+            toast.error("Something went wrong. Please try again.");
             setIsLoading(false);
         }
     };
-
-
 
     useEffect(() => {
         if (typeof window !== "undefined") {
@@ -236,7 +181,7 @@ function Meeting() {
                     <img src={imageSrc} alt="client" className="w-14 h-14 rounded-full border border-zinc-700 shadow-sm dark:invert" />
                     <div>
                         <h3 className="font-bold text-white text-lg">{meeting.user_name}</h3>
-                        <p className="text-sm text-zinc-300">{meeting.title}</p>
+                        <p className="text-sm text-zinc-300">Brand: {meeting.brandName}</p>
                     </div>
                 </div>
 
@@ -280,7 +225,7 @@ function Meeting() {
                             const isActive = currentStepIndex >= index;
                             return (
                                 <div key={index} className="flex-1 text-center">
-                                    <div className={`h - 2 rounded - full mx - 1 transition - all duration - 300 ${isActive ? "bg-green-400" : "bg-zinc-700"} `} />
+                                    <div className={`h-2 rounded-full mx-1 transition-all duration-300 ${isActive ? "bg-green-400" : "bg-zinc-700"}`} />
                                     <span className="block mt-1">{label}</span>
                                 </div>
                             );
@@ -290,9 +235,6 @@ function Meeting() {
             </div>
         </div>
     );
-
-
 }
 
 export default Meeting;
-

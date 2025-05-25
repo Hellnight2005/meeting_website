@@ -18,7 +18,6 @@ const refreshAccessToken = async (refreshToken) => {
     const { credentials } = await oauth2Client.refreshAccessToken();
     return credentials.access_token;
   } catch (error) {
-    console.error("Failed to refresh access token:", error.message);
     throw new Error("Failed to refresh access token.");
   }
 };
@@ -66,7 +65,6 @@ const checkForExistingEvent = async (calendar, startDateTime, endDateTime) => {
 
     return isConflict;
   } catch (error) {
-    console.error("Error checking for existing events:", error.message);
     throw new Error("Error checking for existing events.");
   }
 };
@@ -77,7 +75,7 @@ const createCalendarEvent = async ({
   adminAccessToken,
   adminRefreshToken,
   startDateTime,
-  title,
+  brandName,
   description = "Approved meeting",
   attendees = [],
 }) => {
@@ -88,11 +86,10 @@ const createCalendarEvent = async ({
   let startISO, endISO;
   try {
     const start = new Date(startDateTime);
-    const end = new Date(start.getTime() + 60 * 60 * 1000); // Add 1 hour
-
+    const end = new Date(start.getTime() + 60 * 60 * 1000); // 1 hour
     startISO = start.toISOString();
     endISO = end.toISOString();
-  } catch (err) {
+  } catch {
     throw new Error("Invalid date format for start time.");
   }
 
@@ -101,8 +98,7 @@ const createCalendarEvent = async ({
     const adminUser = await prisma.user.findFirst({ where: { role: "admin" } });
     if (!adminUser) throw new Error("Admin user not found.");
     adminEmail = adminUser.email;
-  } catch (error) {
-    console.error("Error fetching admin email:", error.message);
+  } catch {
     throw new Error("Error fetching admin email.");
   }
 
@@ -113,7 +109,7 @@ const createCalendarEvent = async ({
   const adminCalendar = google.calendar({ version: "v3", auth: adminAuth });
 
   const event = {
-    summary: title,
+    summary: `Meeting with ${brandName}`,
     description,
     start: {
       dateTime: startISO,
@@ -123,7 +119,7 @@ const createCalendarEvent = async ({
       dateTime: endISO,
       timeZone: "UTC",
     },
-    location: "Virtual", // Fixed location
+    location: "Virtual",
     attendees: attendees.length > 0 ? attendees : undefined,
     conferenceData: {
       createRequest: {
@@ -168,10 +164,6 @@ const createCalendarEvent = async ({
       endDateTime: adminEvent.data.end.dateTime,
     };
   } catch (error) {
-    console.error(
-      "Error creating calendar event:",
-      error.response?.data || error.message
-    );
     throw new Error("Error creating calendar event.");
   }
 };
@@ -182,7 +174,11 @@ const deleteCalendarEvent = async (eventId, refreshToken) => {
     oauth2Client.setCredentials({ refresh_token: refreshToken });
 
     const calendar = google.calendar({ version: "v3", auth: oauth2Client });
-    await calendar.events.delete({ calendarId: "primary", eventId });
+
+    await calendar.events.delete({
+      calendarId: "primary",
+      eventId,
+    });
 
     return { success: true };
   } catch (error) {

@@ -75,7 +75,9 @@ const formatMeetingForExcel = (meeting, user) => {
     userId: meeting.userId,
     user_name: user?.User?.displayName || meeting.user_name, // Access displayName correctly
     user_email: user?.User?.email || "No email available",
-    title: meeting.title,
+    brandName: meeting.brandName || "",
+    phoneNumber: meeting.phoneNumber || "",
+    websiteUrl: meeting.websiteUrl || "",
     selectDay: meeting.selectDay,
     selectTime: meeting.selectTime,
     slot: meeting.slot,

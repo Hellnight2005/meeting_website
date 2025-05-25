@@ -37,23 +37,47 @@ export async function POST(req) {
     }
 
     // 🗑 Delete existing calendar event if present
+    // 🗑 Delete existing calendar event if present
     if (existingMeeting.eventId) {
-      if (!user.refreshToken) {
-        return NextResponse.json(
-          { error: "User's refresh token is missing." },
-          { status: 400 }
-        );
-      }
-      const deleteResult = await deleteCalendarEvent(
-        existingMeeting.eventId,
-        user.refreshToken
-      );
+      // Get admin user
+      const admin = await prisma.user.findFirst({ where: { role: "admin" } });
 
-      if (!deleteResult.success) {
+      // Delete event from admin calendar
+      if (admin?.refreshToken) {
+        const adminDeleteResult = await deleteCalendarEvent(
+          existingMeeting.eventId,
+          admin.refreshToken
+        );
+
+        if (!adminDeleteResult.success) {
+          return NextResponse.json(
+            {
+              error: "Failed to delete the calendar event from admin calendar.",
+            },
+            { status: 500 }
+          );
+        }
+      } else {
         return NextResponse.json(
-          { error: "Failed to delete the calendar event." },
+          { error: "Admin credentials missing for calendar deletion." },
           { status: 500 }
         );
+      }
+
+      // Delete event from user calendar (optional, in case event exists there too)
+      if (user?.refreshToken) {
+        const userDeleteResult = await deleteCalendarEvent(
+          existingMeeting.eventId,
+          user.refreshToken
+        );
+
+        // Log error but don't block main flow if user delete fails
+        if (!userDeleteResult.success) {
+          console.warn(
+            "Warning: Failed to delete event from user calendar:",
+            userDeleteResult.message
+          );
+        }
       }
     }
 
