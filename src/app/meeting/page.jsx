@@ -52,7 +52,6 @@ function Meeting() {
     const { user, logout } = useUser();
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
-    const [isMarkingComplete, setIsMarkingComplete] = useState(false);
     const [meetingIdFromUrl, setMeetingIdFromUrl] = useState(null);
 
     const fetchMeetingData = async (meetingId) => {
@@ -74,7 +73,15 @@ function Meeting() {
 
             const fetchedMeeting = result.data;
             setMeeting(fetchedMeeting);
-            // You may want to update meetingStatus & canJoin here as needed
+
+            // Set meeting status for progress step UI
+            setMeetingStatus(fetchedMeeting.type);
+
+            // Calculate join access window
+            const now = new Date();
+            const start = new Date(fetchedMeeting.startDateTime);
+            const end = new Date(fetchedMeeting.endDateTime);
+            setCanJoin(now >= start && now <= end);
 
             setIsLoading(false);
         } catch (error) {
@@ -213,7 +220,7 @@ function Meeting() {
                                 disabled
                                 className="w-full px-5 py-2.5 bg-zinc-800 text-zinc-500 font-semibold rounded-4xl border border-zinc-700 cursor-not-allowed"
                             >
-                                🔒 You can join 5 minutes before the meeting
+                                🔒 You can join during your scheduled meeting time
                             </button>
                         )}
                     </div>
