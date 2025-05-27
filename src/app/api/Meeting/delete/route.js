@@ -1,15 +1,14 @@
-// app/api/meeting/delete/route.js
 import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { deleteCalendarEvent } from "@/config/googleCalendar";
 
-export const dynamic = "force-dynamic"; // Ensure Vercel doesn't cache the route
+export const dynamic = "force-dynamic";
 
 const prisma = new PrismaClient();
 
 export async function DELETE(req) {
   try {
-    const { id } = await req.json(); // Expect JSON body with meeting ID
+    const { id } = await req.json();
 
     if (!id) {
       return NextResponse.json(
@@ -18,7 +17,7 @@ export async function DELETE(req) {
       );
     }
 
-    // 1. Find the meeting
+    // Find the meeting
     const meeting = await prisma.meeting.findUnique({ where: { id } });
     if (!meeting) {
       return NextResponse.json(
@@ -27,30 +26,55 @@ export async function DELETE(req) {
       );
     }
 
-    // 2. Find the user
+    // Find the user linked to the meeting
     const user = await prisma.user.findUnique({
-      where: { id: meeting.userId },
+      where: { id: meeting.userId.toString() },
     });
     if (!user) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
-    // 3. Delete event from Google Calendar if it exists
+    // Find the admin user (assuming you have only one admin or filter accordingly)
+    const admin = await prisma.user.findFirst({
+      where: { role: "admin" },
+    });
+    if (!admin) {
+      return NextResponse.json(
+        { message: "Admin user not found" },
+        { status: 404 }
+      );
+    }
+
+    // Delete event from Google Calendar for both user and admin tokens
     if (meeting.eventId) {
-      const deleteEventResponse = await deleteCalendarEvent(
+      // Delete event using user's token
+      const deleteUserEventResponse = await deleteCalendarEvent(
         meeting.eventId,
         user.refreshToken
       );
 
-      if (!deleteEventResponse?.success) {
+      if (!deleteUserEventResponse?.success) {
         return NextResponse.json(
-          { message: "Failed to delete the calendar event" },
+          { message: "Failed to delete the calendar event for user" },
+          { status: 500 }
+        );
+      }
+
+      // Delete event using admin's token
+      const deleteAdminEventResponse = await deleteCalendarEvent(
+        meeting.eventId,
+        admin.refreshToken
+      );
+
+      if (!deleteAdminEventResponse?.success) {
+        return NextResponse.json(
+          { message: "Failed to delete the calendar event for admin" },
           { status: 500 }
         );
       }
     }
 
-    // 4. Delete the meeting from the DB
+    // Delete the meeting from the DB
     const deletedMeeting = await prisma.meeting.delete({ where: { id } });
 
     return NextResponse.json({

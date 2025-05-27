@@ -130,10 +130,12 @@ const createCalendarEvent = async ({
     reminders: {
       useDefault: false,
       overrides: [
-        { method: "email", minutes: 1440 },
-        { method: "popup", minutes: 1440 },
-        { method: "email", minutes: 30 },
-        { method: "popup", minutes: 10 },
+        { method: "email", minutes: 1440 }, // 1 day before email
+        { method: "popup", minutes: 1440 }, // 1 day before popup
+        { method: "email", minutes: 30 }, // 30 min before email
+        { method: "popup", minutes: 30 }, // 30 min before popup
+        { method: "email", minutes: 10 }, // 10 min before email
+        { method: "popup", minutes: 10 }, // 10 min before popup
       ],
     },
   };

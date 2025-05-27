@@ -1,4 +1,3 @@
-// components/WhyUs.tsx
 "use client";
 
 import { CheckCircle } from "lucide-react";
@@ -24,7 +23,7 @@ const benefits = [
 
 export default function WhyUs() {
     return (
-        <section className="bg-white dark:bg-zinc-900 py-20 px-6 md:px-12 lg:px-24">
+        <section className="bg-zinc-900 py-20 px-6 md:px-12 lg:px-24">
             <motion.div
                 initial="hidden"
                 whileInView="visible"
@@ -33,7 +32,7 @@ export default function WhyUs() {
                 className="max-w-5xl mx-auto text-center"
             >
                 <motion.h2
-                    className="text-4xl md:text-5xl font-bold text-zinc-900 dark:text-white mb-8"
+                    className="text-4xl md:text-5xl font-bold text-white mb-8"
                     initial={{ opacity: 0, y: 40 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6 }}
@@ -45,18 +44,16 @@ export default function WhyUs() {
                     {benefits.map((benefit, i) => (
                         <motion.div
                             key={i}
-                            className="bg-zinc-50 dark:bg-zinc-800 p-6 rounded-2xl shadow-md hover:shadow-lg transition"
+                            className="bg-zinc-800 p-6 rounded-2xl shadow-md hover:shadow-lg transition"
                             initial={{ opacity: 0, y: 30 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.5, delay: i * 0.2 }}
                         >
                             <CheckCircle className="text-green-500 w-6 h-6 mb-4" />
-                            <h3 className="text-xl font-semibold text-zinc-800 dark:text-white mb-2">
+                            <h3 className="text-xl font-semibold text-white mb-2">
                                 {benefit.title}
                             </h3>
-                            <p className="text-zinc-600 dark:text-zinc-300">
-                                {benefit.description}
-                            </p>
+                            <p className="text-zinc-300">{benefit.description}</p>
                         </motion.div>
                     ))}
                 </div>

@@ -23,7 +23,6 @@ export default function Footer() {
     useEffect(() => {
         if (!footerRef.current) return;
 
-        // Animate footer container
         gsap.fromTo(
             footerRef.current,
             { autoAlpha: 0, y: 60 },
@@ -39,7 +38,6 @@ export default function Footer() {
             }
         );
 
-        // Animate columns staggered
         gsap.fromTo(
             columnRefs.current,
             { autoAlpha: 0, y: 50 },
@@ -56,7 +54,6 @@ export default function Footer() {
             }
         );
 
-        // Animate social icons
         gsap.fromTo(
             iconRefs.current,
             { scale: 0.6, autoAlpha: 0 },
@@ -73,7 +70,6 @@ export default function Footer() {
             }
         );
 
-        // Animate form fields
         gsap.fromTo(
             inputRefs.current,
             { x: -30, autoAlpha: 0 },
@@ -134,12 +130,12 @@ export default function Footer() {
     };
 
     return (
-        <footer ref={footerRef} className="bg-white dark:bg-zinc-900 py-20 px-6 md:px-12 lg:px-24 text-white">
+        <footer ref={footerRef} className="bg-zinc-900 py-20 px-6 md:px-12 lg:px-24 text-white">
             <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-16">
 
                 {/* Left: Logo */}
                 <div ref={el => (columnRefs.current[0] = el)} className="space-y-4">
-                    <h2 className="text-2xl font-bold text-white">YourAgency</h2>
+                    <h2 className="text-2xl font-bold text-white">WebSthapana</h2>
                 </div>
 
                 {/* Center: Socials */}
@@ -149,7 +145,7 @@ export default function Footer() {
                         {[
                             { icon: <Facebook className="h-5 w-5" />, link: "https://facebook.com", color: "hover:bg-blue-600" },
                             { icon: <Instagram className="h-5 w-5" />, link: "https://instagram.com", color: "hover:bg-pink-500" },
-                            { icon: <Mail className="h-5 w-5" />, link: `mailto:${userEmail}`, color: "hover:bg-green-500" },
+
                         ].map((item, index) => (
                             <a
                                 key={index}
@@ -180,7 +176,7 @@ export default function Footer() {
                             onChange={(e) => setEmail(e.target.value)}
                             placeholder="Your Email"
                             ref={el => (inputRefs.current[0] = el)}
-                            className="w-full bg-zinc-700 border border-zinc-600 focus:border-blue-500 rounded-md px-4 py-2 text-sm text-white placeholder:text-zinc-400 transition"
+                            className="w-full bg-zinc-800 border border-zinc-600 focus:border-blue-500 rounded-md px-4 py-2 text-sm text-white placeholder:text-zinc-400 transition"
                         />
                         <textarea
                             value={message}
@@ -188,7 +184,7 @@ export default function Footer() {
                             rows={4}
                             placeholder="Your Message"
                             ref={el => (inputRefs.current[1] = el)}
-                            className="w-full bg-zinc-700 border border-zinc-600 focus:border-blue-500 rounded-md px-4 py-2 text-sm text-white placeholder:text-zinc-400 transition"
+                            className="w-full bg-zinc-800 border border-zinc-600 focus:border-blue-500 rounded-md px-4 py-2 text-sm text-white placeholder:text-zinc-400 transition"
                         />
                         <button
                             type="submit"
@@ -214,7 +210,7 @@ export default function Footer() {
 
             {/* Footer Message */}
             <div className="mt-12 text-center text-zinc-400 text-sm">
-                Building innovative solutions for tomorrow.
+                Building your digital foundation with care and precision.
             </div>
 
             {/* Copyright */}

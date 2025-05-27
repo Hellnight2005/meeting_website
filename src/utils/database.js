@@ -1,5 +1,4 @@
 import { PrismaClient } from "@prisma/client";
-import axios from "axios";
 
 const prisma = new PrismaClient();
 
@@ -39,27 +38,18 @@ export const getMeetingById = async (id) => {
   }
 };
 
-// Utility: Fetch user by ID
-// Utility: Fetch user by ID
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"; // Or your deployed URL
-
+// Utility: Fetch user by ID directly from DB (no API call)
 const fetchUserById = async (userId) => {
   try {
-    const response = await fetch(`${BASE_URL}/api/user/${userId}`, {
-      method: "PATCH", // ✅ PATCH
-      headers: { "Content-Type": "application/json" },
-      cache: "no-store",
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch user with ID ${userId}`);
+    if (!user) {
+      throw new Error(`User not found with ID ${userId}`);
     }
 
-    const data = await response.json();
-    console.log("Fetched user data:", data.User);
-    console.log("user email ", data.User.email);
-    // 👈 Log the returned user data
-    return data;
+    return user;
   } catch (error) {
     console.error(`Error fetching user with ID ${userId}:`, error);
     return null;
@@ -68,13 +58,10 @@ const fetchUserById = async (userId) => {
 
 // Utility: Format a meeting object for Excel
 const formatMeetingForExcel = (meeting, user) => {
-  console.log("Formatting meeting:", meeting);
-  console.log("User:", user); // Log the entire user object to check the data
-  console.log("Email:", user?.User?.email); // Log the entire user object to check the data
   return {
     userId: meeting.userId,
-    user_name: user?.User?.displayName || meeting.user_name, // Access displayName correctly
-    user_email: user?.User?.email || "No email available",
+    user_name: user?.displayName || meeting.user_name,
+    user_email: user?.email || "No email available",
     brandName: meeting.brandName || "",
     phoneNumber: meeting.phoneNumber || "",
     websiteUrl: meeting.websiteUrl || "",

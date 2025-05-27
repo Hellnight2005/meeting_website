@@ -7,6 +7,7 @@ import NavBar from "@/components/Navbar";
 import CreateMeetingModal from "@/components/CreateMeetingModal";
 import ProfileTag from "@/components/Profile";
 import { useUser } from "@/constants/UserContext";
+import Image from "next/image";
 
 export default function HeroSection() {
     const [projectName] = useState("WebSthapana");
@@ -61,7 +62,6 @@ export default function HeroSection() {
                 "-=0.8"
             );
 
-        // Parallax scroll effects for text
         gsap.to(titleRef.current, {
             yPercent: -20,
             ease: "none",
@@ -84,16 +84,15 @@ export default function HeroSection() {
             },
         });
 
-        // Enhanced video parallax + subtle zoom
         gsap.to(videoRef.current, {
-            yPercent: 30,       // Moves up 30% vertically on scroll
-            scale: 1.05,        // Slight zoom for depth
+            yPercent: 30,
+            scale: 1.05,
             ease: "none",
             scrollTrigger: {
                 trigger: videoRef.current,
-                start: "top 80%",   // Animation starts when video top hits 80% viewport height
-                end: "bottom top",  // Ends when video bottom hits top of viewport
-                scrub: 0.8,         // Smooth scrubbing with easing
+                start: "top 80%",
+                end: "bottom top",
+                scrub: 0.8,
             },
         });
 
@@ -102,22 +101,29 @@ export default function HeroSection() {
         };
     }, []);
 
-    const projectImage = "/icons/client.svg";
+    const projectImage = "/icons/logo.svg";
     const projectDisplay = projectImage ? (
-        <img src={projectImage} alt="Project Logo" className="h-12 w-auto" />
+        <div className="flex items-center gap-3">
+            <Image
+                src={projectImage}
+                alt="WebSthapana Logo"
+                width={250}
+                height={40}
+                className="drop-shadow-lg invert"
+            />
+        </div>
     ) : (
-        <span className="text-2xl font-bold tracking-tight text-white dark:text-white">
+        <span className="text-2xl font-bold tracking-tight text-white">
             {projectName}
         </span>
     );
 
     return (
-        <section className="relative min-h-screen bg-white dark:bg-zinc-900 py-20 px-6 md:px-12 lg:px-24 text-white overflow-hidden">
+        <section className="relative min-h-screen bg-zinc-900 p-6 md:p-10 text-white overflow-hidden">
             {/* Top Nav & Profile */}
-            <div className="absolute top-6 left-0 right-0 flex justify-between items-center px-6 md:px-12 z-30">
+            <div className="absolute top-[-8] left-0 right-0 flex justify-between items-center px-6 md:px-10 z-30">
                 <div>{projectDisplay}</div>
                 <div className="flex items-center gap-4">
-                    {/* Hide NavBar on mobile */}
                     <div className="hidden md:flex">
                         <NavBar />
                     </div>
@@ -142,7 +148,7 @@ export default function HeroSection() {
                     </h1>
                     <p
                         ref={descRef}
-                        className="mt-4 text-lg md:text-xl text-zinc-200 dark:text-zinc-300 max-w-lg mx-auto md:mx-0"
+                        className="mt-4 text-lg md:text-xl text-zinc-300 max-w-lg mx-auto md:mx-0"
                     >
                         <span className="text-white font-semibold">Whether you're</span>{" "}
                         a brand, creator, or business — we craft stunning web experiences that convert.
@@ -151,7 +157,7 @@ export default function HeroSection() {
                     <div ref={ctaRef} className="mt-8">
                         <button
                             onClick={() => setModalOpen(true)}
-                            className="bg-zinc-900 dark:bg-white text-white dark:text-black px-6 py-3 rounded-full text-base font-bold shadow-lg hover:scale-105 transition-transform"
+                            className="bg-white text-black px-6 py-3 rounded-full text-base font-bold shadow-lg hover:scale-105 transition-transform"
                         >
                             Book a Meeting
                         </button>
@@ -162,9 +168,9 @@ export default function HeroSection() {
                 <div className="w-full md:w-1/2 flex justify-center mb-6 md:mb-0">
                     <div
                         ref={videoRef}
-                        className="w-full max-w-[860px] aspect-[16/10] rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-2xl bg-white dark:bg-zinc-900 overflow-hidden"
+                        className="w-full max-w-[860px] aspect-[16/10] rounded-2xl border border-zinc-700 shadow-2xl bg-zinc-900 overflow-hidden"
                     >
-                        <div className="bg-zinc-100 dark:bg-zinc-800 h-10 flex items-center px-4 border-b border-zinc-200 dark:border-zinc-700">
+                        <div className="bg-zinc-800 h-10 flex items-center px-4 border-b border-zinc-700">
                             <span className="w-3 h-3 bg-red-400 rounded-full mr-2"></span>
                             <span className="w-3 h-3 bg-yellow-400 rounded-full mr-2"></span>
                             <span className="w-3 h-3 bg-green-400 rounded-full"></span>

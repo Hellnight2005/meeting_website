@@ -46,7 +46,6 @@ export default function CTA() {
                 "-=0.4"
             );
 
-        // Floating animation for icon
         if (iconRef.current) {
             gsap.to(iconRef.current, {
                 y: -8,
@@ -59,8 +58,8 @@ export default function CTA() {
     }, []);
 
     return (
-        <section className="relative overflow-hidden dark:bg-zinc-900 py-24 px-6 md:px-12 lg:px-24 text-white">
-            {/* Background Animated Blobs */}
+        <section className="relative overflow-hidden bg-zinc-900 py-24 px-6 md:px-12 lg:px-24 text-white">
+            {/* Background Blobs */}
             <div className="absolute inset-0 -z-10 pointer-events-none">
                 <div className="absolute w-96 h-96 bg-purple-600/20 rounded-full blur-3xl top-0 left-1/2 transform -translate-x-1/2 animate-pulse-slow" />
                 <div className="absolute w-72 h-72 bg-pink-500/20 rounded-full blur-2xl bottom-0 right-1/4 animate-pulse-slow" />
@@ -86,8 +85,8 @@ export default function CTA() {
                         ref={buttonRef}
                         onClick={() => setModalOpen(true)}
                         className="group relative px-6 py-3 rounded-full border border-white text-white bg-transparent transition
-             hover:text-black hover:bg-white hover:shadow-xl overflow-hidden"
-                        style={{ opacity: 1 }} // Ensure visible initially
+                        hover:text-black hover:bg-white hover:shadow-xl overflow-hidden"
+                        style={{ opacity: 1 }}
                     >
                         <span
                             aria-hidden="true"

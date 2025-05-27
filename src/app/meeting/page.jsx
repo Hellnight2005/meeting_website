@@ -113,6 +113,60 @@ function Meeting() {
         return () => clearInterval(interval);
     }, [meetingIdFromUrl]);
 
+    // New effect: Check if meeting is over and trigger API workflow
+    useEffect(() => {
+        if (!meeting) return;
+
+        const now = new Date();
+        const end = new Date(meeting.endDateTime);
+        const meetingId = meeting._id || meeting.id;
+
+        if (now > end) {
+            if (meeting.type === "line_up") {
+                // Delete meeting directly
+                fetch("/api/Meeting/delete", {
+                    method: "DELETE",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ meetingId }),
+                })
+                    .then(() => {
+                        console.log("Meeting deleted after line_up");
+                    })
+                    .catch(console.error);
+            } else if (
+                meeting.type === "upcoming" ||
+                meeting.type === "completed" &&
+                meeting.meetingLink &&
+                meeting.eventId
+            ) {
+                // Mark complete, then export, then delete
+                fetch("/api/Meeting/markComplete", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ meetingId }),
+                })
+                    .then((res) => {
+                        if (!res.ok) throw new Error("Mark complete failed");
+                        return fetch(`/api/exportMeetings?id=${meetingId}`);
+                    })
+                    .then((res) => {
+                        if (!res.ok) throw new Error("Export meetings failed");
+                        return fetch("/api/Meeting/delete", {
+                            method: "DELETE",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ meetingId }),
+                        });
+                    })
+                    .then(() => {
+                        console.log("Meeting marked complete, exported, and deleted");
+                    })
+                    .catch((err) => {
+                        console.error("Error in meeting completion workflow:", err);
+                    });
+            }
+        }
+    }, [meeting]);
+
     if (isLoading) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-900 text-zinc-400 px-4 text-center">
