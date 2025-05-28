@@ -33,8 +33,7 @@ function getMeetingIdFromCookie() {
         try {
             const payload = token.split(".")[1];
             return JSON.parse(atob(payload));
-        } catch (error) {
-            console.error("Failed to decode JWT:", error);
+        } catch {
             return null;
         }
     };
@@ -65,7 +64,7 @@ function Meeting() {
             const result = await res.json();
 
             if (!res.ok || !result.data) {
-                toast.error("Meeting not found or already deleted.");
+                toast.error("Something went wrong. Please try again.");
                 setIsLoading(false);
                 router.push("/");
                 return;
@@ -73,19 +72,15 @@ function Meeting() {
 
             const fetchedMeeting = result.data;
             setMeeting(fetchedMeeting);
-
-            // Set meeting status for progress step UI
             setMeetingStatus(fetchedMeeting.type);
 
-            // Calculate join access window
             const now = new Date();
             const start = new Date(fetchedMeeting.startDateTime);
             const end = new Date(fetchedMeeting.endDateTime);
             setCanJoin(now >= start && now <= end);
 
             setIsLoading(false);
-        } catch (error) {
-            console.error("Failed to fetch meeting:", error);
+        } catch {
             toast.error("Something went wrong. Please try again.");
             setIsLoading(false);
         }
@@ -103,7 +98,6 @@ function Meeting() {
         const id = meetingIdFromUrl || getMeetingIdFromCookie();
 
         if (!id) {
-            console.warn("No meeting ID found.");
             setIsLoading(false);
             return;
         }
@@ -113,7 +107,6 @@ function Meeting() {
         return () => clearInterval(interval);
     }, [meetingIdFromUrl]);
 
-    // New effect: Check if meeting is over and trigger API workflow
     useEffect(() => {
         if (!meeting) return;
 
@@ -122,48 +115,37 @@ function Meeting() {
         const meetingId = meeting._id || meeting.id;
 
         if (now > end) {
-            if (meeting.type === "line_up") {
-                // Delete meeting directly
-                fetch("/api/Meeting/delete", {
-                    method: "DELETE",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ meetingId }),
-                })
-                    .then(() => {
-                        console.log("Meeting deleted after line_up");
-                    })
-                    .catch(console.error);
-            } else if (
-                meeting.type === "upcoming" ||
-                meeting.type === "completed" &&
-                meeting.meetingLink &&
-                meeting.eventId
-            ) {
-                // Mark complete, then export, then delete
-                fetch("/api/Meeting/markComplete", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ meetingId }),
-                })
-                    .then((res) => {
-                        if (!res.ok) throw new Error("Mark complete failed");
-                        return fetch(`/api/exportMeetings?id=${meetingId}`);
-                    })
-                    .then((res) => {
-                        if (!res.ok) throw new Error("Export meetings failed");
-                        return fetch("/api/Meeting/delete", {
+            const handleCleanup = async () => {
+                try {
+                    if (meeting.type === "line_up") {
+                        await fetch("/api/Meeting/delete", {
                             method: "DELETE",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ id: meetingId }),
+                        });
+                    } else if (
+                        (meeting.type === "upcoming" || meeting.type === "completed") &&
+                        meeting.meetingLink &&
+                        meeting.eventId
+                    ) {
+                        await fetch("/api/Meeting/markComplete", {
+                            method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ meetingId }),
                         });
-                    })
-                    .then(() => {
-                        console.log("Meeting marked complete, exported, and deleted");
-                    })
-                    .catch((err) => {
-                        console.error("Error in meeting completion workflow:", err);
-                    });
-            }
+                        await fetch(`/api/exportMeetings?id=${meetingId}`);
+                        await fetch("/api/Meeting/delete", {
+                            method: "DELETE",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ id: meetingId }),
+                        });
+                    }
+                } catch {
+                    toast.error("Something went wrong. Please try again.");
+                }
+            };
+
+            handleCleanup();
         }
     }, [meeting]);
 
@@ -265,7 +247,7 @@ function Meeting() {
                                 href={meeting.meetingLink}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="w-full inline-block text-center px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition"
+                                className="w-full inline-block text-center px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-4xl transition"
                             >
                                 🔗 Join Meeting
                             </a>

@@ -188,7 +188,7 @@ export default function MeetingCard({ id, type }) {
                         ) : (
                             <button
                                 disabled
-                                className="px-4 py-2 rounded-full font-medium bg-gray-400 text-white cursor-not-allowed"
+                                className="px-4 py-2 rounded-full  font-medium bg-gray-400 text-white cursor-not-allowed"
                                 title="Join will be available 5 minutes before the meeting"
                             >
                                 Join
